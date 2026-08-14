@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسعار الفورية - البورصة المصرية</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts: Noto Kufi Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Include global sidebar -->
+    <script src="global-sidebar.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-input: #1f2937;
+            --brand-primary: #3b82f6;
+            --brand-success: #10b981;
+            --brand-warning: #fbbf24;
+            --brand-danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(51, 65, 85, 0.4);
+            --glass-blur: blur(12px);
+            --font-family: 'Noto Kufi Arabic', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            transition: margin-right .3s ease;
+        }
+
+        /* Glassmorphism panel styling */
+        .glass-panel {
+            background-color: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+            border-color: var(--brand-warning);
+        }
+
+        h1 {
+            color: var(--brand-warning);
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-size: 0.88em;
+        }
+
+        /* Controls Panel */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 35px 10px 15px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.88em;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: var(--brand-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-family: inherit;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: var(--brand-warning);
+            color: #0b0f19;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+        }
+
+        /* Auto-refresh checkbox toggle */
+        .refresh-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            user-select: none;
+        }
+
+        .checkbox-custom {
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-toggle input {
+            display: none;
+        }
+
+        .refresh-toggle input:checked + .checkbox-custom {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+
+        .refresh-toggle input:checked + .checkbox-custom::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: white;
+            font-size: 0.7em;
+        }
+
+        .countdown-badge {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--brand-primary);
+            padding: 3px 8px;
+            border-radius: 50px;
+            font-size: 0.8em;
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* Table design */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.88em;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: rgba(17, 24, 39, 0.9);
+            color: var(--brand-warning);
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #1e293b;
+        }
+
+        .sort-icon {
+            font-size: 0.8em;
+            margin-right: 5px;
+            color: var(--text-muted);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .stock-symbol {
+            font-weight: 700;
+            color: var(--brand-primary);
+        }
+
+        .stock-name {
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        /* Badges & Colorings */
+        .price-val {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
+
+        .change-val {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        .change-up { color: var(--brand-success); }
+        .change-down { color: var(--brand-danger); }
+        .change-neutral { color: var(--text-muted); }
+
+        /* Loader Overlay */
+        .loader-overlay {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 0;
+            color: var(--text-muted);
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 35px;
+            height: 35px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3em;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        /* Chart button link */
+        .chart-link-btn {
+            background: none;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--brand-primary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8em;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-link-btn:hover {
+            background-color: var(--brand-primary);
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="glass-panel header-box">
+            <div>
+                <h1><i class="fas fa-clock"></i> أسعار الأسهم المصرية الفورية</h1>
+                <p class="subtitle">أسعار فورية لأسهم محفظتك والبورصة المصرية (مباشر من محرك ياهو فاينانس)</p>
+            </div>
+            <div style="font-size: 0.8em; color: var(--text-muted); text-align: left;" id="lastGlobalUpdate">
+                آخر تحديث عالمي: —
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="glass-panel controls-row">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="ابحث باسم السهم أو الرمز..." onkeyup="handleSearch()">
+            </div>
+            <div class="action-group">
+                <label class="refresh-toggle">
+                    <input type="checkbox" id="autoRefreshCheckbox" onchange="toggleAutoRefresh(this.checked)" checked>
+                    <span class="checkbox-custom"></span>
+                    <span>تحديث تلقائي</span>
+                    <span class="countdown-badge" id="countdownBadge">60ث</span>
+                </label>
+                <button class="btn btn-warning" onclick="fetchAllPrices(true)">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i> تحديث الآن
+                </button>
+            </div>
+        </div>
+
+        <!-- TABLE SECTION -->
+        <div class="glass-panel" style="padding: 10px;">
+            <div id="loadingArea" class="loader-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <p>جاري تحديث الأسعار الفورية من الخادم المحلي...</p>
+            </div>
+            
+            <div id="tableArea" class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="handleSort('symbol')">الرمز <span id="sort-symbol" class="sort-icon">↕</span></th>
+                            <th onclick="handleSort('name')">اسم الشركة <span id="sort-name" class="sort-icon">↕</span></th>
+                            <th onclick="handleSort('price')" style="text-align: left;">السعر الحالي <span id="sort-price" class="sort-icon">↕</span></th>
+                            <th onclick="handleSort('changeVal')" style="text-align: left;">التغيير (ج.م) <span id="sort-changeVal" class="sort-icon">↕</span></th>
+                            <th onclick="handleSort('changePct')" style="text-align: left;">نسبة التغير <span id="sort-changePct" class="sort-icon">↕</span></th>
+                            <th style="text-align: left;">الإغلاق السابق</th>
+                            <th style="text-align: center;">التحليل الفني</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricesTableBody">
+                        <!-- Prices inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyArea" class="empty-state" style="display: none;">
+                <i class="fas fa-database"></i>
+                <h3>لا توجد بيانات متاحة</h3>
+                <p>تأكد من تشغيل الخادم المحلي بنجاح لجلب البيانات.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fallback Egyptian companies list
+        const fallbackStocks = [
+            { symbol: 'COMI', name: 'البنك التجاري الدولي' },
+            { symbol: 'TMGH', name: 'مجموعة طلعت مصطفى' },
+            { symbol: 'FWRY', name: 'فوري لتكنولوجيا البنوك' },
+            { symbol: 'SWDY', name: 'السويدي إليكتريك' },
+            { symbol: 'ESRS', name: 'حديد عز' },
+            { symbol: 'EAST', name: 'إيسترن كومباني (الشرقية للدخان)' },
+            { symbol: 'ABUK', name: 'أبو قير للأسمدة والصناعات الكيماوية' },
+            { symbol: 'HRHO', name: 'إي اف جي هيرميس' },
+            { symbol: 'PHDC', name: 'بالم هيلز للتعمير' },
+            { symbol: 'OCDI', name: 'سوديك' },
+            { symbol: 'HELI', name: 'مصر الجديدة للإسكان والتعمير' },
+            { symbol: 'MNHD', name: 'مدينة مصر للإسكان' },
+            { symbol: 'ORAS', name: 'أوراسكوم للتنمية مصر' },
+            { symbol: 'EKHO', name: 'المصرية الكويتية القابضة' },
+            { symbol: 'MFPC', name: 'مصر لإنتاج الأسمدة (موبكو)' },
+            { symbol: 'ETEL', name: 'المصرية للاتصالات' },
+            { symbol: 'JUFO', name: 'جهينة للصناعات الغذائية' },
+            { symbol: 'CCAP', name: 'القلعة للاستشارات المالية' },
+            { symbol: 'SKPC', name: 'سيدي كرير للبتروكيماويات' },
+            { symbol: 'ISPH', name: 'ابن سينا فارما' },
+            { symbol: 'GBCO', name: 'جي بي أوتو' },
+            { symbol: 'CICH', name: 'سي آي كابيتال القابضة' },
+            { symbol: 'BTFH', name: 'بلتون المالية القابضة' },
+            { symbol: 'EGAL', name: 'مصر للألومنيوم' },
+            { symbol: 'AMOC', name: 'أموك' },
+            { symbol: 'ORWE', name: 'النساجون الشرقيون' },
+            { symbol: 'CLHO', name: 'مستشفيات كليوباترا' },
+            { symbol: 'RMDA', name: 'راميدا للأدوية' },
+            { symbol: 'DSCW', name: 'دايس للملابس' },
+            { symbol: 'RAYA', name: 'راية القابضة' }
+        ];
+
+        let loadedPrices = [];
+        let sortState = { key: 'symbol', dir: 'asc' };
+        let countdownTimer = null;
+        let refreshSeconds = 60;
+        let isFetching = false;
+
+        // Load symbols list
+        function getTargetStocks() {
+            const rawProcessed = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (rawProcessed) {
+                try {
+                    const list = JSON.parse(rawProcessed);
+                    if (Array.isArray(list) && list.length > 0) {
+                        return list.map(item => ({
+                            symbol: String(item.symbol || '').toUpperCase(),
+                            name: item.name || item.shortName || item.symbol
+                        }));
+                    }
+                } catch(e) {}
+            }
+            return fallbackStocks;
+        }
+
+        // Fetch prices from local server
+        async function fetchAllPrices(isManual = false) {
+            if (isFetching) return;
+            isFetching = true;
+
+            const refreshIcon = document.getElementById('refreshIcon');
+            const loadingArea = document.getElementById('loadingArea');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+            if (isManual) loadingArea.style.display = 'flex';
+
+            const targets = getTargetStocks();
+            const symbolsList = targets.map(t => t.symbol).join(',');
+
+            try {
+                const response = await fetch(`/api/prices?symbols=${symbolsList}`);
+                const resJson = await response.json();
+                
+                if (resJson.success && Array.isArray(resJson.data)) {
+                    loadedPrices = resJson.data.map(item => {
+                        const tgt = targets.find(t => t.symbol === item.symbol);
+                        return {
+                            symbol: item.symbol,
+                            name: tgt ? tgt.name : item.symbol,
+                            price: item.price || 0,
+                            changeVal: item.changeVal || 0,
+                            changePct: item.changePct || 0,
+                            success: item.success
+                        };
+                    });
+
+                    // Update last update timestamp
+                    const lastGlobalUpdate = document.getElementById('lastGlobalUpdate');
+                    if (lastGlobalUpdate) {
+                        lastGlobalUpdate.textContent = `آخر تحديث: ${new Date(resJson.timestamp).toLocaleTimeString('ar-EG')}`;
+                    }
+
+                    document.getElementById('emptyArea').style.display = 'none';
+                    document.getElementById('tableArea').style.display = 'block';
+                } else {
+                    console.error('Error fetching prices:', resJson.error);
+                }
+            } catch (err) {
+                console.error('Connection failed:', err);
+                if (loadedPrices.length === 0) {
+                    document.getElementById('tableArea').style.display = 'none';
+                    document.getElementById('emptyArea').style.display = 'block';
+                }
+            } finally {
+                isFetching = false;
+                if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+                loadingArea.style.display = 'none';
+                renderTable();
+                resetCountdown();
+            }
+        }
+
+        // Render data inside table
+        function renderTable() {
+            const tbody = document.getElementById('pricesTableBody');
+            if (!tbody) return;
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            // Filter by search
+            let filtered = loadedPrices.filter(item => {
+                if (!searchTerm) return true;
+                return item.symbol.toLowerCase().includes(searchTerm) || 
+                       item.name.toLowerCase().includes(searchTerm);
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                let valA = a[sortState.key];
+                let valB = b[sortState.key];
+
+                if (typeof valA === 'string') {
+                    return sortState.dir === 'asc' ? valA.localeCompare(valB, 'ar') : valB.localeCompare(valA, 'ar');
+                } else {
+                    return sortState.dir === 'asc' ? valA - valB : valB - valA;
+                }
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            <i class="fas fa-info-circle"></i> لا توجد نتائج للبحث المكتوب.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                // Clicking on the row opens the professional chart page
+                tr.style.cursor = 'pointer';
+                tr.onclick = (e) => {
+                    if (e.target.closest('button')) return; // Ignore if chart button is clicked
+                    window.location.href = `stock-chart.html?symbol=${item.symbol}`;
+                };
+
+                const prevClose = item.price - item.changeVal;
+                
+                let changeClass = 'change-neutral';
+                let sign = '';
+                if (item.changeVal > 0) {
+                    changeClass = 'change-up';
+                    sign = '+';
+                } else if (item.changeVal < 0) {
+                    changeClass = 'change-down';
+                }
+
+                tr.innerHTML = `
+                    <td><span class="stock-symbol">${item.symbol}</span></td>
+                    <td><span class="stock-name">${item.name}</span></td>
+                    <td class="price-val" style="text-align: left;">${item.success ? item.price.toFixed(2) + ' ج.م' : '<span style="color:#ef4444; font-size:0.85em;">خطأ في البيانات</span>'}</td>
+                    <td class="change-val ${changeClass}" style="text-align: left;">${item.success ? sign + item.changeVal.toFixed(2) : '—'}</td>
+                    <td class="change-val ${changeClass}" style="text-align: left;">${item.success ? sign + item.changePct.toFixed(2) + '%' : '—'}</td>
+                    <td class="price-val" style="text-align: left; color:#64748b;">${item.success ? prevClose.toFixed(2) + ' ج' : '—'}</td>
+                    <td style="text-align: center;">
+                        <button class="chart-link-btn" onclick="window.location.href='stock-chart.html?symbol=${item.symbol}'">
+                            <i class="fas fa-chart-line"></i> فتح الشارت
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateSortIcons();
+        }
+
+        // Search handler
+        function handleSearch() {
+            renderTable();
+        }
+
+        // Sort handler
+        function handleSort(key) {
+            if (sortState.key === key) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.dir = 'asc';
+            }
+            renderTable();
+        }
+
+        function updateSortIcons() {
+            const keys = ['symbol', 'name', 'price', 'changeVal', 'changePct'];
+            keys.forEach(k => {
+                const el = document.getElementById(`sort-${k}`);
+                if (!el) return;
+                if (sortState.key === k) {
+                    el.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+                    el.style.opacity = '1';
+                } else {
+                    el.textContent = '↕';
+                    el.style.opacity = '0.4';
+                }
+            });
+        }
+
+        // Auto Refresh Logic
+        function toggleAutoRefresh(checked) {
+            if (checked) {
+                resetCountdown();
+            } else {
+                clearInterval(countdownTimer);
+                document.getElementById('countdownBadge').textContent = 'موقف';
+            }
+        }
+
+        function resetCountdown() {
+            clearInterval(countdownTimer);
+            const checkbox = document.getElementById('autoRefreshCheckbox');
+            if (!checkbox || !checkbox.checked) return;
+
+            refreshSeconds = 60;
+            const badge = document.getElementById('countdownBadge');
+            badge.textContent = `${refreshSeconds}ث`;
+
+            countdownTimer = setInterval(() => {
+                refreshSeconds--;
+                badge.textContent = `${refreshSeconds}ث`;
+                if (refreshSeconds <= 0) {
+                    fetchAllPrices(false);
+                }
+            }, 1000);
+        }
+
+        // Load initially
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAllPrices(true);
+        });
+    </script>
+</body>
+</html>

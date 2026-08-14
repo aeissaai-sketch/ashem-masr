@@ -1,0 +1,193 @@
+<div id="ctl00_C_S_up">
+	
+
+            <script type="text/javascript">
+                function GoData() {
+                    //alert(document.getElementById("Submit1").value);
+                    document.getElementById("Submit1").click();
+                }
+                function show(div, img) {
+                    if (document.getElementById(div).style.visibility == "visible" && document.getElementById(div).style.display == "inline") {
+                        document.getElementById(div).style.visibility = "hidden";
+                        document.getElementById(div).style.display = "none";
+                        document.getElementById(img).src = "../Images-Ar/Expa.GIF";
+                    }
+                    else {
+                        document.getElementById(div).style.visibility = "visible";
+                        document.getElementById(div).style.display = "inline";
+                        document.getElementById(img).src = "../Images-Ar/colla.gif";
+                    }
+                }
+            </script>
+
+            <table class="TableStyle" cellspacing="0" cellpadding="0" width="981" border="0">
+                <tbody>
+                    <tr>
+                        <td valign="top" style="padding-bottom: 0px;">
+                            <table cellspacing="0" cellpadding="0" class="InnerNavPath" border="0" width="100%">
+                                <tbody><tr>
+                                    <td align="right" valign="top">&nbsp;<img src="/Images-Ar/IconeInnerNav.gif" style="display: none;">
+                                        <a href="/ar/homepage.aspx"><span class="fa fa-home" style="margin:5px 8px;font-size:150%;"></span></a>
+                                        <span class="fa fa-angle-left fa-2x" style="font-weight:normal;font-size: 140%;"></span>
+                                        <a href="marketsummry.aspx">بيانات السوق </a>
+                                        <span class="fa fa-angle-left fa-2x" style="font-weight:normal;font-size: 140%;"></span>
+                                        <span>متابعة السوق اليوم</span>
+                                        <span class="fa fa-angle-left fa-2x" style="font-weight:normal;font-size: 140%;"></span>
+                                        <span>الأسهم</span>
+                                        <span class="fa fa-angle-left fa-2x" style="font-weight:normal;font-size: 140%;"></span>
+                                        <span>بيانات التداول</span>
+                                    </td>
+                                </tr>
+                            </tbody></table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="right" valign="top" style="padding-bottom: 0px; padding-top: 0px;">
+                            <table border="0" cellpadding="0" cellspacing="0" class="TitleBgForInner" width="">
+                                <tbody>
+                                    <tr>
+                                        <td valign="top">
+                                            <strong>متابعة السوق اليوم</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-bottom: 0px; padding-top: 0px;" align="right" valign="top">
+                            
+
+<div id="ddtabs" class="Greenbasictab" style="display: flex; flex-wrap: nowrap; justify-content: space-between; width: 100%;">
+
+    <div id="ctl00_C_S_Todaymenu1_MarketSummry" class=""><a href="MarketSummry.aspx"><span>إجماليات</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Indices" class=""><a href="Indices.aspx"><span>المؤشرات</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_MarketWatchSectors" class=""><a href="/ar/MarketWatchSectors.aspx"><span>القطاعات</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Stocks" class="Greenselected"><a href="prices.aspx"><span>الأسهم</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_MarketBounds" class=""><a href="MarketBounds.aspx"><span>سندات</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_MarketPDBonds"><a href="MarketPDBounds.aspx"><span>سندات الخزانة</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_MarketFunds" class=""><a href="MarketFunds.aspx"><span>صناديق الاستثمار</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Sukuk" class=""><a href="MarketSukuk.aspx"><span>الصكوك</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Investor" class=""><a href="InvestorsTypeCharts.aspx"><span>فئات المستثمرين</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_SME" class=""><a href="Nilex.aspx"><span>سوق النيل</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_OTC" class=""><a href="MarketOtc.aspx"><span>خارج المقصورة</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_ETFS" class=""><a href="etfspr.aspx"><span>صناديق المؤشرات</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_MTBLS" class=""><a href="MarketTreasuryBills.aspx"><span>اذون الخزانة</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Sovereign" class=""><a href="marketsovereignsukuk.aspx"><span>صكوك سيادية</span></a></div>
+    <div id="ctl00_C_S_Todaymenu1_Derivatives" class=""><a href="Derivatives.aspx"><span>العقود الآجلة</span></a></div>
+
+</div>
+
+<style>
+    .Greenselected {
+        background-color: #064266 !important;
+        box-shadow: 0px 0px 8px #000 !important;
+        border: 2px solid #dcdcdc !important;
+        border-radius: 8px !important;
+        margin-top: -1px !important;
+    }
+
+        .Greenselected a {
+            color: white;
+            text-decoration: none;
+        }
+
+    .Greenbasictab a span {
+        line-height: 40px; /* Kept your 40px height for Arabic styling */
+        font-size: 11.5px; /* Shrunk slightly to fit 15 elements */
+        white-space: nowrap; 
+        letter-spacing: -0.2px;
+    }
+
+    .Greenbasictab {
+        height: initial !important;
+    }
+
+        .Greenbasictab div {
+            padding: 4px 3px;
+            margin: 0px 1px; /* Minimized margin for fitting */
+            background-color: #ded0a7;
+            border-radius: 5px;
+            box-shadow: 0px 0px 4px #000;
+            text-align: center;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+        .Greenbasictab div:hover {
+            background-color: #f1e1b4;
+        }
+</style>
+                            
+<div id="ddtabs" class="Greenbasictab">
+    <ul>
+        <li id="ctl00_C_S_StocksMenu1_prices" style="" class="Greenselected"><a href="prices.aspx"><span>بيانات التداول</span></a></li>
+        <li id="ctl00_C_S_StocksMenu1_Top_GL" style=""><a href="Top_GL.aspx"><span>الأسهم الأكثر إرتفاعا/إنخفاضا</span></a></li>
+        <li id="ctl00_C_S_StocksMenu1_IntraDay" style=""><a href="InradayTradingStatistics.aspx"><span>التداول في ذات الجلسة</span></a></li>
+        <li id="ctl00_C_S_StocksMenu1_PE" style=""><a href="MarketPECompanies.aspx"><span>مضاعف الربحية (P/E) و العائد على الكوبون (DY)</span></a></li>
+    </ul>
+</div>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="top" align="center" style="padding-bottom: 0px; padding-top: 0px;">
+                            <table width="98%" cellpadding="0" cellspacing="0" class="basictab2">
+                                <tbody><tr style="visibility: hidden;">
+                                    <td colspan="3">
+                                        <input id="Submit1" type="submit" value="submit">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="basictab15" style="position: absolute; margin-top: -25px; margin-right: 8px;">
+                                            <div>
+                                                <ul>
+                                                    <li id="ctl00_C_S_LI3" class="">
+                                                        <a id="ctl00_C_S_lkMarket" href="javascript:__doPostBack('ctl00$C$S$lkMarket','')"><span>جميع الأسهم</span></a>
+                                                    </li>
+                                                    <li id="ctl00_C_S_LI2" class="">
+                                                        <a id="ctl00_C_S_lkSector" href="javascript:__doPostBack('ctl00$C$S$lkSector','')"><span>القطاعات</span></a></li>
+                                                    <li id="ctl00_C_S_LI1" class="basictab15Selected">
+                                                        <a id="ctl00_C_S_lkCompany" href="javascript:__doPostBack('ctl00$C$S$lkCompany','')"><span>الشركة</span></a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody></table>
+
+                            <table id="ctl00_C_S_company" width="98%">
+		<tbody><tr>
+			<td class="egx-framed-slvr">
+                                        <input name="ctl00$C$S$TextBox1" type="text" value="ادخل جزء من أسم الشركة" id="ctl00_C_S_TextBox1" class="Normaltextbox" onfocus="this.value='';" onblur="if(this.value==''){this.value='ادخل جزء من أسم الشركة';}" autocomplete="off" style="width:400px;"><ul id="ctl00_C_S_autoComplete1_completionListElem" class="Ac" style="display: none; visibility: hidden; position: absolute;"></ul>
+                                        
+                                        <a id="ctl00_C_S_Button1" class="btn-search" href="javascript:__doPostBack('ctl00$C$S$Button1','')">
+                                            <span>تحديث </span>
+                                            <span class="fa fa-refresh"></span>
+                                        </a>
+                                    </td>
+		</tr>
+	</tbody></table>
+	
+                            <div id="ctl00_C_S_companyT">
+                                <br>
+                                <div>
+
+	</div>
+                            </div>
+                            
+
+                            
+                            
+
+                            
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <br>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        
+</div>

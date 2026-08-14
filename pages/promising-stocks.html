@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ الأسهم الواعدة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:10px; align-items:center; }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+        .tools { padding: 12px 22px; background:#0f172a; border-bottom: 1px solid #334155; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .tools input { flex:1; min-width:240px; background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:50px; padding:10px 14px; }
+        .tools input:focus { outline:none; border-color:#fbbf24; }
+        .meta { color:#94a3b8; }
+        .table-wrap { padding: 15px; overflow-x:auto; background:#0f172a; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0f172a; padding: 11px; text-align:center; }
+        td { border-bottom:1px solid #334155; padding: 10px; text-align:center; }
+        tr:hover { background:#334155; }
+        .up { color:#10b981; font-weight:bold; }
+        .down { color:#ef4444; font-weight:bold; }
+        .badge { padding:4px 10px; border-radius:40px; font-size:.82em; font-weight:700; display:inline-block; }
+        .strong { background:#059669; color:#fff; }
+        .buy { background:#2563eb; color:#fff; }
+        .empty { margin: 20px; padding: 24px; text-align:center; border:1px dashed #fbbf24; border-radius: 12px; color:#fbbf24; background: rgba(251,191,36,.08); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-star"></i> الأسهم الواعدة</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="loadPromising()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <div class="tools">
+            <input id="searchInput" type="text" placeholder="بحث بالرمز أو اسم الشركة" onkeyup="renderTable()">
+            <div class="meta" id="metaInfo">جاري التحميل...</div>
+        </div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد أسهم واعدة حالياً</h3>
+            <p>تأكد من رفع الملف في الصفحة الرئيسية.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="promisingTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>الرمز</th>
+                        <th>الشركة</th>
+                        <th>السعر</th>
+                        <th>التغير %</th>
+                        <th>RSI</th>
+                        <th>الدعم</th>
+                        <th>المقاومة</th>
+                        <th>التوصية</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let promisingData = [];
+
+        function loadPromising() {
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            const noData = document.getElementById('noData');
+            const table = document.getElementById('promisingTable');
+            const meta = document.getElementById('metaInfo');
+
+            if (!raw) {
+                promisingData = [];
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                meta.textContent = 'لا توجد بيانات محملة';
+                return;
+            }
+
+            try {
+                const allRows = JSON.parse(raw) || [];
+                promisingData = allRows.filter(s => s.recommendation === 'strong-buy' || s.recommendation === 'buy');
+            } catch (e) {
+                promisingData = [];
+            }
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const term = (document.getElementById('searchInput').value || '').toLowerCase();
+            const noData = document.getElementById('noData');
+            const table = document.getElementById('promisingTable');
+            const meta = document.getElementById('metaInfo');
+            const body = document.getElementById('tableBody');
+
+            const filtered = promisingData.filter(s => !term || s.symbol.toLowerCase().includes(term) || s.name.toLowerCase().includes(term));
+
+            if (!filtered.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                meta.textContent = promisingData.length ? 'لا توجد نتائج مطابقة للبحث' : 'لا توجد أسهم واعدة';
+                return;
+            }
+
+            body.innerHTML = filtered.map(s => {
+                const up = (s.changeValue || 0) >= 0;
+                const badge = s.recommendation === 'strong-buy'
+                    ? '<span class="badge strong">شراء قوي</span>'
+                    : '<span class="badge buy">شراء</span>';
+
+                return `
+                    <tr onclick="openStockAnalysis('${s.symbol}')" style="cursor:pointer;">
+                        <td style="color:#fbbf24;font-weight:700;">${s.symbol}</td>
+                        <td>${s.name}</td>
+                        <td class="${up ? 'up' : 'down'}">${(s.currentPrice || 0).toFixed(2)}</td>
+                        <td class="${up ? 'up' : 'down'}">${up ? '+' : ''}${s.change || 0}%</td>
+                        <td>${s.rsi ?? '-'}</td>
+                        <td class="down">${s.support?.[0] ? s.support[0].toFixed(2) : '-'}</td>
+                        <td class="up">${s.resistance?.[0] ? s.resistance[0].toFixed(2) : '-'}</td>
+                        <td>${badge}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            meta.textContent = `عدد الأسهم الواعدة: ${filtered.length}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            loadPromising();
+        });
+    </script>
+</body>
+</html>

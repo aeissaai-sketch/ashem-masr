@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📉 قريبة من أدنى سعر</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:10px; align-items:center; }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+        .tools { padding: 12px 22px; background:#0f172a; border-bottom: 1px solid #334155; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .tools input { width:110px; background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:8px 10px; }
+        .meta { color:#94a3b8; }
+        .table-wrap { padding: 15px; overflow-x:auto; background:#0f172a; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 11px; text-align:center; }
+        td { border-bottom:1px solid #334155; padding: 10px; text-align:center; }
+        tr:hover { background:#334155; }
+        .up { color:#10b981; font-weight:bold; }
+        .warn { color:#f59e0b; font-weight:bold; }
+        .empty { margin: 20px; padding: 24px; text-align:center; border:1px dashed #fbbf24; border-radius: 12px; color:#fbbf24; background: rgba(251,191,36,.08); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-arrow-down"></i> الأسهم القريبة من أدنى سعر</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="updateTable()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <div class="tools">
+            <label>عدد الأيام: <input id="daysInput" type="number" value="40" min="5" max="120"></label>
+            <label>الحد %: <input id="thresholdInput" type="number" value="5" min="1" max="20" step="0.5"></label>
+            <button class="btn btn-info" onclick="updateTable()"><i class="fas fa-filter"></i> تطبيق</button>
+            <span class="meta" id="metaInfo">جاري التحميل...</span>
+        </div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد بيانات كافية</h3>
+            <p>ارفع ملف JSON من الصفحة الرئيسية أولًا.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="nearLowTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>الرمز</th>
+                        <th>الشركة</th>
+                        <th>السعر الحالي</th>
+                        <th>أدنى سعر</th>
+                        <th>الفرق عن الأدنى %</th>
+                        <th>الأيام المستخدمة</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+
+            const processedRaw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!processedRaw) return [];
+            try {
+                const rows = JSON.parse(processedRaw);
+                if (!Array.isArray(rows)) return [];
+                return rows.map(row => ({
+                    symbol: row?.symbol,
+                    shortName: row?.name || row?.symbol,
+                    longName: row?.name || row?.symbol,
+                    historical: []
+                }));
+            } catch {
+                return [];
+            }
+        }
+
+        function getSeries(company) {
+            const rows = company.historical || company.daily || [];
+            return rows
+                .map(x => {
+                    const close = Number(x.close ?? x.price ?? x.value);
+                    const low = Number(x.low ?? x.l ?? x.min ?? x.lowest ?? x.close ?? x.price ?? x.value);
+                    return { close, low };
+                })
+                .filter(x => Number.isFinite(x.close) && Number.isFinite(x.low));
+        }
+
+        function updateTable() {
+            const days = Number(document.getElementById('daysInput').value || 40);
+            const threshold = Number(document.getElementById('thresholdInput').value || 5);
+            const stocks = readStocksData();
+            const body = document.getElementById('tableBody');
+            const table = document.getElementById('nearLowTable');
+            const noData = document.getElementById('noData');
+            const meta = document.getElementById('metaInfo');
+
+            const rows = [];
+
+            stocks.forEach(company => {
+                const series = getSeries(company);
+                if (series.length < days) return;
+
+                const slice = series.slice(-days);
+                if (!slice.length) return;
+
+                const lows = slice.map(point => point.low).filter(Number.isFinite);
+                if (!lows.length) return;
+
+                const low = Math.min(...lows);
+                const current = slice[slice.length - 1].close;
+                if (low <= 0) return;
+
+                const diff = ((current - low) / low) * 100;
+                if (diff >= 0 && diff <= threshold) {
+                    rows.push({
+                        symbol: company.symbol || '-',
+                        name: company.longName || company.shortName || (company.symbol || '-'),
+                        current,
+                        low,
+                        diff,
+                        usedDays: slice.length
+                    });
+                }
+            });
+
+            rows.sort((a, b) => a.diff - b.diff);
+
+            if (!rows.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                meta.textContent = 'لا توجد أسهم مطابقة للشروط الحالية';
+                return;
+            }
+
+            body.innerHTML = rows.map(r => `
+                <tr onclick="openStockAnalysis('${r.symbol}')" style="cursor:pointer;">
+                    <td style="color:#fbbf24;font-weight:700;">${r.symbol}</td>
+                    <td>${r.name}</td>
+                    <td class="up">${r.current.toFixed(2)}</td>
+                    <td class="warn">${r.low.toFixed(2)}</td>
+                    <td class="warn">${r.diff.toFixed(2)}%</td>
+                    <td>${r.usedDays}</td>
+                </tr>
+            `).join('');
+
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            meta.textContent = `عدد الأسهم: ${rows.length}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            updateTable();
+        });
+    </script>
+</body>
+</html>

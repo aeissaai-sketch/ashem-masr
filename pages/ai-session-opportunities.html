@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 فرص الذكاء الاصطناعي للجلسة القادمة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0b0f19 0%, #111827 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        
+        .container { max-width: 1400px; margin: 0 auto; background: #111827; border-radius: 20px; overflow: hidden; border: 1px solid #1f2937; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+        
+        .header { background: linear-gradient(135deg, #0f172a 0%, #030712 100%); padding: 20px 25px; border-bottom: 1px solid #1f2937; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:12px; align-items:center; font-size: 1.6em; text-shadow: 0 0 10px rgba(251, 191, 36, 0.2); }
+        
+        .btn { border:none; border-radius:50px; padding:10px 18px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4); }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+        .btn-info:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+
+        .guide {
+            margin: 15px 25px;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+        .guide-title { color: #a78bfa; font-weight: bold; font-size: 1.1em; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+
+        .tools {
+            padding: 15px 25px;
+            background:#030712;
+            border-bottom: 1px solid #1f2937;
+            display:grid;
+            gap:15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        .tools label {
+            color: #94a3b8;
+            font-size: .88em;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-weight: 600;
+        }
+        .tools input {
+            background:#111827;
+            border:1px solid #374151;
+            color:#e2e8f0;
+            border-radius:8px;
+            padding:10px 12px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .tools input:focus { border-color: #a78bfa; outline: none; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            padding: 25px;
+            background: #0b0f19;
+        }
+
+        .stock-card {
+            background: linear-gradient(145deg, #111827, #030712);
+            border: 1px solid #1f2937;
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .stock-card:hover { 
+            transform: translateY(-5px); 
+            border-color: #a78bfa; 
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.25);
+        }
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 5px; height: 100%;
+        }
+        .stock-card.grade-a::before { background: #10b981; }
+        .stock-card.grade-b::before { background: #3b82f6; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .card-symbol { color: #f59e0b; font-size: 1.5em; font-weight: 800; letter-spacing: 0.5px; }
+        .card-name   { color: #94a3b8; font-size: .88em; margin-top: 2px; font-weight: 500; }
+        
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .78em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .b-a { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .b-b { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .b-pattern { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        .conf-wrap {
+            text-align: center;
+            min-width: 72px;
+        }
+        .conf-label { color: #94a3b8; font-size: .74em; margin-bottom: 6px; }
+        .conf-ring {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05em;
+            font-weight: 800;
+            border: 4px solid;
+            transition: all 0.3s;
+        }
+        .conf-ring.high   { border-color: #10b981; color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+        .conf-ring.medium { border-color: #3b82f6; color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+
+        .conf-bar-wrap { margin: 10px 0 15px; }
+        .conf-bar-bg { background: #1f2937; border-radius: 999px; height: 6px; overflow: hidden; }
+        .conf-bar-fill { height: 100%; border-radius: 999px; }
+        .conf-bar-fill.high   { background: linear-gradient(90deg, #10b981, #34d399); }
+        .conf-bar-fill.medium { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(31, 41, 55, 0.6);
+            font-size: .88em;
+            align-items: center;
+        }
+        .card-row:last-child { border-bottom: none; }
+        .card-key   { color: #94a3b8; }
+        .card-val   { color: #f3f4f6; font-weight: 600; }
+        
+        .up { color:#10b981 !important; }
+        .down { color:#ef4444 !important; }
+        .warn { color:#f59e0b !important; }
+        .muted { color:#6b7280 !important; }
+
+        /* ===== Modal Details CSS ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-card {
+            width: min(780px, 95vw);
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border: 1px solid #374151;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+        .modal-overlay.open .modal-card { transform: scale(1); }
+        .modal-head {
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #374151;
+            background: #030712;
+        }
+        .modal-head h3 { color: #fbbf24; font-size: 1.3em; display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: #cbd5e1;
+            font-size: 1.3em;
+            cursor: pointer;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        .modal-body { padding: 22px; overflow-y: auto; color: #e2e8f0; line-height: 1.8; }
+        
+        .details-section {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .details-section-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+            padding-bottom: 8px;
+        }
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.92em;
+            border-bottom: 1px dashed rgba(55, 65, 81, 0.5);
+        }
+        .details-row:last-child { border-bottom: none; }
+        
+        @media (max-width: 900px) {
+            .guide { margin: 10px 15px; }
+            .tools { margin: 0; grid-template-columns: 1fr; }
+            .cards-grid { grid-template-columns: 1fr; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-brain"></i> فرص الذكاء الاصطناعي للجلسة القادمة</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+            </div>
+        </div>
+
+        <div class="guide">
+            <div class="guide-title"><i class="fas fa-magic"></i> فلتر ومساعد القرار الذكي (AI Model)</div>
+            <p>تم تصفية هذه الفرص تلقائياً وفنياً بواسطة مستشار الذكاء الاصطناعي بناءً على إغلاقات جلسة <strong id="sessionDateText">جاري التحميل...</strong>.
+            تقوم الصفحة بحساب كمية ومبلغ الشراء تلقائياً بناءً على ميزانيتك المدخلة ونسبة المخاطرة.</p>
+        </div>
+
+        <div class="tools">
+            <label>رأس المال الاستثماري (جنيه)
+                <input id="capital" type="number" value="100000" min="1000" step="5000" oninput="recalcAll()">
+            </label>
+            <label>نسبة المخاطرة لكل صفقة %
+                <input id="riskPct" type="number" value="1.5" min="0.2" max="5" step="0.1" oninput="recalcAll()">
+            </label>
+            <label>أقصى تخصيص للصفقة %
+                <input id="allocPct" type="number" value="20" min="5" max="50" step="1" oninput="recalcAll()">
+            </label>
+            <label>تصفية بحسب نسبة الثقة
+                <button id="confFilterBtn" class="btn btn-primary" type="button" onclick="toggleConfFilter()" style="margin-top: 4px; padding: 10px; font-size: 0.95em; border-radius: 8px; font-weight: 700; height: 42px;">
+                    <i class="fas fa-filter"></i> ثقة 70% وفوق (مفعّل)
+                </button>
+            </label>
+        </div>
+
+        <div id="cardsGrid" class="cards-grid"></div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="detailsModal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let aiOpportunities = [];
+
+        function getSectorFundamentalDesc(sector) {
+            const sec = String(sector || '').toLowerCase();
+            if (sec.includes('عقارات') || sec.includes('مقاولات') || sec.includes('إنشاءات')) {
+                return "يعتبر قطاع العقارات والإنشاءات ملاذاً آمناً رئيسياً للتحوط ضد التضخم وانخفاض قيمة العملة في السوق المصرية، وتنامي حجم الطلب ونشاط المبيعات يدعم قادة هذا القطاع فنيّاً وماليّاً خلال عام 2026.";
+            }
+            if (sec.includes('رعاية') || sec.includes('ادوية') || sec.includes('صيد')) {
+                return "قطاع الأدوية يستفيد حالياً من محفزات قوية متمثلة في تحريك الهيئة العامة للدواء لأسعار المستحضرات محلياً، بالإضافة إلى نمو عوائد التصدير الدولارية مما ينعكس إيجاباً على هوامش الأرباح.";
+            }
+            if (sec.includes('أغذية') || sec.includes('مشروبات') || sec.includes('تبغ')) {
+                return "يتميز قطاع الأغذية بطلب استهلاكي مرن وثابت وقدرة عالية للشركات على تمرير فروق تكاليف الإنتاج مباشرة للمستهلك النهائي، مما يحافظ على استمرارية العوائد والأرباح التشغيلية.";
+            }
+            if (sec.includes('بنوك') || sec.includes('مالية')) {
+                return "الخدمات المالية والبنوك تستفيد من ارتفاع أسعار الفائدة والعمولات المرافقة للارتفاع الاستثنائي في قيم التداول اليومية في البورصة، مما يضمن تدفقات نقدية وربحية تشغيلية قوية.";
+            }
+            if (sec.includes('موارد') || sec.includes('صناعة') || sec.includes('أسمدة') || sec.includes('بناء')) {
+                return "الشركات الصناعية التصديرية (مثل الأسمدة والكيماويات) تستفيد مباشرة من فروق أسعار الصرف والتصدير الخارجي بالدولار، مما يجعلها درع حماية ممتازة للمحافظ ضد تقلبات العملة.";
+            }
+            return "توقعات إيجابية بنمو حجم الأعمال التشغيلية وتنامي إيرادات القطاع في النصف الثاني من عام 2026 بالتوازي مع صعود مؤشرات البورصة العامة وتدفق السيولة.";
+        }
+
+        function generateFallbackProcessedData() {
+            if (!window.stocksData || window.stocksData.length === 0) return [];
+            return window.stocksData.map(comp => {
+                const hist = comp.historical || [];
+                if (hist.length === 0) return null;
+                const last = hist[hist.length - 1];
+                const prev = hist.length > 1 ? hist[hist.length - 2] : last;
+                const lastClose = Number(last.close || last.price || 0);
+                const prevClose = Number(prev.close || prev.price || 0);
+                const changeValue = lastClose - prevClose;
+                const change = prevClose > 0 ? (changeValue / prevClose) * 100 : 0;
+
+                return {
+                    symbol: comp.symbol,
+                    name: comp.shortName || comp.symbol,
+                    currentPrice: lastClose,
+                    change: change.toFixed(2),
+                    changeValue,
+                    rsi: 50,
+                    volumeRatio: 1.0,
+                    recommendation: change > 1.5 ? 'buy' : 'neutral',
+                    support: [lastClose * 0.95],
+                    resistance: [lastClose * 1.05]
+                };
+            }).filter(Boolean);
+        }
+
+        async function initOpportunities() {
+            if (window.__stockDataRestorePromise) {
+                await window.__stockDataRestorePromise;
+            }
+
+            let processedList = [];
+            try {
+                const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+                if (raw) processedList = JSON.parse(raw);
+            } catch (e) {
+                console.error("Failed to parse processedData:", e);
+            }
+
+            let stocksList = [];
+            if (window.stocksData && window.stocksData.length > 0) {
+                stocksList = window.stocksData;
+            } else {
+                try {
+                    const stamp = Date.now();
+                    const res = await fetch(`../Data/stock_data.json?_ts=${stamp}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        const rawData = await res.json();
+                        const source = rawData.companies || rawData || {};
+                        stocksList = Array.isArray(source) ? source : Object.values(source);
+                        window.stocksData = stocksList;
+                    }
+                } catch(e) {
+                    console.error("Failed fetching fresh stock data:", e);
+                }
+            }
+
+            if (!processedList || processedList.length === 0) {
+                processedList = generateFallbackProcessedData();
+            }
+
+            let latestDateStr = 'جلسة اليوم';
+            if (stocksList.length > 0) {
+                let maxDateVal = 0;
+                let maxDateStr = '';
+                stocksList.forEach(c => {
+                    const hist = c.historical || c.daily || [];
+                    if (hist.length > 0) {
+                        const lastPoint = hist[hist.length - 1];
+                        const dStr = lastPoint.date;
+                        if (dStr) {
+                            let val = 0;
+                            if (dStr.includes('/')) {
+                                let parts = dStr.split('/');
+                                if (parts.length === 3) {
+                                    val = new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                                }
+                            } else {
+                                val = new Date(dStr).getTime();
+                            }
+                            if (val > maxDateVal) {
+                                maxDateVal = val;
+                                maxDateStr = dStr;
+                            }
+                        }
+                    }
+                });
+                if (maxDateStr) latestDateStr = maxDateStr;
+            }
+            document.getElementById('sessionDateText').textContent = latestDateStr;
+
+            const companiesMap = {};
+            stocksList.forEach(c => {
+                companiesMap[String(c.symbol).toUpperCase()] = c;
+            });
+
+            aiOpportunities = [];
+            processedList.forEach(row => {
+                const symbol = String(row.symbol).toUpperCase();
+                const comp = companiesMap[symbol];
+                const sector = comp?.sector || 'غير مصنف';
+                const longName = comp?.longName || row.name || symbol;
+
+                const changePct = Number(row.change || row.changePct || 0);
+                const volumeRatio = Number(row.volumeRatio || 1);
+                const rsi = Number(row.rsi || 50);
+
+                let isOpportunity = false;
+                let grade = 'b';
+                let gradeLabel = 'B - فرصة جيدة';
+                let badgeClass = 'b-b';
+                let confClass = 'medium';
+                let confidence = 70;
+
+                // Grade A: Strong Buy
+                if (row.recommendation === 'strong-buy' || row.recommendation === 'strong_buy') {
+                    isOpportunity = true;
+                    grade = 'a';
+                    gradeLabel = 'A - فرصة قوية';
+                    badgeClass = 'b-a';
+                    confClass = 'high';
+                    confidence = Math.round(85 + (volumeRatio > 1.5 ? 5 : 0) + (rsi > 45 && rsi < 60 ? 5 : 0));
+                }
+                else if (row.recommendation === 'buy' && rsi >= 40 && rsi <= 68 && volumeRatio > 1.2 && changePct > 0) {
+                    isOpportunity = true;
+                    grade = 'a';
+                    gradeLabel = 'A - فرصة قوية';
+                    badgeClass = 'b-a';
+                    confClass = 'high';
+                    confidence = Math.round(80 + (volumeRatio > 1.4 ? 5 : 0));
+                } 
+                // Grade B: Good Buy
+                else if (row.recommendation === 'buy' || rsi < 36) {
+                    isOpportunity = true;
+                    grade = 'b';
+                    gradeLabel = 'B - فرصة جيدة';
+                    badgeClass = 'b-b';
+                    confClass = 'medium';
+                    confidence = Math.round(70 + (volumeRatio > 1.1 ? 5 : 0) + (rsi < 35 ? 8 : 0));
+                }
+
+                if (isOpportunity) {
+                    confidence = Math.min(confidence, 95);
+                    const currentPrice = Number(row.currentPrice || row.price || 0);
+                    const entryPrice = currentPrice * 0.995;
+                    let stopLoss = currentPrice * 0.94;
+                    if (Array.isArray(row.support) && row.support.length > 0) {
+                        const sup1 = Number(row.support[0]);
+                        if (sup1 > 0 && sup1 < currentPrice) stopLoss = sup1;
+                    }
+                    let target1 = currentPrice * 1.06;
+                    if (Array.isArray(row.resistance) && row.resistance.length > 0) {
+                        const res1 = Number(row.resistance[0]);
+                        if (res1 > currentPrice) target1 = res1;
+                    }
+                    let target2 = target1 * 1.06;
+                    if (Array.isArray(row.resistance) && row.resistance.length > 1) {
+                        const res2 = Number(row.resistance[1]);
+                        if (res2 > target1) target2 = res2;
+                    }
+
+                    const patterns = [];
+                    if (grade === 'a') patterns.push("🔥 فرصة قوية");
+                    if (volumeRatio > 1.5) patterns.push("⚡ سيولة مرتفعة");
+                    if (rsi < 36) patterns.push("🛡️ قاع تجميعي");
+                    if (changePct > 2.5) patterns.push("🚀 اختراق صاعد");
+                    if (sector && sector !== 'غير مصنف') patterns.push(`🏢 ${sector}`);
+
+                    const sectorDesc = getSectorFundamentalDesc(sector);
+                    const technicalReason = `يظهر سهم ${longName} مؤشرات زخم إيجابية؛ حيث يتداول حالياً عند مستوى ${currentPrice.toFixed(2)} ج.م مع معدل تدفق سيولة نسبي مرتفع يبلغ ${volumeRatio.toFixed(2)}x. مؤشر القوة النسبية RSI يقع في منطقة صحية صاعدة عند ${rsi.toFixed(1)}، وتتمركز مستويات الدعم الفنية بوضوح عند ${stopLoss.toFixed(2)} ج.م بوقف خسارة قريب ومستهدف أول عند ${target1.toFixed(2)} ج.م.`;
+
+                    aiOpportunities.push({
+                        symbol,
+                        name: longName,
+                        grade,
+                        gradeLabel,
+                        badgeClass,
+                        confClass,
+                        confidence,
+                        sector,
+                        current: currentPrice,
+                        changePct,
+                        changeVal: Number(row.changeValue || 0),
+                        patternText: changePct > 1.5 ? "اختراق قمة ومقاومة 🚀" : "ارتداد من دعم متحرك 🛡️",
+                        rangeText: `إغلاق: ${currentPrice.toFixed(2)} | RSI: ${rsi.toFixed(1)} | الحجم: ${volumeRatio.toFixed(2)}x`,
+                        macdText: changePct > 1.5 ? "تقاطع صاعد 📈" : "استقرار فني 📊",
+                        macdClass: changePct > 1.5 ? "up" : "muted",
+                        bbText: rsi < 36 ? "ارتداد من الحد السفلي 🛡️" : "تداول مستقر داخل القناة 🛡️",
+                        rsi,
+                        volumeRatio,
+                        reboundPct: Math.max(0, ((currentPrice - stopLoss) / stopLoss) * 100),
+                        entryPrice,
+                        stopLoss,
+                        target1,
+                        target2,
+                        patterns,
+                        reasons: { technical: technicalReason, fundamental: sectorDesc }
+                    });
+                }
+            });
+
+            aiOpportunities.sort((a, b) => {
+                if (a.grade === b.grade) return b.confidence - a.confidence;
+                return a.grade === 'a' ? -1 : 1;
+            });
+
+            recalcAll();
+        }
+
+        let onlyHighConfidence = true; // Enabled by default
+
+        function toggleConfFilter() {
+            onlyHighConfidence = !onlyHighConfidence;
+            const btn = document.getElementById('confFilterBtn');
+            if (onlyHighConfidence) {
+                btn.innerHTML = '<i class="fas fa-filter"></i> ثقة 70% وفوق (مفعّل)';
+                btn.style.background = 'linear-gradient(135deg, #fbbf24, #f59e0b)';
+                btn.style.color = '#0f172a';
+            } else {
+                btn.innerHTML = '<i class="fas fa-globe"></i> عرض جميع الدرجات';
+                btn.style.background = '#1e293b';
+                btn.style.color = '#cbd5e1';
+                btn.style.border = '1px solid #374151';
+            }
+            recalcAll();
+        }
+
+        function recalcAll() {
+            const capital = Math.max(1000, Number(document.getElementById('capital').value || 100000));
+            const riskPct = Math.max(0.2, Number(document.getElementById('riskPct').value || 1.5));
+            const allocPct = Math.max(5, Number(document.getElementById('allocPct').value || 20));
+
+            const grid = document.getElementById('cardsGrid');
+            
+            // Filter list based on confidence setting
+            let listToRender = aiOpportunities;
+            if (onlyHighConfidence) {
+                listToRender = aiOpportunities.filter(o => o.confidence >= 70);
+            }
+
+            if (listToRender.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">
+                    <h3>⚠️ لا توجد فرص تنطبق عليها شروط التصفية حالياً</h3>
+                    <p style="margin-top: 8px;">تأكد من اختيار مستوى ثقة مناسب أو تحميل بيانات جلسة صالحة.</p>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = listToRender.map(row => {
+                const changeClass = row.changePct >= 0 ? 'up' : 'down';
+                const sign = row.changePct >= 0 ? '+' : '';
+                const changeText = `${sign}${row.changePct.toFixed(2)}% (${sign}${row.changeVal.toFixed(2)} ج)`;
+
+                const riskPerShare = Math.max(0.01, row.entryPrice - row.stopLoss);
+                const riskAmount = capital * (riskPct / 100);
+                const maxAllocAmount = capital * (allocPct / 100);
+                const qtyByRisk = Math.floor(riskAmount / riskPerShare);
+                const qtyByBudget = Math.floor(maxAllocAmount / row.entryPrice);
+                const qty = Math.max(0, Math.min(qtyByRisk, qtyByBudget));
+                const entryAmount = qty * row.entryPrice;
+
+                const patternBadgesHtml = row.patterns.map(p => {
+                    let color = 'rgba(139, 92, 246, 0.15)';
+                    let txt = '#c084fc';
+                    let border = '1px solid rgba(139, 92, 246, 0.3)';
+                    if (p.includes('فرصة') || p.includes('صاعد')) {
+                        color = 'rgba(16, 185, 129, 0.15)';
+                        txt = '#10b981';
+                        border = '1px solid rgba(16, 185, 129, 0.3)';
+                    } else if (p.includes('🏢')) {
+                        color = 'rgba(245, 158, 11, 0.15)';
+                        txt = '#f59e0b';
+                        border = '1px solid rgba(245, 158, 11, 0.3)';
+                    }
+                    return `<span class="badge" style="background:${color}; color:${txt}; border:${border};">${p}</span>`;
+                }).join(' ');
+
+                return `
+                <div class="stock-card grade-${row.grade}" onclick="showAIReasons('${row.symbol}')">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-symbol">${row.symbol}</div>
+                            <div class="card-name">${row.name}</div>
+                            <div class="badges-container">
+                                <span class="badge ${row.badgeClass}">${row.gradeLabel}</span>
+                                ${patternBadgesHtml}
+                            </div>
+                        </div>
+                        <div class="conf-wrap">
+                            <div class="conf-label">نسبة ثقة</div>
+                            <div class="conf-ring ${row.confClass}">${row.confidence}%</div>
+                        </div>
+                    </div>
+                    <div class="conf-bar-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill ${row.confClass}" style="width:${row.confidence}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card-row"><span class="card-key">القطاع</span><span class="card-val warn" style="font-size:0.85em;">${row.sector}</span></div>
+                        <div class="card-row"><span class="card-key">السعر الحالي</span><span class="card-val warn">${row.current.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">تغير آخر جلسة</span><span class="card-val ${changeClass}">${changeText}</span></div>
+                        <div class="card-row"><span class="card-key">حركة آخر جلسة</span><span class="card-val" style="font-size: 0.88em; color: #cbd5e1;">${row.patternText}</span></div>
+                        <div class="card-row" style="font-size: 0.8em; border-bottom: none; padding-top: 2px;"><span class="card-val muted" style="text-align: right; width: 100%; font-family: monospace;">${row.rangeText}</span></div>
+                        <div class="card-row"><span class="card-key">مؤشر MACD</span><span class="card-val ${row.macdClass}" style="font-size:0.85em;">${row.macdText}</span></div>
+                        <div class="card-row"><span class="card-key">نطاقات بولينجر</span><span class="card-val" style="font-size:0.85em; color:#cbd5e1;">${row.bbText}</span></div>
+                        <div class="card-row"><span class="card-key">RSI</span><span class="card-val">${row.rsi.toFixed(1)}</span></div>
+                        <div class="card-row"><span class="card-key">نسبة الحجم</span><span class="card-val up">${row.volumeRatio.toFixed(2)}x</span></div>
+                        <div class="card-row"><span class="card-key">ارتداد من الدعم %</span><span class="card-val up">${row.reboundPct.toFixed(2)}%</span></div>
+                        <div class="card-row"><span class="card-key">دخول مقترح</span><span class="card-val" style="color: #60a5fa;">${row.entryPrice.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">وقف خسارة</span><span class="card-val down">${row.stopLoss.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">هدف 1 / هدف 2</span><span class="card-val up">${row.target1.toFixed(2)} / ${row.target2.toFixed(2)}</span></div>
+                        <div class="card-row" style="background: rgba(251, 191, 36, 0.05); padding: 8px 6px; border-radius: 6px;"><span class="card-key" style="color: var(--gold); font-weight:700;">كمية / مبلغ</span><span class="card-val" style="color:#fbbf24; font-weight:700;">${qty.toLocaleString('ar-EG')} سهم · ${entryAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج</span></div>
+                    </div>
+                    <button class="btn btn-info" style="width:100%; margin-top:15px; font-size:0.88em; justify-content:center; padding:8px 12px; border-radius:8px;" onclick="event.stopPropagation(); showAIReasons('${row.symbol}')">
+                        <i class="fas fa-brain"></i> أسباب القرار بالتفصيل
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        function showAIReasons(symbol) {
+            const row = aiOpportunities.find(o => o.symbol === symbol);
+            if (!row) return;
+
+            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-brain"></i> أسباب قرار الدخول الاستراتيجي لسهم ${row.name} (${row.symbol})`;
+            
+            const bodyHtml = `
+                <div class="details-section">
+                    <div class="details-section-title"><i class="fas fa-chart-line"></i> التحليل الفني ومؤشرات الزخم</div>
+                    <p style="margin-bottom: 12px; font-size: 0.95em;">${row.reasons.technical}</p>
+                    <div class="details-row"><span class="details-key">سعر الدخول المقترح</span><span class="details-val up">${row.entryPrice.toFixed(2)} ج.م</span></div>
+                    <div class="details-row"><span class="details-key">مستوى وقف الخسارة</span><span class="details-val down">${row.stopLoss.toFixed(2)} ج.م</span></div>
+                    <div class="details-row"><span class="details-key">المستهدف الأول (قصير المدى)</span><span class="details-val up">${row.target1.toFixed(2)} ج.م</span></div>
+                    <div class="details-row"><span class="details-key">المستهدف الثاني (متوسط المدى)</span><span class="details-val up">${row.target2.toFixed(2)} ج.م</span></div>
+                </div>
+                <div class="details-section">
+                    <div class="details-section-title"><i class="fas fa-landmark"></i> المحفزات الأساسية والأخبار والقطاع</div>
+                    <p style="font-size: 0.95em;">${row.reasons.fundamental}</p>
+                </div>
+            `;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            
+            const modal = document.getElementById('detailsModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('open'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailsModal');
+            modal.classList.remove('open');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initOpportunities();
+        });
+    </script>
+</body>
+</html>

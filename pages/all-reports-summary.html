@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملخص كل التقارير - الأسهم الذهبية</title>
+    <!-- المكتبات اللازمة لنافذة التحليل -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; transition: margin-right .3s ease; }
+        .header-box { text-align: center; margin-bottom: 40px; padding: 20px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 15px; border: 1px solid #fbbf24; }
+        h1 { color: #fbbf24; margin: 0; font-size: 2.2em; }
+        .subtitle { color: #94a3b8; margin-top: 10px; }
+        .table-wrap { overflow-x: auto; background: #1e293b; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #334155; }
+        th { background: #111827; color: #fbbf24; position: sticky; top: 0; }
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background: #1e293b; }
+        .sort-icon { font-size: 0.8em; margin-right: 5px; opacity: 0.6; }
+        tr { cursor: pointer; transition: background 0.2s; }
+        tr:hover { background: #334155; }
+        .score-badge { padding: 5px 12px; border-radius: 50px; font-weight: bold; font-size: 0.9em; }
+        .score-high { background: #059669; color: white; }
+        .score-mid { background: #d97706; color: white; }
+        .check-icon { color: #22c55e; margin-right: 5px; }
+        .x-icon { color: #ef4444; margin-right: 5px; }
+        .summary-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; margin: 2px; background: #0f172a; border: 1px solid #475569; }
+        .positive { color: #4ade80; border-color: #22c55e; }
+        .up { color: #22c55e; font-weight: bold; }
+        .empty-state { text-align: center; padding: 60px; color: #94a3b8; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; display: inline-block; margin-top: 5px; font-weight: bold; }
+        .bg-up { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .bg-down { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-box">
+            <h1>✨ ملخص التقارير الإيجابية (الأسهم الذهبية)</h1>
+            <p class="subtitle">الأسهم التي تظهر إيجابية مشتركة عبر جميع أنواع التحليل الفني</p>
+        </div>
+
+        <div id="contentArea">
+            <div class="search-container" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="summarySearch" placeholder="ابحث بكود السهم أو اسم الشركة..." onkeyup="renderTable()" style="flex: 1; padding: 11px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; outline: none; transition: border-color 0.2s;">
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="setSort('symbol')">الرمز والشركة <span id="sort-symbol" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('price')">السعر الحالي <span id="sort-price" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('score')">درجة التوافق <span id="sort-score" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('avgStatus')">تحليل المتوسطات <span id="sort-avgStatus" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('rsi')">المؤشرات (RSI) <span id="sort-rsi" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('patternCount')">النماذج الفنية <span id="sort-patternCount" class="sort-icon">↕</span></th>
+                            <th class="sortable" onclick="setSort('statusWeight')">الحالة العامة <span id="sort-statusWeight" class="sort-icon">↕</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sortState = { key: 'score', dir: 'desc' };
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.dir = 'desc';
+            }
+            renderTable();
+        }
+
+        function updateSortIcons() {
+            const keys = ['symbol', 'price', 'score', 'avgStatus', 'rsi', 'patternCount', 'statusWeight'];
+            keys.forEach(k => {
+                const icon = document.getElementById(`sort-${k}`);
+                if (!icon) return;
+                icon.textContent = sortState.key === k ? (sortState.dir === 'asc' ? '▲' : '▼') : '↕';
+            });
+        }
+
+        function calcSMA(prices, period) {
+            if (!prices || prices.length < period) return null;
+            return prices.slice(-period).reduce((a, b) => a + b, 0) / period;
+        }
+
+        function getGeneralStatus(score) {
+            if (score >= 80) return { text: '⭐ فرص ذهبية صريحة', weight: 3 };
+            if (score >= 60) return { text: '✅ إيجابية قوية', weight: 2 };
+            return { text: '🔍 مراقبة لصيقة', weight: 1 };
+        }
+
+        function renderTable() {
+            const rawStocks = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+            const rawProcessed = localStorage.getItem('processedData') || sessionStorage.getItem('processedData');
+            
+            if (!rawStocks || !rawProcessed) {
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-database" style="font-size: 4em; color: #334155;"></i>
+                        <h3>لا توجد بيانات متاحة</h3>
+                        <p>يرجى رفع ملف البيانات من الصفحة الرئيسية أولاً لتتمكن من رؤية الملخص.</p>
+                    </div>`;
+                return;
+            }
+
+            const stocksData = JSON.parse(rawStocks).companies || JSON.parse(rawStocks);
+            const processedData = JSON.parse(rawProcessed);
+            const tbody = document.getElementById('summaryTableBody');
+            
+            updateSortIcons();
+            const items = [];
+
+            Object.values(stocksData).forEach(stock => {
+                const symbol = stock.symbol;
+                const processed = processedData.find(p => p.symbol === symbol);
+                if (!processed) return;
+
+                const history = (stock.historical || []).map(h => parseFloat(h.close)).filter(p => !isNaN(p));
+                if (history.length < 20) return;
+
+                const currentPrice = history[history.length - 1];
+                const sma20 = calcSMA(history, 20);
+                const sma50 = calcSMA(history, 50);
+                const sma200 = calcSMA(history, 200);
+
+                let score = 0;
+                let details = { avg: false, indicators: false, patterns: false };
+
+                if (processed.recommendation === 'strong-buy') score += 30;
+                else if (processed.recommendation === 'buy') score += 15;
+
+                if (sma20 && currentPrice > sma20) score += 10;
+                if (sma50 && currentPrice > sma50) score += 10;
+                if (sma200 && currentPrice > sma200) { score += 15; details.avg = true; }
+
+                const rsi = parseFloat(processed.rsi);
+                if (rsi > 30 && rsi < 55) { score += 15; details.indicators = true; }
+
+                const pCount = processed.patterns ? processed.patterns.length : 0;
+                if (pCount > 0) score += 10;
+
+                if (score >= 40) {
+                    const statusObj = getGeneralStatus(score);
+                    items.push({
+                        symbol, name: processed.name || stock.shortName || symbol,
+                        price: currentPrice, score, avgStatus: details.avg ? 1 : 0,
+                        rsi, patternCount: pCount, statusText: statusObj.text,
+                        statusWeight: statusObj.weight, patterns: processed.patterns || [],
+                        recommendation: processed.recommendation
+                    });
+                }
+            });
+
+            const term = (document.getElementById('summarySearch')?.value || '').trim().toLowerCase();
+            const filtered = items.filter(item => {
+                if (!term) return true;
+                return item.symbol.toLowerCase().includes(term) || item.name.toLowerCase().includes(term);
+            });
+
+            const sorted = filtered.sort((a, b) => {
+                let valA = a[sortState.key], valB = b[sortState.key];
+                if (typeof valA === 'string') return sortState.dir === 'asc' ? valA.localeCompare(valB, 'ar') : valB.localeCompare(valA, 'ar');
+                return sortState.dir === 'asc' ? valA - valB : valB - valA;
+            });
+
+            tbody.innerHTML = '';
+            sorted.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => openStockAnalysis(item.symbol);
+                const scoreClass = item.score >= 70 ? 'score-high' : 'score-mid';
+                tr.innerHTML = `
+                    <td><strong>${item.symbol}</strong><br><small style="color:#94a3b8">${item.name}</small></td>
+                    <td><span class="up">${item.price.toFixed(2)}</span></td>
+                    <td><span class="score-badge ${scoreClass}">${item.score}%</span></td>
+                    <td>${item.avgStatus === 1 ? '<span class="check-icon">✔ صاعد</span>' : '<span class="x-icon">✘ عرضي</span>'}<div style="font-size:0.7em; color:#94a3b8">فوق المتوسطات</div></td>
+                    <td><span class="summary-pill ${item.rsi > 30 && item.rsi < 55 ? 'positive' : ''}">RSI: ${item.rsi}</span></td>
+                    <td>${item.patterns.length > 0 ? item.patterns.slice(0,2).map(p => `<span class="summary-pill positive">${p}</span>`).join('') : '<span style="color:#64748b">—</span>'}</td>
+                    <td><span class="badge ${item.recommendation === 'strong-buy' ? 'bg-up' : 'bg-down'}" style="background: ${item.score >= 70 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(217, 119, 6, 0.2)'}">${item.statusText}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        window.onload = renderTable;
+    </script>
+</body>
+</html>

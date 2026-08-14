@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 منصة تحليل الأسهم - رفع يدوي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="pages/global-sidebar.js"></script>
+    <style>
+        /* نفس التنسيقات السابقة مع إضافة تنسيقات جديدة */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 12px 18px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-main h1 {
+            color: #fbbf24;
+            font-size: 1.45em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+
+        .expert-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .header-tools {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            max-width: 100%;
+        }
+
+        .header-tool-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ==================== منطقة رفع الملف ==================== */
+        .upload-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.98em;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            margin: 0;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .sample-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 0.92em;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            margin: 0;
+        }
+
+        .sample-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        #jsonFile {
+            display: none;
+        }
+
+        .selected-file {
+            background: #334155;
+            padding: 8px 14px;
+            border-radius: 50px;
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid #fbbf24;
+            max-width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .selected-file i {
+            font-size: 1.15em;
+            margin: 0;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .file-size {
+            color: #94a3b8;
+        }
+
+        .clear-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px 11px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.82em;
+        }
+
+        @media (max-width: 900px) {
+            .header {
+                padding: 10px 12px;
+            }
+
+            .header-main h1 {
+                font-size: 1.2em;
+            }
+
+            .sample-btn {
+                display: none;
+            }
+        }
+
+        .clear-btn:hover {
+            background: #dc2626;
+        }
+
+        /* ==================== القائمة الجانبية ==================== */
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-left: 1px solid #334155;
+            z-index: 100;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            color: #fbbf24;
+            font-size: 1.2em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-toggle:hover {
+            color: #fbbf24;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 15px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-right: 3px solid transparent;
+            margin: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-right-color: #3b82f6;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #3b82f6;
+            border-right-color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .sidebar-item.disabled-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: auto;
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .sidebar-item span {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: #334155;
+            margin: 15px 20px;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #334155;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .sidebar-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #94a3b8;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-info:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-info i {
+            color: #fbbf24;
+            font-size: 0.9em;
+        }
+
+        .sidebar-toggle-btn {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 99;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .container {
+            margin-left: 0;
+            margin-right: 280px;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 250px;
+            }
+            .container {
+                margin-right: 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                right: -250px;
+            }
+            .sidebar.open {
+                right: 0;
+            }
+            .container {
+                margin-right: 0;
+            }
+            .sidebar-toggle-btn {
+                display: flex;
+            }
+        }
+
+        /* ==================== الإحصائيات ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #475569;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: #fbbf24;
+        }
+
+        .stat-card .number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .stat-card .label {
+            color: #94a3b8;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .coverage-summary {
+            margin: 12px 20px 0;
+            padding: 14px;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .coverage-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
+        }
+
+        .coverage-pill {
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 999px;
+            padding: 8px 12px;
+            white-space: nowrap;
+            font-size: 0.92em;
+        }
+
+        .coverage-sep {
+            width: 1px;
+            align-self: stretch;
+            background: #334155;
+            opacity: 0.8;
+        }
+
+        .coverage-distribution-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .coverage-title {
+            color: #94a3b8;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .coverage-distribution {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .coverage-distribution li {
+            border: 1px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            color: #bfdbfe;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.86em;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 992px) {
+            .coverage-summary {
+                flex-wrap: wrap;
+            }
+            .coverage-sep {
+                display: none;
+            }
+            .coverage-distribution-wrap {
+                width: 100%;
+            }
+        }
+
+        /* ==================== بطاقات الصفحات ==================== */
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .page-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .page-card.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page-card.active:hover {
+            transform: translateY(-5px);
+            border-color: #fbbf24;
+            box-shadow: 0 10px 25px rgba(251, 191, 36, 0.2);
+        }
+
+        .page-card.disabled-link {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .page-icon {
+            font-size: 2.5em;
+            color: #fbbf24;
+            margin-bottom: 15px;
+        }
+
+        .page-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .page-desc {
+            color: #94a3b8;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .page-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #e2e8f0;
+        }
+
+        .page-stats i {
+            color: #10b981;
+            margin-left: 5px;
+        }
+
+        .warning-message {
+            text-align: center;
+            padding: 30px;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 12px;
+            margin: 20px;
+            border: 1px dashed #fbbf24;
+        }
+
+        .warning-message i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #334155;
+            color: #e2e8f0;
+            padding: 15px 30px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1em;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .notification-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- القائمة الجانبية -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-bars"></i> القائمة الرئيسية</h3>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="#" class="sidebar-item active" onclick="showHome()">
+                <i class="fas fa-home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="pages/main-table.html" class="sidebar-item page-link">
+                <i class="fas fa-table"></i>
+                <span>الجدول الرئيسي</span>
+            </a>
+            <a href="pages/upload-data.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-upload"></i>
+                <span>رفع البيانات</span>
+            </a>
+            <a href="pages/top20-egyptian.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-trophy"></i>
+                <span>أهم 20 سهم مصري</span>
+            </a>
+            <a href="pages/accumulation-stocks.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-layer-group"></i>
+                <span>أسهم التجميع (نطاق ضيق)</span>
+            </a>
+            <a href="pages/portfolio.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-wallet"></i>
+                <span>محفظتي الاستثمارية</span>
+            </a>
+            <a href="pages/hammer-stocks.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-hammer"></i>
+                <span>شمعة الهامر</span>
+            </a>
+            <a href="pages/rebound-reversal.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-undo"></i>
+                <span>بداية ارتداد من الهبوط</span>
+            </a>
+            <a href="pages/stock-chart.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-chart-area"></i>
+                <span>الرسم البياني المحترف</span>
+            </a>
+            <a href="pages/ai-analysis.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-robot"></i>
+                <span>التحليل ومساعد القرار الذكي (GPT)</span>
+            </a>
+            <a href="pages/special-analysis.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-bullseye"></i>
+                <span>تحليل خاص</span>
+            </a>
+            <a href="pages/copilot-lab.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-vial"></i>
+                <span>مختبر Copilot الذكي</span>
+            </a>
+            <a href="pages/egypt-stocks-news.html" class="sidebar-item page-link" data-available="true">
+                <i class="fas fa-newspaper"></i>
+                <span>أخبار الأسهم</span>
+            </a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <a href="#" class="sidebar-item" onclick="exportAllData()">
+                <i class="fas fa-download"></i>
+                <span>تصدير جميع البيانات</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="sidebar-info">
+                <i class="fas fa-database"></i>
+                <span id="sidebarStockCount">0 سهم</span>
+            </div>
+            <div class="sidebar-info">
+                <i class="fas fa-file"></i>
+                <span id="sidebarFileName">لم يتم رفع ملف</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="container">
+        <!-- رأس الصفحة -->
+        <div class="header">
+            <div class="header-main">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    منصة تحليل الأسهم
+                    <span class="expert-badge"><i class="fas fa-hand-pointer"></i> رفع يدوي</span>
+                </h1>
+            </div>
+
+            <div class="header-tools">
+                <div class="header-tool-row">
+                    <button class="upload-btn" id="uploadBtn">
+                        <i class="fas fa-file-upload"></i> اختر ملف JSON
+                    </button>
+                </div>
+
+                <input type="file" id="jsonFile" accept=".json">
+
+                <div id="selectedFileContainer" class="hidden">
+                    <div class="selected-file">
+                        <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                        <span class="file-name" id="selectedFileName"></span>
+                        <span class="file-size" id="selectedFileSize"></span>
+                        <button class="clear-btn" id="clearBtn">
+                            <i class="fas fa-times"></i> مسح
+                        </button>
+                    </div>
+                </div>
+
+                <div class="selected-file" style="margin-top:8px; border:1px dashed #cbd5e1;">
+                    <i class="fas fa-file-code" style="color:#2563eb;"></i>
+                    <span class="file-name">الملف المستخدم:</span>
+                    <span class="file-name" id="activeDataFileName">Data/stock_data.json</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- رسالة تحذير قبل رفع الملف -->
+        <div id="warningMessage" class="warning-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>⚠️ لم يتم رفع ملف بعد</h3>
+            <p>يرجى رفع ملف JSON لتفعيل الصفحات وعرض الإحصائيات</p>
+        </div>
+
+        <!-- الإحصائيات (تظهر بعد رفع الملف) -->
+        <div id="statsArea" class="hidden">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" id="totalStocks">0</div>
+                    <div class="label">📊 إجمالي الأسهم</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="strongBuyCount">0</div>
+                    <div class="label">⭐ شراء قوي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="buyCount">0</div>
+                    <div class="label">✅ شراء</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="avgRsi">0</div>
+                    <div class="label">📈 متوسط RSI</div>
+                </div>
+            </div>
+
+            <div class="coverage-summary">
+                <div class="coverage-meta">
+                    <div class="coverage-pill">📅 آخر يوم بيانات: <strong id="latestDataDate">-</strong></div>
+                    <div class="coverage-pill">📊 عدد الأسهم: <strong id="coverageTotalStocks">0</strong></div>
+                </div>
+                <div class="coverage-sep"></div>
+                <div class="coverage-distribution-wrap">
+                    <div class="coverage-title">🧩 توزيع الأسهم حسب عدد الأيام</div>
+                    <ul id="daysDistributionList" class="coverage-distribution"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقات الصفحات -->
+        <div class="pages-grid" id="pagesGrid">
+            <a href="pages/main-table.html" class="page-card" id="cardMainTable" data-available="true">
+                <div class="page-icon"><i class="fas fa-table"></i></div>
+                <div class="page-title">الجدول الرئيسي</div>
+                <div class="page-desc">عرض جميع الأسهم مع التحليلات الفنية</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-chart-line"></i> <span id="statMainTable">0</span></span>
+                </div>
+            </a>
+
+            <a href="pages/upload-data.html" class="page-card" id="cardUploadDatat" data-available="true">
+                <div class="page-icon"><i class="fas fa-upload"></i></div>
+                <div class="page-title">رفع البيانات</div>
+                <div class="page-desc">فتح صفحة رفع البيانات المخصصة</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-file"></i> صفحة إضافية</span>
+                </div>
+            </a>
+
+            <a href="pages/top20-egyptian.html" class="page-card" id="cardTop20" data-available="true">
+                <div class="page-icon"><i class="fas fa-trophy"></i></div>
+                <div class="page-title">أهم 20 سهم مصري</div>
+                <div class="page-desc">أفضل الأسهم المصرية المتوقع صعودها</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-list"></i> 20 سهم</span>
+                </div>
+            </a>
+
+            <a href="pages/accumulation-stocks.html" class="page-card" id="cardAccumulation" data-available="true">
+                <div class="page-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="page-title">أسهم التجميع (نطاق ضيق)</div>
+                <div class="page-desc">أسهم تتحرك داخل نطاق سعري ضيق لفترة وقد تدل على تجميع</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-compress-alt"></i> نطاق ضيق</span>
+                </div>
+            </a>
+
+            <a href="pages/portfolio.html" class="page-card" id="cardPortfolio" data-available="true">
+                <div class="page-icon"><i class="fas fa-wallet"></i></div>
+                <div class="page-title">محفظتي الاستثمارية</div>
+                <div class="page-desc">إدارة ومتابعة أسهمك في المحفظة الشخصية</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-coins"></i> <span id="statPortfolio">0</span></span>
+                </div>
+            </a>
+
+            <a href="pages/hammer-stocks.html" class="page-card" id="cardHammer" data-available="true">
+                <div class="page-icon"><i class="fas fa-hammer"></i></div>
+                <div class="page-title">شمعة الهامر</div>
+                <div class="page-desc">أسهم تشكل نمط شمعة المطرقة (فرصة ارتداد)</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-hammer"></i> <span id="statHammer">0</span></span>
+                </div>
+            </a>
+
+            <a href="pages/rebound-reversal.html" class="page-card" id="cardReboundReversal" data-available="true">
+                <div class="page-icon"><i class="fas fa-undo"></i></div>
+                <div class="page-title">بداية ارتداد من الهبوط</div>
+                <div class="page-desc">أسهم أنهت التصحيح السلبي وبدأت في الارتداد وتأسيس الدعم</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-undo"></i> فرز فني وإشارات انعكاس</span>
+                </div>
+            </a>
+
+            <a href="pages/ai-analysis.html" class="page-card" id="cardAiAnalysis" data-available="true">
+                <div class="page-icon"><i class="fas fa-robot"></i></div>
+                <div class="page-title">التحليل ومساعد القرار الذكي (GPT)</div>
+                <div class="page-desc">تحليل شامل للسهم مع سيناريوهات الأسعار بالأرقام، خطط القرار التفاعلية ونمط المخاطرة</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-brain"></i> تحليل شامل + سيناريوهات قرار</span>
+                </div>
+            </a>
+
+            <a href="pages/special-analysis.html" class="page-card" id="cardSpecialAnalysis" data-available="true">
+                <div class="page-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="page-title">تحليل خاص</div>
+                <div class="page-desc">خطة مضاربة عملية مبنية على الدعم والمقاومة و RSI و Stochastic والحجم</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-crosshairs"></i> تنفيذ مباشر</span>
+                </div>
+            </a>
+
+            <a href="pages/copilot-lab.html" class="page-card" id="cardCopilotLab" data-available="true">
+                <div class="page-icon"><i class="fas fa-vial"></i></div>
+                <div class="page-title">مختبر Copilot الذكي</div>
+                <div class="page-desc">جودة الإشارة + تحليل متعدد الأطر + اختبار تاريخي سريع للاستراتيجية</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-flask"></i> مختبر استراتيجي</span>
+                </div>
+            </a>
+            <a href="pages/egypt-stocks-news.html" class="page-card" id="cardEgyptStocksNews" data-available="true">
+                <div class="page-icon"><i class="fas fa-newspaper"></i></div>
+                <div class="page-title">أخبار الأسهم</div>
+                <div class="page-desc">جلب وتحليل آخر الأخبار للأسهم المصرية من موقع مباشر وجوجل نيوز</div>
+                <div class="page-stats">
+                    <span><i class="fas fa-sync-alt"></i> تحديث فوري</span>
+                </div>
+            </a>
+
+        </div>
+
+    </div>
+
+    <script>
+        // ==================== المتغيرات العامة ====================
+        let stocksData = null;
+        let processedData = [];
+        let portfolio = [];
+        const DEFAULT_STOCKS_DATA_FILE = 'Data/stock_data.json';
+
+        // ==================== تحميل المحفظة من localStorage ====================
+        async function loadPortfolio() {
+            const saved = localStorage.getItem('userPortfolio');
+            if (saved) {
+                try {
+                    portfolio = JSON.parse(saved);
+                    setTextIfExists('statPortfolio', portfolio.length + ' سهم');
+                } catch (e) {
+                    console.error('خطأ في تحميل المحفظة:', e);
+                }
+            }
+            try {
+                const stamp = Date.now();
+                const response = await fetch(`Data/portfolio.json?_ts=${stamp}`, { cache: 'no-store' });
+                if (response.ok) {
+                    const serverPortfolio = await response.json();
+                    if (Array.isArray(serverPortfolio)) {
+                        portfolio = serverPortfolio;
+                        localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+                        setTextIfExists('statPortfolio', portfolio.length + ' سهم');
+                        console.log('✅ Synchronized portfolio from server disk successfully in dashboard.');
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not sync portfolio from server:', e);
+            }
+        }
+
+        // ==================== عناصر الصفحة ====================
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('jsonFile');
+        const clearBtn = document.getElementById('clearBtn');
+        const selectedContainer = document.getElementById('selectedFileContainer');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const selectedFileSize = document.getElementById('selectedFileSize');
+        const activeDataFileName = document.getElementById('activeDataFileName');
+        const warningMessage = document.getElementById('warningMessage');
+        const statsArea = document.getElementById('statsArea');
+        
+        // جميع بطاقات الصفحات
+        const pageCards = document.querySelectorAll('.page-card');
+        const pageLinks = document.querySelectorAll('.page-link');
+
+        function setActiveDataSource(filePath) {
+            const label = filePath || DEFAULT_STOCKS_DATA_FILE;
+            if (activeDataFileName) {
+                activeDataFileName.textContent = label;
+            }
+            document.getElementById('sidebarFileName').textContent = label;
+        }
+
+        // ==================== تحديث حالة الصفحات ====================
+        function updatePagesState(active) {
+            pageCards.forEach(card => {
+                const isAvailable = card.dataset.available !== 'false';
+                card.classList.toggle('disabled-link', !isAvailable);
+
+                if (active) {
+                    card.classList.toggle('active', isAvailable);
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            pageLinks.forEach(link => {
+                const isAvailable = link.dataset.available !== 'false';
+                link.classList.toggle('disabled-link', !isAvailable);
+
+                if (active && isAvailable) {
+                    link.classList.remove('disabled-link');
+                    link.setAttribute('aria-disabled', 'false');
+                } else {
+                    link.setAttribute('aria-disabled', 'true');
+                }
+            });
+        }
+
+        function setTextIfExists(id, value) {
+            const node = document.getElementById(id);
+            if (node) node.textContent = value;
+        }
+
+        function setStorageSafely(key, value) {
+            try { sessionStorage.setItem(key, value); } catch (e) { console.warn(`sessionStorage failed for ${key}:`, e); }
+            try { localStorage.setItem(key, value); } catch (e) { console.warn(`localStorage failed for ${key}:`, e); }
+        }
+
+        // ==================== عرض إشعار ====================
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ==================== معالجة الملف المرفوع ====================
+        function handleFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    stocksData = JSON.parse(e.target.result);
+                    
+                    // عرض معلومات الملف
+                    selectedFileName.textContent = file.name;
+                    selectedFileSize.textContent = `(${(file.size / 1024).toFixed(2)} KB)`;
+                    selectedContainer.classList.remove('hidden');
+                    localStorage.setItem('lastUploadedFileName', file.name);
+                    localStorage.setItem('lastUploadedFileSize', (file.size || 0).toString());
+                    
+                    // معالجة البيانات
+                    processStocks(stocksData);
+                    
+                    // إخفاء رسالة التحذير وإظهار الإحصائيات
+                    warningMessage.classList.add('hidden');
+                    statsArea.classList.remove('hidden');
+                    
+                    // تفعيل الصفحات
+                    updatePagesState(true);
+                    
+                    // تحديث معلومات الشريط الجانبي
+                    setActiveDataSource(file.name);
+                    
+                    showNotification('✅ تم تحميل الملف ومعالجة البيانات بنجاح', 'success');
+                    
+                } catch (error) {
+                    console.error('❌ خطأ في قراءة الملف:', error);
+                    showNotification('❌ خطأ في قراءة الملف: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // ==================== بيانات تجريبية ====================
+        function loadSampleData() {
+            const sampleData = {
+                "companies": [
+                    {
+                        "symbol": "COMI",
+                        "longName": "البنك التجاري الدولي",
+                        "historical": [
+                            {"date": "01/02/2026", "close": 85.5},
+                            {"date": "02/02/2026", "close": 86.2},
+                            {"date": "03/02/2026", "close": 87.0},
+                            {"date": "04/02/2026", "close": 86.8},
+                            {"date": "05/02/2026", "close": 87.5}
+                        ]
+                    },
+                    {
+                        "symbol": "EMFD",
+                        "longName": "المصرية لتطوير الصناعة",
+                        "historical": [
+                            {"date": "01/02/2026", "close": 12.3},
+                            {"date": "02/02/2026", "close": 12.5},
+                            {"date": "03/02/2026", "close": 12.8},
+                            {"date": "04/02/2026", "close": 12.6},
+                            {"date": "05/02/2026", "close": 12.9}
+                        ]
+                    },
+                    {
+                        "symbol": "ETEL",
+                        "longName": "المصرية للاتصالات",
+                        "historical": [
+                            {"date": "01/02/2026", "close": 25.1},
+                            {"date": "02/02/2026", "close": 25.4},
+                            {"date": "03/02/2026", "close": 25.8},
+                            {"date": "04/02/2026", "close": 25.6},
+                            {"date": "05/02/2026", "close": 26.2}
+                        ]
+                    }
+                ]
+            };
+            
+            // تحويل البيانات إلى ملف وهمي
+            const jsonStr = JSON.stringify(sampleData, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const file = new File([blob], 'sample_data.json', { type: 'application/json' });
+            
+            // معالجة الملف
+            handleFile(file);
+            
+            // تحديث اسم الملف في الواجهة
+            selectedFileName.textContent = 'sample_data.json';
+            selectedFileSize.textContent = `(${(file.size / 1024).toFixed(2)} KB)`;
+            localStorage.setItem('lastUploadedFileName', 'sample_data.json');
+            localStorage.setItem('lastUploadedFileSize', (file.size || 0).toString());
+            setActiveDataSource('sample_data.json');
+        }
+
+        function restorePersistedData() {
+            const storedStocksData = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+            if (!storedStocksData) {
+                restoreFromProcessedOnly();
+                return;
+            }
+
+            try {
+                stocksData = JSON.parse(storedStocksData);
+                processStocks(stocksData);
+
+                warningMessage.classList.add('hidden');
+                statsArea.classList.remove('hidden');
+                updatePagesState(true);
+
+                const storedFileName = localStorage.getItem('lastUploadedFileName') || 'بيانات محفوظة';
+                const storedFileSize = parseFloat(localStorage.getItem('lastUploadedFileSize') || '0');
+
+                selectedFileName.textContent = storedFileName;
+                selectedFileSize.textContent = storedFileSize > 0 ? `(${(storedFileSize / 1024).toFixed(2)} KB)` : '(تم الاسترجاع تلقائياً)';
+                selectedContainer.classList.remove('hidden');
+
+                setActiveDataSource(storedFileName);
+                showNotification('✅ تم استرجاع البيانات المحفوظة تلقائياً', 'success');
+            } catch (error) {
+                console.error('خطأ في استرجاع البيانات:', error);
+                restoreFromProcessedOnly();
+            }
+        }
+
+        function restoreFromProcessedOnly() {
+            const storedProcessedData = localStorage.getItem('processedData') || sessionStorage.getItem('processedData');
+            if (!storedProcessedData) return;
+
+            try {
+                const parsed = JSON.parse(storedProcessedData);
+                if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+                processedData = parsed;
+
+                warningMessage.classList.add('hidden');
+                statsArea.classList.remove('hidden');
+                updatePagesState(true);
+
+                const strongBuy = parsed.filter(s => s?.recommendation === 'strong-buy').length;
+                const buy = parsed.filter(s => s?.recommendation === 'buy').length;
+                const rsiValues = parsed.map(s => Number(s?.rsi)).filter(Number.isFinite);
+                const avgRsi = rsiValues.length ? (rsiValues.reduce((a, b) => a + b, 0) / rsiValues.length).toFixed(1) : '0';
+
+                document.getElementById('totalStocks').textContent = parsed.length;
+                document.getElementById('strongBuyCount').textContent = strongBuy;
+                document.getElementById('buyCount').textContent = buy;
+                document.getElementById('avgRsi').textContent = avgRsi;
+                document.getElementById('sidebarStockCount').textContent = parsed.length + ' سهم';
+
+                setTextIfExists('statMainTable', parsed.length + ' سهم');
+                setTextIfExists('statPortfolio', portfolio.length + ' سهم');
+                setTextIfExists('statPromising', (strongBuy + buy) + ' سهم');
+
+                const storedFileName = localStorage.getItem('lastUploadedFileName') || DEFAULT_STOCKS_DATA_FILE;
+                selectedFileName.textContent = storedFileName;
+                selectedFileSize.textContent = '(تم الاسترجاع من التحليل المحفوظ)';
+                selectedContainer.classList.remove('hidden');
+                setActiveDataSource(storedFileName);
+
+                if (!stocksData) {
+                    stocksData = { companies: {} };
+                }
+
+                showNotification('✅ تم تفعيل الصفحات من البيانات المحفوظة', 'success');
+            } catch (error) {
+                console.error('خطأ في استرجاع processedData:', error);
+            }
+        }
+
+        async function loadDefaultDataFile() {
+            try {
+                const response = await fetch(DEFAULT_STOCKS_DATA_FILE, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                stocksData = await response.json();
+                processStocks(stocksData);
+
+                warningMessage.classList.add('hidden');
+                statsArea.classList.remove('hidden');
+                updatePagesState(true);
+
+                const fileLabel = DEFAULT_STOCKS_DATA_FILE;
+                selectedFileName.textContent = fileLabel;
+                selectedFileSize.textContent = '(تحميل تلقائي من مجلد Data)';
+                selectedContainer.classList.remove('hidden');
+
+                localStorage.setItem('lastUploadedFileName', fileLabel);
+                localStorage.removeItem('lastUploadedFileSize');
+                setActiveDataSource(fileLabel);
+                showNotification('✅ تم تحميل بيانات الأسهم من Data/stock_data.json', 'success');
+                return true;
+            } catch (error) {
+                console.warn('تعذر تحميل ملف Data الافتراضي:', error);
+                return false;
+            }
+        }
+
+        // ==================== معالجة البيانات ====================
+        function processStocks(data) {
+            const companiesSource = data.companies || data;
+            const stocks = [];
+            let totalRsi = 0;
+            let rsiCount = 0;
+            let strongBuy = 0;
+            let buy = 0;
+            const daysDistribution = new Map();
+            let latestDataDate = null;
+
+            const formatDisplayDate = (dateObj) => {
+                if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '-';
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+
+            const processCompany = (company, symbol) => {
+                if (!symbol) symbol = company.symbol;
+                if (!symbol) return;
+
+                let pricePoints = [];
+                
+                if (company.historical) {
+                    company.historical.forEach(item => {
+                        if (item.close) {
+                            pricePoints.push({
+                                date: item.date,
+                                price: parseFloat(item.close),
+                                volume: Number(item.volume ?? item.vol ?? 0)
+                            });
+                        }
+                    });
+                }
+                
+                if (company.daily) {
+                    company.daily.forEach(item => {
+                        if (item.price) {
+                            pricePoints.push({
+                                date: item.date,
+                                price: parseFloat(item.price),
+                                volume: Number(item.volume ?? item.vol ?? 0)
+                            });
+                        }
+                    });
+                }
+
+                if (pricePoints.length === 0) return;
+
+                pricePoints.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+                const daysCount = pricePoints.length;
+                daysDistribution.set(daysCount, (daysDistribution.get(daysCount) || 0) + 1);
+
+                const companyLatestDate = parseDate(pricePoints[pricePoints.length - 1].date);
+                if (!latestDataDate || companyLatestDate > latestDataDate) {
+                    latestDataDate = companyLatestDate;
+                }
+
+                const prices = pricePoints.map(p => p.price);
+                const volumes = pricePoints.map(p => Number(p.volume || 0));
+                const currentPrice = prices[prices.length - 1];
+                const previousPrice = prices.length > 1 ? prices[prices.length - 2] : currentPrice;
+                const change = previousPrice ? ((currentPrice - previousPrice) / previousPrice * 100).toFixed(1) : '0.0';
+                const changeValue = parseFloat(change);
+                const recentVolumes = volumes.slice(-20).filter(v => Number.isFinite(v) && v > 0);
+                const latestVolume = volumes.length ? Number(volumes[volumes.length - 1] || 0) : 0;
+                const avgVolume20 = recentVolumes.length
+                    ? recentVolumes.reduce((sum, value) => sum + value, 0) / recentVolumes.length
+                    : 0;
+                const volumeRatio = avgVolume20 > 0 ? latestVolume / avgVolume20 : 1;
+
+                const rsi = calculateRSI(prices);
+                const sr = calculateSupportResistance(prices);
+                const patterns = detectCandlePatterns(pricePoints);
+                const recommendation = getRecommendation(
+                    rsi,
+                    patterns,
+                    currentPrice,
+                    sr.support,
+                    sr.resistance,
+                    volumeRatio,
+                    changeValue
+                );
+
+                if (recommendation === 'strong-buy') strongBuy++;
+                if (recommendation === 'buy') buy++;
+                
+                totalRsi += rsi;
+                rsiCount++;
+
+                stocks.push({
+                    symbol,
+                    name: company.longName || company.shortName || symbol,
+                    currentPrice,
+                    change,
+                    changeValue,
+                    rsi,
+                    support: sr.support,
+                    resistance: sr.resistance,
+                    patterns,
+                    latestVolume,
+                    avgVolume20,
+                    volumeRatio,
+                    recommendation
+                });
+            };
+
+            if (Array.isArray(companiesSource)) {
+                companiesSource.forEach(company => processCompany(company));
+            } else if (typeof companiesSource === 'object' && companiesSource !== null) {
+                Object.entries(companiesSource).forEach(([symbol, company]) => processCompany(company, symbol));
+            }
+
+            processedData = stocks;
+            
+            // تحديث الإحصائيات
+            document.getElementById('totalStocks').textContent = stocks.length;
+            document.getElementById('strongBuyCount').textContent = strongBuy;
+            document.getElementById('buyCount').textContent = buy;
+            document.getElementById('avgRsi').textContent = rsiCount > 0 ? (totalRsi / rsiCount).toFixed(1) : '0';
+            
+            // تحديث إحصائيات البطاقات
+            setTextIfExists('statMainTable', stocks.length + ' سهم');
+            setTextIfExists('statPortfolio', portfolio.length + ' سهم');
+            setTextIfExists('statPromising', (strongBuy + buy) + ' سهم');
+
+            // تحديث ملخص التغطية
+            document.getElementById('latestDataDate').textContent = formatDisplayDate(latestDataDate);
+            document.getElementById('coverageTotalStocks').textContent = stocks.length;
+
+            const daysDistributionList = document.getElementById('daysDistributionList');
+            const distributionRows = Array.from(daysDistribution.entries())
+                .sort((a, b) => b[0] - a[0]);
+
+            if (!distributionRows.length) {
+                daysDistributionList.innerHTML = '<li>لا توجد بيانات توزيع متاحة.</li>';
+            } else {
+                daysDistributionList.innerHTML = distributionRows
+                    .map(([days, count]) => `<li>${count} سهم بهم ${days} يوم</li>`)
+                    .join('');
+            }
+            
+            // تخزين البيانات للصفحات الأخرى (sessionStorage + localStorage)
+            setStorageSafely('processedData', JSON.stringify(processedData));
+            setStorageSafely('stocksData', JSON.stringify(stocksData));
+            
+            // تحديث الشريط الجانبي
+            document.getElementById('sidebarStockCount').textContent = stocks.length + ' سهم';
+        }
+
+        // ==================== دوال التحليل الفني ====================
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function calculateRSI(prices, period = 14) {
+            if (prices.length < period + 1) return 50;
+            
+            let gains = 0;
+            let losses = 0;
+            
+            for (let i = prices.length - period; i < prices.length; i++) {
+                const diff = prices[i] - prices[i-1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            
+            if (avgLoss === 0) return 70;
+            if (avgGain === 0) return 30;
+            
+            const rs = avgGain / avgLoss;
+            return Math.round((100 - (100 / (1 + rs))) * 10) / 10;
+        }
+
+        function calculateSupportResistance(prices) {
+            if (prices.length < 10) {
+                const lastPrice = prices[prices.length - 1] || 0;
+                return {
+                    support: [lastPrice * 0.95, lastPrice * 0.9, lastPrice * 0.85],
+                    resistance: [lastPrice * 1.05, lastPrice * 1.1, lastPrice * 1.15]
+                };
+            }
+            
+            const last10 = prices.slice(-10);
+            const min = Math.min(...last10);
+            const max = Math.max(...last10);
+            const current = prices[prices.length - 1];
+            const range = max - min;
+            
+            return {
+                support: [current - range * 0.382, current - range * 0.5, current - range * 0.618],
+                resistance: [current + range * 0.382, current + range * 0.5, current + range * 0.618]
+            };
+        }
+
+        function detectCandlePatterns(pricePoints) {
+            const patterns = [];
+            if (pricePoints.length < 2) return patterns;
+            
+            const last = pricePoints[pricePoints.length - 1];
+            const prev = pricePoints[pricePoints.length - 2];
+            
+            if (last.price > prev.price * 1.03) patterns.push('صاعدة قوية');
+            if (last.price < prev.price * 0.97) patterns.push('هابطة قوية');
+            
+            return patterns;
+        }
+
+        function getRecommendation(rsi, patterns, price, support, resistance, volumeRatio = 1, dayChange = 0) {
+            let score = 0;
+
+            const safeSupport = Number(support?.[0]);
+            const safeResistance = Number(resistance?.[0]);
+            const safePrice = Number(price);
+            const safeRsi = Number(rsi);
+            const safeVolumeRatio = Number(volumeRatio);
+            const safeDayChange = Number(dayChange);
+            const nearSupport = Number.isFinite(safeSupport) && safeSupport > 0 && Number.isFinite(safePrice)
+                ? ((safePrice - safeSupport) / safeSupport) * 100 <= 2.5
+                : false;
+            const nearResistance = Number.isFinite(safeResistance) && safeResistance > 0 && Number.isFinite(safePrice) && safePrice > 0
+                ? ((safeResistance - safePrice) / safePrice) * 100 <= 2
+                : false;
+
+            // Prefer balanced RSI zones and penalize overbought extremes.
+            if (safeRsi >= 38 && safeRsi <= 58) score += 1.2;
+            else if (safeRsi >= 30 && safeRsi < 38) score += 0.8;
+            else if (safeRsi < 26) score += 0.2;
+            else if (safeRsi > 70) score -= 1.3;
+            else if (safeRsi > 64) score -= 0.7;
+
+            if (patterns.includes('صاعدة قوية')) score += 1.1;
+            if (patterns.includes('هابطة قوية')) score -= 1.1;
+
+            if (nearSupport) score += 0.9;
+            if (Number.isFinite(safeSupport) && safeSupport > 0 && Number.isFinite(safePrice) && safePrice < safeSupport * 0.97) score -= 1;
+
+            if (safeVolumeRatio >= 1.2 && safeDayChange > 0) score += 1.2;
+            else if (safeVolumeRatio >= 1 && safeDayChange > 0) score += 0.4;
+            else if (safeVolumeRatio >= 1.3 && safeDayChange < 0) score -= 1.2;
+            else if (safeVolumeRatio <= 0.65) score -= 0.6;
+
+            if (safeDayChange > 4.5 && safeVolumeRatio < 1) score -= 0.7;
+            if (nearResistance) score -= 0.8;
+
+            const strongBuyGate = (
+                safeRsi >= 32 && safeRsi <= 62 &&
+                safeDayChange >= 0 &&
+                safeVolumeRatio >= 1.05 &&
+                nearSupport &&
+                !nearResistance
+            );
+
+            if (score >= 3.2 && strongBuyGate) return 'strong-buy';
+            if (score >= 1.9) return 'buy';
+            return 'neutral';
+        }
+
+        // ==================== دوال الواجهة ====================
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        };
+
+        window.showHome = function() {
+            window.location.href = 'index.html';
+        };
+
+        window.exportAllData = function() {
+            if (processedData.length === 0) {
+                showNotification('⚠️ لا توجد بيانات للتصدير', 'error');
+                return;
+            }
+            
+            let csvContent = 'الرمز,الشركة,السعر,التغير%,RSI,التوصية\n';
+            
+            processedData.forEach(stock => {
+                const row = [
+                    `"${stock.symbol}"`,
+                    `"${stock.name}"`,
+                    stock.currentPrice.toFixed(2),
+                    stock.change,
+                    stock.rsi,
+                    stock.recommendation === 'strong-buy' ? 'شراء قوي' : 
+                    stock.recommendation === 'buy' ? 'شراء' : 'محايد'
+                ].join(',');
+                csvContent += row + '\n';
+            });
+            
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `اسهم_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('✅ تم تصدير البيانات بنجاح', 'success');
+        };
+
+        // ==================== أحداث الأزرار ====================
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            handleFile(file);
+        });
+
+        document.querySelectorAll('.disabled-link').forEach(element => {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                showNotification('ℹ️ هذه الصفحة غير متاحة حالياً في هذا الإصدار', 'info');
+            });
+        });
+
+        clearBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            selectedContainer.classList.add('hidden');
+            warningMessage.classList.remove('hidden');
+            statsArea.classList.add('hidden');
+            updatePagesState(false);
+            
+            processedData = [];
+            stocksData = null;
+            
+            setActiveDataSource(DEFAULT_STOCKS_DATA_FILE);
+            document.getElementById('sidebarStockCount').textContent = '0 سهم';
+            document.getElementById('totalStocks').textContent = '0';
+            document.getElementById('strongBuyCount').textContent = '0';
+            document.getElementById('buyCount').textContent = '0';
+            document.getElementById('avgRsi').textContent = '0';
+            document.getElementById('latestDataDate').textContent = '-';
+            document.getElementById('coverageTotalStocks').textContent = '0';
+            document.getElementById('daysDistributionList').innerHTML = '';
+            setTextIfExists('statMainTable', '0');
+            setTextIfExists('statPortfolio', '0');
+            setTextIfExists('statPromising', '0');
+            setTextIfExists('statNearLow', '0');
+            setTextIfExists('statHammer', '0');
+            setTextIfExists('statRebound', '0');
+            
+            sessionStorage.removeItem('processedData');
+            sessionStorage.removeItem('stocksData');
+            localStorage.removeItem('processedData');
+            localStorage.removeItem('stocksData');
+            localStorage.setItem('lastUploadedFileName', DEFAULT_STOCKS_DATA_FILE);
+            localStorage.removeItem('lastUploadedFileSize');
+            
+            showNotification('🗑️ تم مسح الملف', 'info');
+        });
+
+        // ==================== بدء التشغيل ====================
+        (async function initializeMainPage() {
+            if (window.__stockDataRestorePromise) {
+                try {
+                    await window.__stockDataRestorePromise;
+                } catch {
+                }
+            }
+
+            loadPortfolio();
+            setActiveDataSource(DEFAULT_STOCKS_DATA_FILE);
+
+            restorePersistedData();
+
+            if (!stocksData) {
+                const loadedFromDataFolder = await loadDefaultDataFile();
+                if (!loadedFromDataFolder) {
+                    restorePersistedData();
+                }
+            }
+
+            if (!stocksData) {
+                updatePagesState(false);
+            }
+        })();
+    </script>
+</body>
+</html>

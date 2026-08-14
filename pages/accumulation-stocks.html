@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 أسهم التجميع - نطاق سعري ضيق</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1350px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 16px 20px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+        .header h2 { color: #fbbf24; display:flex; align-items:center; gap:10px; }
+        .tools { padding: 12px 16px; background:#0f172a; border-bottom:1px solid #334155; display:grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap:10px; }
+        .tool label { display:block; color:#94a3b8; font-size:.86em; margin-bottom:5px; }
+        .tool input { width:100%; background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:10px; padding:8px 10px; }
+        .btns { display:flex; gap:8px; align-items:end; }
+        .btn { border:none; border-radius:50px; padding:9px 14px; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:8px; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+        .meta { padding: 12px 16px; border-bottom:1px solid #334155; background:#111827; color:#cbd5e1; }
+        .table-wrap { padding: 15px; overflow-x:auto; background:#0f172a; }
+        table { width:100%; border-collapse: collapse; }
+        th { background: linear-gradient(135deg, #10b981, #059669); color:#fff; padding:11px; text-align:center; }
+        th.sortable { cursor:pointer; user-select:none; }
+        td { border-bottom:1px solid #334155; padding:10px; text-align:center; }
+        tr:hover { background:#334155; }
+        .up { color:#10b981; font-weight:700; }
+        .mid { color:#fbbf24; font-weight:700; }
+        .down { color:#ef4444; font-weight:700; }
+        .badge { display:inline-block; padding:3px 10px; border-radius:40px; font-size:.82em; font-weight:700; }
+        .b-strong { background:#059669; color:#fff; }
+        .b-good { background:#2563eb; color:#fff; }
+        .b-watch { background:#6b7280; color:#fff; }
+        .b-hidden { background:#7c3aed; color:#fff; }
+        .empty { margin:20px; padding:24px; text-align:center; border:1px dashed #fbbf24; border-radius:12px; color:#fbbf24; background: rgba(251,191,36,.08); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-layer-group"></i> أسهم التجميع - نطاق سعري ضيق</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="loadAccumulation()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <div class="tools">
+            <div class="tool">
+                <label>فترة الفحص (أيام)</label>
+                <input id="lookbackInput" type="number" min="20" max="180" value="40">
+            </div>
+            <div class="tool">
+                <label>أقل بيانات مطلوبة</label>
+                <input id="minDaysInput" type="number" min="20" max="180" value="35">
+            </div>
+            <div class="tool">
+                <label>أقصى عرض نطاق %</label>
+                <input id="maxRangeInput" type="number" min="2" max="25" step="0.5" value="10">
+            </div>
+            <div class="tool">
+                <label>أقصى تذبذب يومي %</label>
+                <input id="maxVolInput" type="number" min="0.5" max="8" step="0.1" value="2.2">
+            </div>
+            <div class="tool">
+                <label>فلتر البحث</label>
+                <input id="searchInput" type="text" placeholder="اكتب الرمز أو الاسم...">
+            </div>
+            <div class="btns">
+                <button class="btn btn-info" onclick="resetDefaults()"><i class="fas fa-rotate-left"></i> افتراضي</button>
+            </div>
+        </div>
+
+        <div class="meta" id="metaInfo">جاري التحليل...</div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد أسهم مطابقة حالياً</h3>
+            <p>تأكد من تحميل بيانات تاريخية كافية ثم جرّب تقليل الشروط.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="accTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th class="sortable" onclick="setSort('symbol')">الرمز</th>
+                        <th class="sortable" onclick="setSort('name')">الشركة</th>
+                        <th class="sortable" onclick="setSort('stabilityDays')">أيام الاستقرار</th>
+                        <th class="sortable" onclick="setSort('daysUsed')">الأيام</th>
+                        <th class="sortable" onclick="setSort('rangePct')">عرض النطاق %</th>
+                        <th class="sortable" onclick="setSort('dailyVolPct')">تذبذب يومي %</th>
+                        <th class="sortable" onclick="setSort('trendPct')">اتجاه صافي %</th>
+                        <th class="sortable" onclick="setSort('volumeGrowthPct')">نمو السيولة %</th>
+                        <th class="sortable" onclick="setSort('volumeBalance')">توازن الحجم</th>
+                        <th class="sortable" onclick="setSort('score')">درجة التجميع</th>
+                        <th>التصنيف</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let accumulationRows = [];
+        let sortState = { key: 'score', dir: 'desc' };
+
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function toNum(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {
+                }
+            }
+            return [];
+        }
+
+        function getCandles(company) {
+            const rows = company?.historical || company?.daily || [];
+            const candles = rows.map(row => {
+                const close = toNum(row?.close ?? row?.price ?? row?.value);
+                const high = toNum(row?.high ?? row?.h ?? row?.close ?? row?.price ?? row?.value);
+                const low = toNum(row?.low ?? row?.l ?? row?.close ?? row?.price ?? row?.value);
+                const volume = toNum(row?.volume ?? row?.vol ?? 0) || 0;
+                return {
+                    date: row?.date,
+                    close,
+                    high: Number.isFinite(high) ? high : close,
+                    low: Number.isFinite(low) ? low : close,
+                    volume
+                };
+            }).filter(c => c.date && Number.isFinite(c.close));
+
+            candles.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            return candles;
+        }
+
+        function avg(list) {
+            const vals = list.filter(Number.isFinite);
+            if (!vals.length) return 0;
+            return vals.reduce((sum, v) => sum + v, 0) / vals.length;
+        }
+
+        function calcAccumulationForCompany(company, lookback, minDays, maxRange, maxVol) {
+            const candles = getCandles(company);
+            if (candles.length < minDays) return null;
+
+            const slice = candles.slice(-Math.min(lookback, candles.length));
+            if (slice.length < minDays) return null;
+
+            const closes  = slice.map(x => x.close).filter(Number.isFinite);
+            const highs   = slice.map(x => x.high).filter(Number.isFinite);
+            const lows    = slice.map(x => x.low).filter(Number.isFinite);
+            const volumes = slice.map(x => x.volume).filter(Number.isFinite);
+
+            if (!closes.length || !highs.length || !lows.length) return null;
+
+            const minLow  = Math.min(...lows);
+            const maxHigh = Math.max(...highs);
+            const avgClose = avg(closes);
+            if (!Number.isFinite(avgClose) || avgClose <= 0) return null;
+
+            const rangePct = ((maxHigh - minLow) / avgClose) * 100;
+
+            const dailyMoves = [];
+            for (let i = 1; i < closes.length; i++) {
+                const prev = closes[i - 1];
+                const curr = closes[i];
+                if (prev > 0) dailyMoves.push(Math.abs((curr - prev) / prev) * 100);
+            }
+            const dailyVolPct = avg(dailyMoves);
+
+            const first   = closes[0];
+            const last    = closes[closes.length - 1];
+            const trendPct = first > 0 ? ((last - first) / first) * 100 : 0;
+
+            const half = Math.max(1, Math.floor(volumes.length / 2));
+            const firstHalfAvgVol  = avg(volumes.slice(0, half));
+            const secondHalfAvgVol = avg(volumes.slice(-half));
+            const volumeBalance = firstHalfAvgVol > 0 ? (secondHalfAvgVol / firstHalfAvgVol) : 1;
+
+            // نمو السيولة: النسبة المئوية لنمو متوسط حجم النصف الثاني مقارنةً بالأول
+            const volumeGrowthPct = firstHalfAvgVol > 0
+                ? ((secondHalfAvgVol - firstHalfAvgVol) / firstHalfAvgVol) * 100
+                : 0;
+
+            // عداد أيام الاستقرار: أيام تذبذبت بأقل من التذبذب اليومي المسموح (maxVol)
+            let stabilityDays = 0;
+            for (let i = 1; i < closes.length; i++) {
+                const prev = closes[i - 1];
+                const curr = closes[i];
+                if (prev > 0 && Math.abs((curr - prev) / prev) * 100 <= maxVol) {
+                    stabilityDays++;
+                }
+            }
+
+            const positionInRange = (maxHigh - minLow) > 0 ? ((last - minLow) / (maxHigh - minLow)) : 0.5;
+
+            let score = 0;
+
+            if (rangePct <= maxRange) score += 25;
+            else if (rangePct <= maxRange * 1.35) score += 12;
+
+            if (dailyVolPct <= maxVol) score += 22;
+            else if (dailyVolPct <= maxVol * 1.4) score += 10;
+
+            const absTrend = Math.abs(trendPct);
+            if (absTrend <= 3) score += 20;
+            else if (absTrend <= 6) score += 12;
+            else if (absTrend <= 9) score += 5;
+            else score -= 6;
+
+            if (volumeBalance >= 0.9 && volumeBalance <= 1.5) score += 15;
+            else if (volumeBalance >= 0.75 && volumeBalance <= 1.8) score += 8;
+
+            if (positionInRange >= 0.35 && positionInRange <= 0.75) score += 10;
+            else if (positionInRange < 0.2 || positionInRange > 0.9) score -= 4;
+
+            // بونس التجميع الخفي: تذبذب ضيق + نمو سيولة + سعر ثابت
+            const isHiddenAcc = dailyVolPct < 1.5 && volumeGrowthPct >= 10 && absTrend <= 4;
+            if (isHiddenAcc) score += 8;
+
+            const isCandidate = score >= 55 && rangePct <= (maxRange * 1.6) && dailyVolPct <= (maxVol * 1.8);
+            if (!isCandidate) return null;
+
+            return {
+                symbol: String(company?.symbol || '').toUpperCase(),
+                name: company?.longName || company?.shortName || company?.symbol || '-',
+                stabilityDays,
+                daysUsed: slice.length,
+                rangePct,
+                dailyVolPct,
+                trendPct,
+                volumeGrowthPct,
+                volumeBalance,
+                score,
+                isHiddenAcc
+            };
+        }
+
+        function getBadge(score, isHiddenAcc) {
+            if (isHiddenAcc) return '<span class="badge b-hidden">تجميع خفي</span>';
+            if (score >= 75) return '<span class="badge b-strong">تجميع قوي</span>';
+            if (score >= 62) return '<span class="badge b-good">تجميع محتمل</span>';
+            return '<span class="badge b-watch">متابعة</span>';
+        }
+
+        function compareRows(a, b, key, dir) {
+            const av = a?.[key];
+            const bv = b?.[key];
+            const bothNumbers = Number.isFinite(Number(av)) && Number.isFinite(Number(bv));
+            const cmp = bothNumbers
+                ? (Number(av) - Number(bv))
+                : String(av ?? '').localeCompare(String(bv ?? ''), 'ar', { sensitivity: 'base' });
+            return dir === 'asc' ? cmp : -cmp;
+        }
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.dir = (key === 'name' || key === 'symbol') ? 'asc' : 'desc';
+            }
+            renderTable();
+        }
+
+        function renderTable() {
+            const term = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+            const body = document.getElementById('tableBody');
+            const table = document.getElementById('accTable');
+            const noData = document.getElementById('noData');
+            const meta = document.getElementById('metaInfo');
+
+            const filtered = accumulationRows
+                .filter(r => {
+                    if (!term) return true;
+                    return String(r.symbol || '').toLowerCase().includes(term) || String(r.name || '').toLowerCase().includes(term);
+                })
+                .sort((a, b) => compareRows(a, b, sortState.key, sortState.dir));
+
+            if (!filtered.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                meta.textContent = accumulationRows.length ? 'لا توجد نتائج مطابقة للبحث الحالي.' : 'لا توجد أسهم تستوفي شروط التجميع الآن.';
+                return;
+            }
+
+            body.innerHTML = filtered.map((r, idx) => {
+                const rangeCls   = r.rangePct <= 8 ? 'up' : r.rangePct <= 12 ? 'mid' : 'down';
+                const volCls     = r.dailyVolPct <= 1.6 ? 'up' : r.dailyVolPct <= 2.4 ? 'mid' : 'down';
+                const trendCls   = Math.abs(r.trendPct) <= 4 ? 'up' : Math.abs(r.trendPct) <= 7 ? 'mid' : 'down';
+                const volBalCls  = (r.volumeBalance >= 0.9 && r.volumeBalance <= 1.5) ? 'up' : 'mid';
+                const growthCls  = r.volumeGrowthPct >= 10 ? 'up' : r.volumeGrowthPct >= 0 ? 'mid' : 'down';
+                const stabCls    = r.stabilityDays >= 20 ? 'up' : r.stabilityDays >= 10 ? 'mid' : '';
+                return `
+                    <tr onclick="openStockAnalysis('${r.symbol}')" style="cursor:pointer;">
+                        <td>${idx + 1}</td>
+                        <td style="color:#fbbf24;font-weight:700;">${r.symbol}</td>
+                        <td>${r.name}</td>
+                        <td class="${stabCls}">${r.stabilityDays} يوم</td>
+                        <td>${r.daysUsed}</td>
+                        <td class="${rangeCls}">${r.rangePct.toFixed(2)}%</td>
+                        <td class="${volCls}">${r.dailyVolPct.toFixed(2)}%</td>
+                        <td class="${trendCls}">${r.trendPct.toFixed(2)}%</td>
+                        <td class="${growthCls}">${r.volumeGrowthPct.toFixed(1)}%</td>
+                        <td class="${volBalCls}">${r.volumeBalance.toFixed(2)}x</td>
+                        <td class="up">${r.score.toFixed(1)}</td>
+                        <td>${getBadge(r.score, r.isHiddenAcc)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            meta.textContent = `عدد الأسهم المرشحة للتجميع: ${filtered.length} | مرتبة حسب ${sortState.key} (${sortState.dir === 'asc' ? 'تصاعدي' : 'تنازلي'})`;
+        }
+
+        function loadAccumulation() {
+            const lookback = Math.max(20, Number(document.getElementById('lookbackInput')?.value || 40));
+            const minDays = Math.max(20, Number(document.getElementById('minDaysInput')?.value || 35));
+            const maxRange = Math.max(2, Number(document.getElementById('maxRangeInput')?.value || 10));
+            const maxVol = Math.max(0.5, Number(document.getElementById('maxVolInput')?.value || 2.2));
+
+            const stocks = readStocksData();
+            const rows = [];
+
+            stocks.forEach(company => {
+                const row = calcAccumulationForCompany(company, lookback, minDays, maxRange, maxVol);
+                if (row && row.symbol) rows.push(row);
+            });
+
+            rows.sort((a, b) => (b.score - a.score) || (a.rangePct - b.rangePct));
+            accumulationRows = rows;
+            renderTable();
+        }
+
+        function resetDefaults() {
+            document.getElementById('lookbackInput').value = 40;
+            document.getElementById('minDaysInput').value = 35;
+            document.getElementById('maxRangeInput').value = 10;
+            document.getElementById('maxVolInput').value = 2.2;
+            document.getElementById('searchInput').value = '';
+            loadAccumulation();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', renderTable);
+            }
+
+            ['lookbackInput', 'minDaysInput', 'maxRangeInput', 'maxVolInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', loadAccumulation);
+            });
+
+            loadAccumulation();
+        });
+    </script>
+</body>
+</html>

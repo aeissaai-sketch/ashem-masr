@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔄 لوحة مراقبة تدوير السيولة وحركة القطاعات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="shared-analysis.js"></script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --gold: #fbbf24;
+            --green: #10b981;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Style */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            margin-bottom: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), #f59e0b);
+            color: #0f172a;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.35);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--gold);
+        }
+
+        /* Top Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .stat-icon.gold { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Cycle Flow Section */
+        .section-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(12px);
+            margin-bottom: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-box h2 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .cycle-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .cycle-step {
+            flex: 1;
+            min-width: 160px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .cycle-step.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        .cycle-step .step-num {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .cycle-step.active .step-num {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .cycle-step h4 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .cycle-step p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .cycle-arrow {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            animation: pulseArrow 1.5s infinite;
+        }
+
+        @keyframes pulseArrow {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+
+        /* Two Column Layout */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Table & Lists Styles */
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .sector-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Exposure Progress Bar */
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-bg {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        /* Alerts */
+        .alert-box {
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 12px;
+            font-size: 0.9rem;
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .alert-warning {
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.2);
+            color: #fde047;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .alert-box i {
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        /* Details Modal or Panel */
+        .details-panel {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Value Colors */
+        .val-up { color: var(--green); font-weight: 700; }
+        .val-down { color: var(--red); font-weight: 700; }
+        .val-neutral { color: var(--text-secondary); }
+
+        /* Guide / Info List */
+        .guide-list {
+            list-style: none;
+        }
+
+        .guide-list li {
+            position: relative;
+            padding-right: 20px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .guide-list li::before {
+            content: "•";
+            position: absolute;
+            right: 0;
+            color: var(--gold);
+            font-size: 1.2rem;
+            top: -2px;
+        }
+
+        .guide-list strong {
+            color: var(--text-primary);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-sync-alt"></i> مراقب تدوير السيولة وحركة القطاعات</h1>
+                <p>تحليل حركة التدفق المالي بين القطاعات المصرية وتوقع القطاع التالي مع دراسة تعرض محفظتك</p>
+            </div>
+            <div class="header-btns">
+                <button class="btn btn-secondary" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="initDashboard()"><i class="fas fa-sync-alt"></i> تحديث التحليل</button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-fire"></i></div>
+                <div class="stat-info">
+                    <h3>القطاع النشط حالياً</h3>
+                    <p id="activeSectorText">جاري الحساب...</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fas fa-box-open"></i></div>
+                <div class="stat-info">
+                    <h3>القطاع القادم المتوقع (تجميع)</h3>
+                    <p id="nextSectorText">جاري الحساب...</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-coins"></i></div>
+                <div class="stat-info">
+                    <h3>متوسط سيولة السوق</h3>
+                    <p id="marketVolumeRatio">جاري الحساب...</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-wallet"></i></div>
+                <div class="stat-info">
+                    <h3>التعرض لقطاع محفظتك الأكبر</h3>
+                    <p id="portfolioMaxExposure">جاري الحساب...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cycle Flow Section -->
+        <div class="section-box">
+            <h2><i class="fas fa-circle-notch"></i> الدورة التقليدية لانتقال السيولة في البورصة المصرية</h2>
+            <div class="cycle-flow">
+                <div class="cycle-step" id="step-realestate">
+                    <span class="step-num">1</span>
+                    <h4>العقارات والبنوك</h4>
+                    <p>المحرك الرئيسي والتحوط الأول للمؤسسات</p>
+                </div>
+                <div class="cycle-arrow"><i class="fas fa-chevron-left"></i></div>
+                <div class="cycle-step" id="step-finance">
+                    <span class="step-num">2</span>
+                    <h4>الخدمات المالية</h4>
+                    <p>شركات الاستثمار والوساطة المرافقة لنشاط التداول</p>
+                </div>
+                <div class="cycle-arrow"><i class="fas fa-chevron-left"></i></div>
+                <div class="cycle-step" id="step-industry">
+                    <span class="step-num">3</span>
+                    <h4>الموارد والصناعة</h4>
+                    <p>البتروكيماويات، الأسمدة والأسمنت (شركات الدولار)</p>
+                </div>
+                <div class="cycle-arrow"><i class="fas fa-chevron-left"></i></div>
+                <div class="cycle-step" id="step-food">
+                    <span class="step-num">4</span>
+                    <h4>الأغذية والرعاية</h4>
+                    <p>القطاع الدفاعي الملاذ الآمن للاحتفاظ</p>
+                </div>
+                <div class="cycle-arrow"><i class="fas fa-chevron-left"></i></div>
+                <div class="cycle-step" id="step-speculation">
+                    <span class="step-num">5</span>
+                    <h4>أسهم المضاربة (70)</h4>
+                    <p>المحطة الأخيرة لتحقيق أرباح سريعة قبل التصحيح</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Column Main Grid -->
+        <div class="layout-grid">
+            <!-- Right / Left Side (Sectors Table) -->
+            <div class="section-box">
+                <h2><i class="fas fa-list-alt"></i> جدول حالة وتحليل قطاعات السوق</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اسم القطاع</th>
+                                <th>عدد الأسهم</th>
+                                <th>متوسط التغير اليومي</th>
+                                <th>معدل السيولة (النسبي)</th>
+                                <th>متوسط RSI</th>
+                                <th>مرحلة الدوران الفنية</th>
+                                <th>درجة التراكم (التوقع)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sectorsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                                    <i class="fas fa-spinner fa-spin"></i> جاري استرجاع البيانات وحساب مؤشرات القطاعات...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="details-panel" id="sectorDetailsBox" style="display:none;">
+                    <h3 style="color:var(--gold); margin-bottom: 10px;" id="detailsSectorTitle">أسهم قطاع</h3>
+                    <div class="table-wrap">
+                        <table style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>الرمز</th>
+                                    <th>الشركة</th>
+                                    <th>السعر</th>
+                                    <th>التغير</th>
+                                    <th>RSI</th>
+                                    <th>معدل السيولة</th>
+                                    <th>التوصية</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Left / Right Side (Portfolio Exposure & Educational Guide) -->
+            <div>
+                <!-- Portfolio exposure -->
+                <div class="section-box">
+                    <h2><i class="fas fa-chart-pie"></i> توزيع محفظتك قطاعياً</h2>
+                    <div id="portfolioAlertsContainer"></div>
+                    <div id="portfolioExposureContainer">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 20px;">جاري تحميل محفظتك الشخصية ومطابقتها قطاعياً...</p>
+                    </div>
+                </div>
+
+                <!-- Educational Guide -->
+                <div class="section-box">
+                    <h2><i class="fas fa-graduation-cap"></i> دليل التداول في تدوير السيولة</h2>
+                    <ul class="guide-list">
+                        <li><strong>القاعدة الذهبية:</strong> لا تلاحق السهم بعد ارتفاعه في قطاع مشتعل؛ بل ابحث عن قادة القطاع التالي الذي في حالة تجميع هادئ.</li>
+                        <li><strong>إشارة السيولة المبكرة:</strong> زيادة حجم التداول اليومي لعدة جلسات متتالية لأسهم قطاع ما مع استقرار سعري هي إشارة مؤكدة لدخول صناع السوق.</li>
+                        <li><strong>تحديد القادة:</strong> في كل قطاع هناك "قائد" (مثلاً TMGH في العقارات، SWDY في الصناعة، EFID في الأغذية) يتحرك أولاً، ثم تتبعه بقية أسهم القطاع (Sympathy Play).</li>
+                        <li><strong>وقف الخسارة وجني الأرباح:</strong> عند دخول قطاع نائم، ضع وقف خسارة قريب أسفل الدعم التاريخي، وقم بتسييل مراكزك تدريجياً فور صعود القطاع ووصول مؤشر القوة النسبية (RSI) لمستويات تشبع الشراء (فوق 70).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SECTOR_CONFIG = {
+            'عقارات': { color: 'blue', stepId: 'step-realestate' },
+            'مقاولات و إنشاءات هندسية': { color: 'blue', stepId: 'step-realestate' },
+            'بنوك': { color: 'purple', stepId: 'step-finance' },
+            'خدمات مالية غير مصرفية': { color: 'purple', stepId: 'step-finance' },
+            'موارد أساسية': { color: 'green', stepId: 'step-industry' },
+            'خدمات و منتجات صناعية وسيارات': { color: 'green', stepId: 'step-industry' },
+            'مواد البناء': { color: 'green', stepId: 'step-industry' },
+            'أغذية و مشروبات و تبغ': { color: 'gold', stepId: 'step-food' },
+            'رعاية صحية و ادوية': { color: 'gold', stepId: 'step-food' }
+        };
+
+        let SECTORS = {};
+        let processedStocksMap = {};
+
+        async function initDashboard() {
+            // Wait for bridge restore
+            if (window.__stockDataRestorePromise) {
+                await window.__stockDataRestorePromise;
+            }
+
+            // Extract processed data from storage
+            let processedData = [];
+            try {
+                const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+                if (raw) processedData = JSON.parse(raw);
+            } catch (e) {
+                console.error("Failed loading processed data:", e);
+            }
+
+            // Parse processed data into mapping
+            processedStocksMap = {};
+            if (Array.isArray(processedData)) {
+                processedData.forEach(row => {
+                    processedStocksMap[String(row.symbol).toUpperCase()] = row;
+                });
+            }
+
+            // Fetch fresh stock data with sectors if missing
+            let stocksList = [];
+            if (window.stocksData && window.stocksData.length > 0 && window.stocksData.some(c => c.sector)) {
+                stocksList = window.stocksData;
+            } else {
+                try {
+                    const stamp = Date.now();
+                    const res = await fetch(`../Data/stock_data.json?_ts=${stamp}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        const rawData = await res.json();
+                        const source = rawData.companies || rawData || {};
+                        stocksList = Array.isArray(source) ? source : Object.values(source);
+                        window.stocksData = stocksList;
+                    }
+                } catch (e) {
+                    console.error("Failed fetching fresh stock data:", e);
+                }
+            }
+
+            // Build dynamic SECTORS object
+            SECTORS = {};
+            stocksList.forEach(company => {
+                const symbol = String(company.symbol || '').toUpperCase().trim();
+                if (!symbol) return;
+                
+                const sectorName = company.sector || 'غير مصنف';
+                
+                if (!SECTORS[sectorName]) {
+                    SECTORS[sectorName] = {
+                        name: sectorName,
+                        symbols: [],
+                        color: SECTOR_CONFIG[sectorName]?.color || 'grey',
+                        stepId: SECTOR_CONFIG[sectorName]?.stepId || 'step-speculation'
+                    };
+                }
+                SECTORS[sectorName].symbols.push(symbol);
+            });
+
+            // Read portfolio.json
+            let portfolioData = [];
+            try {
+                const stamp = Date.now();
+                const res = await fetch(`../Data/portfolio.json?_ts=${stamp}`, { cache: 'no-store' });
+                if (res.ok) {
+                    portfolioData = await res.json();
+                }
+            } catch (e) {
+                console.error("Failed fetching portfolio:", e);
+            }
+
+            // Calculate sector stats
+            const sectorStats = calculateSectorStats();
+            
+            // Render UI
+            renderSectorsTable(sectorStats);
+            renderStatsGrid(sectorStats);
+            renderCycleFlowHighlight(sectorStats);
+            renderPortfolioExposure(portfolioData);
+        }
+
+        function calculateSectorStats() {
+            const stats = {};
+            
+            let totalMarketVolRatio = 0;
+            let marketCount = 0;
+
+            Object.entries(SECTORS).forEach(([key, sector]) => {
+                let count = 0;
+                let sumChange = 0;
+                let sumVolRatio = 0;
+                let sumRsi = 0;
+                const stocksInSector = [];
+
+                sector.symbols.forEach(sym => {
+                    const row = processedStocksMap[sym];
+                    if (row) {
+                        count++;
+                        sumChange += Number(row.change || 0);
+                        sumVolRatio += Number(row.volumeRatio || 1);
+                        sumRsi += Number(row.rsi || 50);
+                        stocksInSector.push(row);
+                    }
+                });
+
+                // Skip rendering empty sectors in the main table to keep it clean
+                if (count === 0) return;
+
+                const avgChange = count > 0 ? (sumChange / count) : 0;
+                const avgVolRatio = count > 0 ? (sumVolRatio / count) : 1;
+                const avgRsi = count > 0 ? (sumRsi / count) : 50;
+
+                // Determine rotation stage
+                let stage = 'ترقب وهدوء عرضي';
+                let stageClass = 'b-watch';
+                let score = 50; // Accumulation score out of 100
+
+                if (avgVolRatio > 1.4 && avgChange > 1.2) {
+                    stage = 'صعود نشط ودخول سيولة';
+                    stageClass = 'val-up';
+                    score = 40; // Already rallying, not accumulation
+                } else if (avgVolRatio > 1.15 && avgChange >= -0.6 && avgChange <= 0.8) {
+                    stage = 'تجميع صامت وقريب من دعم';
+                    stageClass = 'val-neutral';
+                    score = 85; // Great accumulation candidate!
+                } else if (avgRsi > 70) {
+                    stage = 'ذروة شراء وجني أرباح';
+                    stageClass = 'val-down';
+                    score = 20; // Overbought, high risk
+                } else if (avgRsi < 36) {
+                    stage = 'قاع تاريخي وتجميع قوي';
+                    stageClass = 'val-neutral';
+                    score = 90; // High score, oversold
+                } else if (avgChange < -1.5) {
+                    stage = 'خروج سيولة وتصحيح مؤقت';
+                    stageClass = 'val-down';
+                    score = 70; // Buying the correction dip
+                }
+
+                // Adjust score based on indicators
+                if (avgVolRatio > 1.1 && avgVolRatio < 1.3) score += 10;
+                if (avgRsi >= 40 && avgRsi <= 50) score += 10;
+
+                stats[key] = {
+                    key: key,
+                    name: sector.name,
+                    count: count,
+                    avgChange: avgChange,
+                    avgVolRatio: avgVolRatio,
+                    avgRsi: avgRsi,
+                    stage: stage,
+                    stageClass: stageClass,
+                    score: Math.min(score, 100),
+                    stocks: stocksInSector,
+                    color: sector.color
+                };
+
+                totalMarketVolRatio += sumVolRatio;
+                marketCount += count;
+            });
+
+            // Fallback for global stats if needed
+            stats._marketAvgVolRatio = marketCount > 0 ? (totalMarketVolRatio / marketCount) : 1.0;
+
+            return stats;
+        }
+
+        function renderSectorsTable(sectorStats) {
+            const tbody = document.getElementById('sectorsTableBody');
+            tbody.innerHTML = '';
+
+            Object.values(sectorStats).forEach(sector => {
+                if (typeof sector !== 'object' || !sector.name) return;
+
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => showSectorDetails(sector);
+
+                const changeClass = sector.avgChange > 0 ? 'val-up' : (sector.avgChange < 0 ? 'val-down' : 'val-neutral');
+                const changeSign = sector.avgChange > 0 ? '+' : '';
+
+                tr.innerHTML = `
+                    <td style="font-weight: 700; color: var(--gold);">${sector.name}</td>
+                    <td>${sector.count} أسهم</td>
+                    <td class="${changeClass}">${changeSign}${sector.avgChange.toFixed(2)}%</td>
+                    <td>${sector.avgVolRatio.toFixed(2)}x</td>
+                    <td>${sector.avgRsi.toFixed(1)}</td>
+                    <td class="${sector.stageClass}" style="font-weight:700;">${sector.stage}</td>
+                    <td>
+                        <span class="sector-badge" style="background: rgba(251, 191, 36, 0.15); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.3)">
+                            ${sector.score} / 100
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showSectorDetails(sector) {
+            const box = document.getElementById('sectorDetailsBox');
+            const title = document.getElementById('detailsSectorTitle');
+            const tbody = document.getElementById('detailsTableBody');
+
+            title.textContent = `تفاصيل أسهم قطاع: ${sector.name}`;
+            tbody.innerHTML = '';
+
+            if (sector.stocks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-secondary);">لا تتوفر تفاصيل لأسهم هذا القطاع في قاعدة البيانات الحالية.</td></tr>';
+            } else {
+                sector.stocks.forEach(stock => {
+                    const tr = document.createElement('tr');
+                    const changeVal = Number(stock.change || 0);
+                    const changeClass = changeVal > 0 ? 'val-up' : (changeVal < 0 ? 'val-down' : 'val-neutral');
+                    const changeSign = changeVal > 0 ? '+' : '';
+
+                    let recText = 'احتفاظ';
+                    let recClass = 'val-neutral';
+                    if (stock.recommendation === 'strong_buy') { recText = 'شراء قوي'; recClass = 'val-up'; }
+                    else if (stock.recommendation === 'buy') { recText = 'شراء'; recClass = 'val-up'; }
+                    else if (stock.recommendation === 'sell') { recText = 'تخفيف/بيع'; recClass = 'val-down'; }
+
+                    tr.innerHTML = `
+                        <td style="font-weight:700;">${stock.symbol}</td>
+                        <td style="color:var(--text-secondary);">${stock.name || stock.symbol}</td>
+                        <td style="font-weight:700;">${Number(stock.currentPrice || 0).toFixed(2)} ج.م</td>
+                        <td class="${changeClass}">${changeSign}${changeVal.toFixed(2)}%</td>
+                        <td>${Number(stock.rsi || 50).toFixed(1)}</td>
+                        <td>${Number(stock.volumeRatio || 1).toFixed(2)}x</td>
+                        <td class="${recClass}" style="font-weight:700;">${recText}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function renderStatsGrid(sectorStats) {
+            // Find active sector (highest volume ratio)
+            let activeSector = null;
+            let maxVol = 0;
+            // Find accumulating sector (highest score)
+            let accSector = null;
+            let maxScore = 0;
+
+            Object.values(sectorStats).forEach(s => {
+                if (typeof s !== 'object' || !s.name) return;
+                if (s.avgVolRatio > maxVol) {
+                    maxVol = s.avgVolRatio;
+                    activeSector = s;
+                }
+                if (s.score > maxScore) {
+                    maxScore = s.score;
+                    accSector = s;
+                }
+            });
+
+            if (activeSector) {
+                document.getElementById('activeSectorText').textContent = activeSector.name;
+            }
+            if (accSector) {
+                document.getElementById('nextSectorText').textContent = `${accSector.name} (${accSector.score}/100)`;
+            }
+
+            const marketAvg = sectorStats._marketAvgVolRatio || 1.0;
+            document.getElementById('marketVolumeRatio').textContent = `${marketAvg.toFixed(2)}x ${marketAvg > 1.2 ? '(مرتفعة)' : '(طبيعية)'}`;
+        }
+
+        function renderCycleFlowHighlight(sectorStats) {
+            // Remove active highlights
+            document.querySelectorAll('.cycle-step').forEach(el => el.classList.remove('active'));
+
+            // Check which sector is leading
+            let leadingKey = null;
+            let maxVol = 0;
+            Object.entries(sectorStats).forEach(([key, s]) => {
+                if (key.startsWith('_')) return;
+                if (s.avgVolRatio > maxVol) {
+                    maxVol = s.avgVolRatio;
+                    leadingKey = key;
+                }
+            });
+
+            // Highlight the active step in rotation
+            if (leadingKey) {
+                const sector = SECTORS[leadingKey];
+                if (sector && sector.stepId) {
+                    const stepEl = document.getElementById(sector.stepId);
+                    if (stepEl) stepEl.classList.add('active');
+                }
+            }
+        }
+
+        function renderPortfolioExposure(portfolio) {
+            const container = document.getElementById('portfolioExposureContainer');
+            const alertsContainer = document.getElementById('portfolioAlertsContainer');
+            container.innerHTML = '';
+            alertsContainer.innerHTML = '';
+
+            if (!Array.isArray(portfolio) || portfolio.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">المحفظة فارغة حالياً أو غير محملة.</p>';
+                document.getElementById('portfolioMaxExposure').textContent = 'لا توجد أسهم';
+                return;
+            }
+
+            // Group portfolio by sector
+            const sectorValues = {};
+            let totalPortfolioValue = 0;
+
+            Object.keys(SECTORS).forEach(k => sectorValues[k] = 0);
+
+            portfolio.forEach(item => {
+                const qty = Number(item.quantity || 0);
+                const entry = Number(item.entryPrice || 0);
+                
+                // Get current price from processed data, fallback to entryPrice
+                const upperSym = String(item.symbol || '').toUpperCase();
+                const currentPrice = processedStocksMap[upperSym] 
+                    ? Number(processedStocksMap[upperSym].currentPrice || entry) 
+                    : entry;
+
+                const value = qty * currentPrice;
+                totalPortfolioValue += value;
+
+                // Find sector
+                let foundSector = 'others';
+                Object.entries(SECTORS).forEach(([key, sector]) => {
+                    if (key !== 'others' && sector.symbols.includes(upperSym)) {
+                        foundSector = key;
+                    }
+                });
+
+                // If foundSector is still others, let's see if the company has a sector in window.stocksData
+                if (foundSector === 'others' && window.stocksData) {
+                    const comp = window.stocksData.find(c => String(c.symbol).toUpperCase() === upperSym);
+                    if (comp && comp.sector && SECTORS[comp.sector]) {
+                        foundSector = comp.sector;
+                    }
+                }
+
+                if (!sectorValues[foundSector]) sectorValues[foundSector] = 0;
+                sectorValues[foundSector] += value;
+            });
+
+            if (totalPortfolioValue === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">إجمالي قيمة المحفظة صفر.</p>';
+                return;
+            }
+
+            // Sort sectors by exposure value
+            const sortedExposure = Object.entries(sectorValues)
+                .map(([key, val]) => {
+                    const name = SECTORS[key] ? SECTORS[key].name : key;
+                    const pct = (val / totalPortfolioValue) * 100;
+                    return { key, name, value: val, percentage: pct };
+                })
+                .filter(exp => exp.value > 0)
+                .sort((a, b) => b.percentage - a.percentage);
+
+            if (sortedExposure.length > 0) {
+                // Display exposure max text
+                const topExp = sortedExposure[0];
+                document.getElementById('portfolioMaxExposure').textContent = `${topExp.name} (${topExp.percentage.toFixed(1)}%)`;
+            }
+
+            // Draw progress bars
+            sortedExposure.forEach(exp => {
+                const cardHtml = `
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span style="font-weight: 700; color: #fff;">${exp.name}</span>
+                            <span style="color: var(--gold); font-weight:700;">${exp.percentage.toFixed(1)}% (${exp.value.toLocaleString('ar-EG', {maximumFractionDigits: 0})} ج.م)</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${exp.percentage}%; background: ${exp.key === 'others' || exp.key === 'غير مصنف' ? '#6b7280' : 'var(--blue)'};"></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+
+                // Alert if single sector exposure > 25%
+                if (exp.percentage > 25 && exp.key !== 'others' && exp.key !== 'غير مصنف') {
+                    const alertHtml = `
+                        <div class="alert-box alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <strong>تنبيه تركز استثماري:</strong> قطاع <strong>"${exp.name}"</strong> يمثل <strong>${exp.percentage.toFixed(1)}%</strong> من محفظتك. هذا تركيز عالٍ جداً؛ يفضل التوزيع لتقليل المخاطر.
+                            </div>
+                        </div>
+                    `;
+                    alertsContainer.innerHTML += alertHtml;
+                }
+            });
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>

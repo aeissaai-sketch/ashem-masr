@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 الجدول الرئيسي - منصة تحليل الأسهم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script src="global-sidebar.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <style>
+        /* نفس التنسيقات الأساسية */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 15px 20px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header h2 {
+            color: #fbbf24;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .tools-bar {
+            padding: 15px 20px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 50px;
+            color: #e2e8f0;
+            font-size: 0.95em;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #fbbf24;
+        }
+
+        .filter-cards {
+            padding: 6px 12px;
+            background: #111827;
+            border-bottom: 1px solid #334155;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 6px;
+        }
+
+        .filter-card {
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 5px 8px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #e2e8f0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-align: right;
+        }
+
+        .filter-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .filter-card.active {
+            border-color: #fbbf24;
+            box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.35);
+            background: linear-gradient(135deg, #1f3b70, #1e293b);
+        }
+
+        .filter-card:disabled {
+            opacity: 0.3;
+            cursor: not-allowed !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .filter-card .label {
+            font-size: 0.78em;
+            color: #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-card .count {
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 0.82em;
+        }
+
+        .table-container {
+            padding: 15px;
+            overflow-x: auto;
+            background: #0f172a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0f172a;
+            padding: 12px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        th:hover {
+            background: rgba(251, 191, 36, 0.8);
+        }
+
+        td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        tr:hover {
+            background: #334155;
+        }
+
+        .price-up { color: #10b981; font-weight: bold; }
+        .price-down { color: #ef4444; font-weight: bold; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .badge-strong-buy { background: #059669; color: white; }
+        .badge-buy { background: #10b981; color: white; }
+        .badge-sell { background: #ef4444; color: white; }
+        .badge-neutral { background: #6b7280; color: white; }
+
+        .pattern-tag {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin: 1px;
+            border: 1px solid #10b981;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #94a3b8;
+        }
+
+        .loading i {
+            font-size: 3em;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ef4444;
+        }
+
+        .warning-message {
+            text-align: center;
+            padding: 40px;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 12px;
+            margin: 20px;
+            border: 1px dashed #fbbf24;
+        }
+
+        .warning-message i {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .warning-message h3 {
+            margin-bottom: 10px;
+        }
+
+        .warning-message p {
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- رأس الصفحة -->
+        <div class="header">
+            <h2>
+                <i class="fas fa-table"></i>
+                الجدول الرئيسي - جميع الأسهم
+            </h2>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button class="btn btn-warning" onclick="window.location.href='ai-session-opportunities.html'">
+                    <i class="fas fa-brain"></i> فرص الذكاء الاصطناعي للغد
+                </button>
+                <button class="btn btn-info" onclick="goBack()">
+                    <i class="fas fa-arrow-right"></i> العودة للرئيسية
+                </button>
+            </div>
+        </div>
+
+        <!-- أدوات البحث والفلترة -->
+        <div class="tools-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="بحث بالاسم أو الرمز..." onkeyup="filterTable()" disabled>
+            </div>
+            <button class="btn btn-primary" onclick="refreshData()" id="refreshBtn" disabled>
+                <i class="fas fa-sync-alt"></i> تحديث
+            </button>
+        </div>
+
+        <div class="filter-cards" id="quickFilterCards"></div>
+
+        <!-- جدول الأسهم -->
+        <div class="table-container">
+            <div id="loading" class="loading" style="display: none;">
+                <i class="fas fa-circle-notch"></i>
+                <h3>جاري تحميل البيانات...</h3>
+            </div>
+            
+            <div id="noDataMessage" class="warning-message">
+                <i class="fas fa-database"></i>
+                <h3>⚠️ لا توجد بيانات</h3>
+                <p>لم يتم تحميل أي بيانات بعد. يرجى العودة للصفحة الرئيسية ورفع ملف JSON أولاً.</p>
+                <button class="btn btn-warning" onclick="goBack()">
+                    <i class="fas fa-arrow-right"></i> الذهاب للصفحة الرئيسية
+                </button>
+            </div>
+            
+            <table id="mainTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('symbol')">الرمز <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('name')">الشركة <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('price')">السعر <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('change')">% <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('optEntry')">الدخول الأمثل <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('optEntryDiff')">البعد عن الدخول <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('volume')">حجم التداول <span class="sort-indicator">↕️</span></th>
+                        <th onclick="sortTable('rsi')">RSI <span class="sort-indicator">↕️</span></th>
+                        <th id="periodLowHeader">أدنى 60 يوم</th>
+                        <th>دعم</th>
+                        <th>مقاومة</th>
+                        <th>الأنماط</th>
+                        <th onclick="sortTable('recommendation')">توصية <span class="sort-indicator">↕️</span></th>
+                        <th>إضافة</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ==================== المتغيرات العامة ====================
+        let processedData = [];
+        let currentSort = { column: 'symbol', direction: 'asc' };
+        let activeQuickFilters = new Set();
+        let nearLowDays = 60;
+        let volumeDays = 60;
+        let historicalClosesMap = new Map();
+        let historicalLowsMap = new Map();
+        let historicalVolumesMap = new Map();
+        let historicalHighsMap = new Map();
+        let historicalOpensMap = new Map();
+
+        let minOpportunityScore = 70;
+
+        const quickFilterDefs = [
+            { key: 'all', label: 'كل الأسهم', icon: 'fa-layer-group' },
+            { key: 'golden-opp', label: 'فرص ذهبية صريحة', icon: 'fa-crown' },
+            { key: 'ai-opp-70', label: 'فرص ذكاء اصطناعي (≥70%)', icon: 'fa-brain' },
+            { key: 'invest-buy', label: 'شراء استثماري 💎', icon: 'fa-gem' },
+            { key: 'indicators-bullish', label: 'إيجابي مؤشرات 📈', icon: 'fa-wave-square' },
+            { key: 'indicators-strong-bullish', label: 'إيجابي قوي مؤشرات 🔥', icon: 'fa-fire' },
+            { key: 'next-session-opp', label: 'فرص الجلسة المقبلة', icon: 'fa-magic' },
+            { key: 'strong-buy', label: 'شراء قوي', icon: 'fa-star' },
+            { key: 'buy', label: 'شراء', icon: 'fa-check-circle' },
+            { key: 'neutral', label: 'محايد', icon: 'fa-balance-scale' },
+            { key: 'rebound', label: 'بداية ارتداد من الهبوط', icon: 'fa-undo' },
+            { key: 'accumulation', label: 'أسهم التجميع (نطاق ضيق)', icon: 'fa-box' },
+            { key: 'oversold', label: 'RSI منخفض', icon: 'fa-arrow-down' },
+            { key: 'overbought', label: 'RSI مرتفع', icon: 'fa-arrow-up' },
+            { key: 'near-support', label: 'قريبة من الدعم', icon: 'fa-life-ring' },
+            { key: 'near-resistance', label: 'قريبة من المقاومة', icon: 'fa-shield-alt' },
+            { key: 'positive-change', label: 'موجبة اليوم', icon: 'fa-bolt' },
+            { key: 'negative-change', label: 'سالبة اليوم', icon: 'fa-chart-line' },
+            { key: 'hammer', label: 'نماذج هامر', icon: 'fa-hammer' },
+            { key: 'in-portfolio', label: 'ضمن المحفظة', icon: 'fa-wallet' },
+            { key: 'strong-volume-60', label: 'حجم أعلى من المتوسط', icon: 'fa-chart-column' },
+            { key: 'near-low-60', label: 'قريب من الأدنى', icon: 'fa-arrow-trend-down' }
+        ];
+
+        // ==================== تحميل البيانات من sessionStorage فقط ====================
+        function loadData() {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('mainTable');
+            const noDataMessage = document.getElementById('noDataMessage');
+            const searchInput = document.getElementById('searchInput');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            // محاولة الحصول على البيانات من sessionStorage ثم localStorage
+            const savedData = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            buildHistoricalClosesMap();
+            updatePeriodLowHeader();
+            
+            if (savedData) {
+                try {
+                    processedData = JSON.parse(savedData);
+                    
+                    // حساب أداء القطاعات مسبقاً لتحديد القطاع الصاعد الرائد متطابقاً مع صفحة الفرص
+                    try {
+                        const sectorReturns = {};
+                        const sectorCounts = {};
+                        processedData.forEach(stock => {
+                            const symbol = String(stock?.symbol || '').toUpperCase();
+                            const closes = getHistoricalCloses(symbol);
+                            if (closes.length >= 6) {
+                                const latest = Number(closes[closes.length - 1]);
+                                const prev5 = Number(closes[closes.length - 6]);
+                                if (latest > 0 && prev5 > 0) {
+                                    const ret5 = ((latest - prev5) / prev5) * 100;
+                                    const sector = getCompanySector(stock.name, symbol);
+                                    sectorReturns[sector] = (sectorReturns[sector] || 0) + ret5;
+                                    sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
+                                }
+                            }
+                        });
+                        window.sectorAverages = {};
+                        let bestSector = '';
+                        let bestReturn = -999;
+                        for (const sector in sectorReturns) {
+                            const avgVal = sectorReturns[sector] / sectorCounts[sector];
+                            window.sectorAverages[sector] = avgVal;
+                            if (avgVal > bestReturn) {
+                                bestReturn = avgVal;
+                                bestSector = sector;
+                            }
+                        }
+                        window.bestSector = bestSector;
+                    } catch (secErr) {
+                        console.error('Error pre-calculating sectors:', secErr);
+                    }
+
+                    if (processedData.length > 0) {
+                        // توحيد التوصيات من التاريخ السعري نفسه لمنع اختلافات المصدر/التخزين.
+                        recomputeRecommendationsFromHistory();
+
+                        // إخفاء رسالة عدم وجود بيانات وإظهار الجدول
+                        noDataMessage.style.display = 'none';
+                        table.style.display = 'table';
+                        loading.style.display = 'none';
+                        
+                        // تفعيل أدوات البحث والتحديث
+                        searchInput.disabled = false;
+
+                function recomputeRecommendationsFromHistory() {
+                    if (!Array.isArray(processedData) || !processedData.length) return;
+
+                    processedData = processedData.map(stock => {
+                        const symbol = String(stock?.symbol || '').toUpperCase();
+                        const closes = getHistoricalCloses(symbol);
+                        if (!Array.isArray(closes) || closes.length < 2) return stock;
+
+                        const currentPrice = Number(stock?.currentPrice);
+                        const safeCurrent = Number.isFinite(currentPrice) && currentPrice > 0
+                            ? currentPrice
+                            : Number(closes[closes.length - 1] || 0);
+                        const previous = Number(closes[closes.length - 2] || safeCurrent);
+                        const dayChange = previous > 0 ? ((safeCurrent - previous) / previous) * 100 : Number(stock?.changeValue || 0);
+
+                        const points = closes.map((price, idx) => ({ date: idx, price: Number(price || 0) }));
+                        const rsi = calculateRSI(closes);
+                        const sr = calculateSupportResistance(closes);
+                        const patterns = detectCandlePatterns(points);
+
+                        let volumeRatio = Number(stock?.volumeRatio);
+                        if (!Number.isFinite(volumeRatio) || volumeRatio <= 0) {
+                            volumeRatio = getVolumeRatio(stock, volumeDays) || 1;
+                        }
+
+                        const recObj = getRecommendation(
+                            rsi,
+                            patterns,
+                            safeCurrent,
+                            sr.support,
+                            sr.resistance,
+                            volumeRatio,
+                            dayChange,
+                            symbol
+                        );
+
+                        return {
+                            ...stock,
+                            currentPrice: safeCurrent,
+                            changeValue: dayChange,
+                            change: Number.isFinite(dayChange) ? dayChange.toFixed(1) : String(stock?.change || '0.0'),
+                            rsi,
+                            support: sr.support,
+                            resistance: sr.resistance,
+                            patterns,
+                            volumeRatio,
+                            recommendation: recObj.recommendation,
+                            recommendationDetails: recObj
+                        };
+                    });
+
+                    sessionStorage.setItem('processedData', JSON.stringify(processedData));
+                    localStorage.setItem('processedData', JSON.stringify(processedData));
+                }
+                        refreshBtn.disabled = false;
+                        
+                        // عرض البيانات
+                        renderQuickFilterCards();
+                        refreshTableView();
+                    } else {
+                        // البيانات موجودة لكنها فارغة
+                        noDataMessage.style.display = 'block';
+                        table.style.display = 'none';
+                        loading.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error('خطأ في قراءة البيانات:', e);
+                    showError('خطأ في قراءة البيانات المخزنة');
+                }
+            } else {
+                // لا توجد بيانات محفوظة
+                console.log('لا توجد بيانات محفوظة');
+                noDataMessage.style.display = 'block';
+                table.style.display = 'none';
+                loading.style.display = 'none';
+            }
+        }
+
+        function getPortfolioSymbolSet() {
+            try {
+                const rows = JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+                if (!Array.isArray(rows)) return new Set();
+                return new Set(rows.map(item => String(item?.symbol || '').toUpperCase()).filter(Boolean));
+            } catch {
+                return new Set();
+            }
+        }
+
+        function buildHistoricalClosesMap() {
+            historicalClosesMap = new Map();
+            historicalLowsMap = new Map();
+            historicalVolumesMap = new Map();
+            historicalHighsMap = new Map();
+            historicalOpensMap = new Map();
+            try {
+                const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                const source = data?.companies || data;
+                const companies = Array.isArray(source)
+                    ? source
+                    : (source && typeof source === 'object' ? Object.values(source) : []);
+
+                companies.forEach(company => {
+                    const symbol = String(company?.symbol || '').toUpperCase();
+                    if (!symbol) return;
+                    
+                    const rows = company.historical || company.daily || [];
+                    
+                    const cleanedPoints = rows.map(r => {
+                        const close = Number(r?.close ?? r?.price ?? r?.value);
+                        const high = Number(r?.high ?? r?.h ?? r?.max ?? r?.highest ?? r?.close ?? r?.price);
+                        const low = Number(r?.low ?? r?.l ?? r?.min ?? r?.lowest ?? r?.close ?? r?.price ?? r?.value);
+                        const volume = Number(r?.volume ?? r?.vol ?? 0);
+                        return {
+                            date: r?.date,
+                            close: Number.isFinite(close) ? close : null,
+                            high: Number.isFinite(high) ? high : (Number.isFinite(close) ? close : null),
+                            low: Number.isFinite(low) ? low : (Number.isFinite(close) ? close : null),
+                            volume: Number.isFinite(volume) ? volume : 0
+                        };
+                    }).filter(p => p.date && p.close !== null && p.high !== null && p.low !== null);
+
+                    cleanedPoints.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                    
+                    const closes = cleanedPoints.map(p => p.close);
+                    const lows = cleanedPoints.map(p => p.low);
+                    const volumes = cleanedPoints.map(p => p.volume);
+                    const highs = cleanedPoints.map(p => p.high);
+                    const opens = cleanedPoints.map(p => p.close); // opens default to close if not needed
+
+                    if (closes.length) historicalClosesMap.set(symbol, closes);
+                    if (lows.length) historicalLowsMap.set(symbol, lows);
+                    if (volumes.length) historicalVolumesMap.set(symbol, volumes);
+                    if (highs.length) historicalHighsMap.set(symbol, highs);
+                    if (opens.length) historicalOpensMap.set(symbol, opens);
+                });
+            } catch {
+            }
+        }
+
+        function getHistoricalCloses(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            return historicalClosesMap.get(upper) || [];
+        }
+
+        function getHistoricalLows(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            return historicalLowsMap.get(upper) || [];
+        }
+
+        function getHistoricalVolumes(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            return historicalVolumesMap.get(upper) || [];
+        }
+
+        function getHistoricalHighs(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            return historicalHighsMap.get(upper) || [];
+        }
+
+        function getHistoricalOpens(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            return historicalOpensMap.get(upper) || [];
+        }
+
+        function getOptimalEntryPrice(stock) {
+            let entryPrice = Number(stock.entryPrice || 0);
+            if (entryPrice > 0) return entryPrice;
+
+            const symbol = String(stock.symbol || '').toUpperCase();
+            const highs = getHistoricalHighs(symbol);
+            const lows = getHistoricalLows(symbol);
+            
+            if (Array.isArray(highs) && highs.length > 0 && Array.isArray(lows) && lows.length > 0) {
+                const lookback = 60;
+                const rangeHighs = highs.slice(-lookback).map(Number).filter(Number.isFinite);
+                const rangeLows = lows.slice(-lookback).map(Number).filter(Number.isFinite);
+                
+                if (rangeHighs.length > 0 && rangeLows.length > 0) {
+                    const maxHigh = Math.max(...rangeHighs);
+                    const minLow = Math.min(...rangeLows);
+                    const diff = maxHigh - minLow;
+                    const f61 = minLow + diff * 0.618;
+                    const currentPrice = Number(stock.currentPrice || 0);
+                    return f61 > 0 ? f61 * 1.005 : currentPrice;
+                }
+            }
+            return Number(stock.currentPrice || 0);
+        }
+
+        function isGoldenOpportunityExplicit(stock) {
+            if (!stock) return false;
+            const symbol = String(stock.symbol || '').toUpperCase();
+            const history = getHistoricalCloses(symbol);
+            if (!Array.isArray(history) || history.length < 20) return false;
+
+            const currentPrice = history[history.length - 1];
+            const sma20 = calculateSMA(history, 20);
+            const sma50 = calculateSMA(history, 50);
+            const sma200 = calculateSMA(history, 200);
+
+            let score = 0;
+
+            const recommendation = String(stock.recommendation || '').toLowerCase();
+            if (recommendation === 'strong-buy') score += 30;
+            else if (recommendation === 'buy') score += 15;
+
+            if (sma20 !== null && currentPrice > sma20) score += 10;
+            if (sma50 !== null && currentPrice > sma50) score += 10;
+            if (sma200 !== null && currentPrice > sma200) score += 15;
+
+            const rsi = Number(stock.rsi);
+            if (Number.isFinite(rsi) && rsi > 30 && rsi < 55) score += 15;
+
+            const pCount = Array.isArray(stock.patterns) ? stock.patterns.length : 0;
+            if (pCount > 0) score += 10;
+
+            return score >= 80;
+        }
+
+        function isQuickRebound(stock) {
+            const symbol = String(stock.symbol || '').toUpperCase();
+            const closes = getHistoricalCloses(symbol);
+            const lows = getHistoricalLows(symbol);
+            if (!Array.isArray(closes) || closes.length < 10) return false;
+
+            const lookback = 20;
+            const pointsCloses = closes.slice(-lookback);
+            const pointsLows = lows.slice(-lookback);
+            const lastIdx = pointsCloses.length - 1;
+            const currentClose = pointsCloses[lastIdx];
+
+            const sessionsLimit = 2; // matches rebound-reversal default
+            const minDrop = 5;
+            const minRebound = 0.5;
+
+            // Find lowest low (bottom) in the last 12 sessions
+            const searchRange = Math.min(12, pointsLows.length);
+            let bottomPrice = Infinity;
+            let bottomIdx = -1;
+            
+            for (let j = pointsLows.length - 1; j >= pointsLows.length - searchRange; j--) {
+                if (pointsLows[j] < bottomPrice) {
+                    bottomPrice = pointsLows[j];
+                    bottomIdx = j;
+                }
+            }
+
+            if (bottomIdx < 0 || bottomIdx === lastIdx) return false;
+
+            const sessionsSinceBottom = lastIdx - bottomIdx;
+            if (sessionsSinceBottom > sessionsLimit || sessionsSinceBottom < 1) return false;
+
+            // Find peak before bottom (within 15 sessions before bottom)
+            const highs = getHistoricalHighs(symbol).slice(-lookback);
+            let peakPrice = -Infinity;
+            let peakIdx = -1;
+            const peakStart = Math.max(0, bottomIdx - 15);
+            
+            for (let j = bottomIdx; j >= peakStart; j--) {
+                const highVal = highs[j] ?? pointsCloses[j];
+                if (highVal > peakPrice) {
+                    peakPrice = highVal;
+                    peakIdx = j;
+                }
+            }
+
+            if (peakIdx < 0 || peakPrice <= bottomPrice) return false;
+
+            const dropPercent = ((peakPrice - bottomPrice) / peakPrice) * 100;
+            if (dropPercent < minDrop) return false;
+
+            const reboundPercent = ((currentClose - bottomPrice) / bottomPrice) * 100;
+            if (reboundPercent < minRebound) return false;
+
+            return true;
+        }
+
+        function isAccumulationStock(stock) {
+            const symbol = String(stock.symbol || '').toUpperCase();
+            const closes = getHistoricalCloses(symbol);
+            const lows = getHistoricalLows(symbol);
+            const highs = getHistoricalHighs(symbol);
+            
+            if (closes.length < 20 || lows.length < 20 || highs.length < 20) return false;
+            
+            const sliceCloses = closes.slice(-20);
+            const sliceLows = lows.slice(-20);
+            const sliceHighs = highs.slice(-20);
+            
+            const minLow = Math.min(...sliceLows);
+            const maxHigh = Math.max(...sliceHighs);
+            const avgClose = sliceCloses.reduce((a, b) => a + b, 0) / sliceCloses.length;
+            
+            if (avgClose <= 0) return false;
+            
+            const rangePct = ((maxHigh - minLow) / avgClose) * 100;
+            return rangePct <= 8.0;
+        }
+
+        function getVolumeRatio(stock, days = 60) {
+            const symbol = String(stock?.symbol || '').toUpperCase();
+            const volumes = getHistoricalVolumes(symbol);
+            const safeDays = Math.max(1, Number(days) || 60);
+
+            if (volumes.length < safeDays) return 0;
+
+            let latestVolume = Number(stock?.latestVolume);
+            let avgVolumePeriod = 0;
+
+            if (volumes.length) {
+                const latestFromHistory = Number(volumes[volumes.length - 1] || 0);
+                if (!Number.isFinite(latestVolume) || latestVolume <= 0) latestVolume = latestFromHistory;
+
+                const window = volumes.slice(-safeDays).filter(v => Number.isFinite(v) && v > 0);
+                if (window.length) {
+                    avgVolumePeriod = window.reduce((sum, value) => sum + value, 0) / window.length;
+                }
+            }
+
+            if ((!Number.isFinite(avgVolumePeriod) || avgVolumePeriod <= 0) && Number.isFinite(Number(stock?.avgVolume20)) && Number(stock?.avgVolume20) > 0) {
+                avgVolumePeriod = Number(stock.avgVolume20);
+            }
+
+            if ((!Number.isFinite(latestVolume) || latestVolume <= 0) && Number.isFinite(Number(stock?.volumeRatio)) && Number(stock?.volumeRatio) > 0 && avgVolumePeriod > 0) {
+                latestVolume = avgVolumePeriod * Number(stock.volumeRatio);
+            }
+
+            if (!Number.isFinite(latestVolume) || latestVolume <= 0 || !Number.isFinite(avgVolumePeriod) || avgVolumePeriod <= 0) return 0;
+            return latestVolume / avgVolumePeriod;
+        }
+
+        function hasStrongVolume(stock, days = 60) {
+            return getVolumeRatio(stock, days) > 1;
+        }
+
+        function getVolumeSnapshot(stock) {
+            const symbol = String(stock?.symbol || '').toUpperCase();
+            const volumes = getHistoricalVolumes(symbol);
+
+            let latestVolume = Number(stock?.latestVolume);
+            if ((!Number.isFinite(latestVolume) || latestVolume <= 0) && volumes.length) {
+                latestVolume = Number(volumes[volumes.length - 1] || 0);
+            }
+
+            const volumeRatioPeriod = getVolumeRatio(stock, volumeDays);
+            const stateText = volumeRatioPeriod > 1 ? 'أكثر' : 'أقل';
+
+            return {
+                latestVolume: Number.isFinite(latestVolume) && latestVolume > 0 ? latestVolume : 0,
+                volumeRatio60: volumeRatioPeriod,
+                stateText
+            };
+        }
+
+        function getPeriodLow(symbol, days) {
+            const lows = getHistoricalLows(symbol);
+            if (!lows.length) return null;
+            const safeDays = Math.max(1, Number(days) || 60);
+            if (lows.length < safeDays) return null;
+            const window = lows.slice(-safeDays);
+            if (!window.length) return null;
+            const low = Math.min(...window);
+            return Number.isFinite(low) ? low : null;
+        }
+
+        function isNearPeriodLow(stock, days, maxPct = 5) {
+            const price = Number(stock?.currentPrice);
+            if (!Number.isFinite(price) || price <= 0) return false;
+            const low = getPeriodLow(stock?.symbol, days);
+            if (!Number.isFinite(low) || low <= 0) return false;
+            return ((price - low) / low) * 100 <= maxPct;
+        }
+
+        function updatePeriodLowHeader() {
+            const header = document.getElementById('periodLowHeader');
+            if (header) header.textContent = `أدنى ${nearLowDays} يوم`;
+        }
+
+        function includesHammerPattern(stock) {
+            const patterns = Array.isArray(stock?.patterns) ? stock.patterns : [];
+            const text = patterns.join(' ').toLowerCase();
+            return text.includes('hammer') || text.includes('هامر') || text.includes('مطرقة') || text.includes('مطرقه');
+        }
+
+        function isNearSupport(stock) {
+            const price = Number(stock?.currentPrice);
+            const support = Number(stock?.support?.[0]);
+            if (!Number.isFinite(price) || !Number.isFinite(support) || support <= 0) return false;
+            return ((price - support) / support) * 100 <= 3;
+        }
+
+        function isNearResistance(stock) {
+            const price = Number(stock?.currentPrice);
+            const resistance = Number(stock?.resistance?.[0]);
+            if (!Number.isFinite(price) || !Number.isFinite(resistance) || price <= 0) return false;
+            return ((resistance - price) / price) * 100 <= 3;
+        }
+
+        function getCompanySector(name, symbol) {
+            const n = String(name || '').toLowerCase();
+            const s = String(symbol || '').toUpperCase();
+            
+            if (n.includes('عقار') || n.includes('تعمير') || n.includes('إعمار') || n.includes('اسكان') || n.includes('إسكان') || 
+                n.includes('مطور') || n.includes('أسمنت') || n.includes('حديد') || n.includes('مقاولات') || n.includes('إنشاء') || 
+                n.includes('بناء') || n.includes('مباني') || n.includes('سكن') || n.includes('أوراسكوم للتنمية') || 
+                n.includes('طلعت مصطفى') || n.includes('بالم هيلز') || n.includes('سوديك') || n.includes('مدينة نصر') || 
+                n.includes('مصر الجديدة') || n.includes('المطورون') || s === 'TMGH' || s === 'PHDC' || s === 'OCDI' || s === 'HELI' || s === 'EMFD') {
+                return 'العقارات والإنشاءات';
+            }
+            
+            if (n.includes('بنك') || n.includes('تمويل') || n.includes('استثمار') || n.includes('قابضة') || n.includes('تأمين') || 
+                n.includes('مالية') || n.includes('هيرميس') || n.includes('بلتون') || n.includes('بايونيرز') || 
+                n.includes('سي آي كابيتال') || s === 'COMI' || s === 'HRHO' || s === 'BTFH' || s === 'CICH') {
+                return 'الخدمات المالية والبنوك';
+            }
+            
+            if (n.includes('كيماويات') || n.includes('صناعة') || n.includes('أسلاك') || n.includes('نحاس') || n.includes('ألمنيوم') || 
+                n.includes('كابلات') || n.includes('أسمدة') || n.includes('ورق') || n.includes('زجاج') || n.includes('منسوجات') || 
+                n.includes('ملابس') || n.includes('غزل') || n.includes('نسيج') || n.includes('حديد عز') || s === 'ESRS' || s === 'EKHO' || s === 'MFPC') {
+                return 'الصناعة والمواد الأساسية';
+            }
+            
+            if (n.includes('أغذية') || n.includes('ألبان') || n.includes('سكر') || n.includes('مطاحن') || n.includes('صوامع') || 
+                n.includes('دواجن') || n.includes('زيوت') || n.includes('جهينة') || n.includes('أدوية') || n.includes('مستشفى') || 
+                n.includes('علاج') || n.includes('صيدلة') || s === 'JUFO' || s === 'EDFM' || s === 'OLFI') {
+                return 'الأغذية والرعاية الصحية';
+            }
+            
+            if (n.includes('اتصالات') || n.includes('تكنولوجيا') || n.includes('نظم') || n.includes('معلومات') || 
+                n.includes('فوري') || n.includes('راية') || s === 'ETEL' || s === 'FWRY' || s === 'RAYA') {
+                return 'التكنولوجيا والاتصالات';
+            }
+            
+            if (n.includes('بترول') || n.includes('طاقة') || n.includes('كهرباء') || n.includes('غاز') || n.includes('مياه') || 
+                n.includes('شحن') || n.includes('نقل') || n.includes('حاويات') || n.includes('ملاحة') || n.includes('قناة السويس') || 
+                s === 'ALCN' || s === 'ETRS') {
+                return 'الطاقة والخدمات العامة';
+            }
+            
+            return 'قطاعات أخرى';
+        }
+
+        function avg(arr) {
+            if (!arr.length) return 0;
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+
+        function sma(values, period) {
+            if (values.length < period) return null;
+            const window = values.slice(-period);
+            return avg(window);
+        }
+
+        function ema(values, period) {
+            if (values.length < period) return null;
+            let k = 2 / (period + 1);
+            let emaVal = sma(values.slice(0, period), period);
+            for (let i = period; i < values.length; i++) {
+                emaVal = values[i] * k + emaVal * (1 - k);
+            }
+            return emaVal;
+        }
+
+        function emaSeries(prices, period) {
+            if (prices.length < period) return [];
+            let k = 2 / (period + 1);
+            let emaArr = new Array(prices.length).fill(null);
+            
+            let sum = 0;
+            for (let i = 0; i < period; i++) {
+                sum += prices[i];
+            }
+            let currentEma = sum / period;
+            emaArr[period - 1] = currentEma;
+            
+            for (let i = period; i < prices.length; i++) {
+                currentEma = prices[i] * k + currentEma * (1 - k);
+                emaArr[i] = currentEma;
+            }
+            return emaArr;
+        }
+
+        function calcMACD(prices) {
+            const ema12 = emaSeries(prices, 12);
+            const ema26 = emaSeries(prices, 26);
+            if (ema26.length === 0) return null;
+            
+            let macdLine = [];
+            for (let i = 0; i < prices.length; i++) {
+                if (ema12[i] !== null && ema26[i] !== null) {
+                    macdLine.push(ema12[i] - ema26[i]);
+                } else {
+                    macdLine.push(null);
+                }
+            }
+            
+            const validMacd = macdLine.filter(x => x !== null);
+            const validSignal = emaSeries(validMacd, 9);
+            
+            let signalLine = new Array(prices.length).fill(null);
+            let validIndex = 0;
+            for (let i = 0; i < prices.length; i++) {
+                if (macdLine[i] !== null) {
+                    signalLine[i] = validSignal[validIndex] ?? null;
+                    validIndex++;
+                }
+            }
+            
+            let histogram = new Array(prices.length).fill(null);
+            for (let i = 0; i < prices.length; i++) {
+                if (macdLine[i] !== null && signalLine[i] !== null) {
+                    histogram[i] = macdLine[i] - signalLine[i];
+                }
+            }
+            
+            const latestIndex = prices.length - 1;
+            const prevIndex = prices.length - 2;
+            
+            return {
+                macdLine: macdLine[latestIndex],
+                signalLine: signalLine[latestIndex],
+                histogram: histogram[latestIndex],
+                prevHistogram: histogram[prevIndex],
+                isBullishCross: (histogram[prevIndex] < 0 && histogram[latestIndex] >= 0),
+                isRising: (histogram[prevIndex] !== null && histogram[latestIndex] !== null && histogram[latestIndex] > histogram[prevIndex])
+            };
+        }
+
+        function calcBollingerBands(prices, period = 20, multiplier = 2) {
+            if (prices.length < period) return null;
+            
+            const window = prices.slice(-period);
+            const mean = avg(window);
+            
+            const variance = window.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / period;
+            const stdDev = Math.sqrt(variance);
+            
+            const upper = mean + multiplier * stdDev;
+            const lower = mean - multiplier * stdDev;
+            const bandwidth = mean > 0 ? (upper - lower) / mean : 0;
+            
+            const latestPrice = prices[prices.length - 1];
+            
+            return {
+                middle: mean,
+                upper: upper,
+                lower: lower,
+                bandwidth: bandwidth,
+                isNearLower: latestPrice <= lower * 1.015,
+                isNearUpper: latestPrice >= upper * 0.985,
+                isSqueeze: bandwidth < 0.06
+            };
+        }
+
+        function calcVolatility(closes, period = 20) {
+            if (closes.length < period + 1) return null;
+            const returns = [];
+            for (let i = closes.length - period; i < closes.length; i++) {
+                const prev = closes[i - 1];
+                const curr = closes[i];
+                if (prev > 0) returns.push((curr - prev) / prev);
+            }
+            if (!returns.length) return null;
+            const mean = avg(returns);
+            const variance = avg(returns.map(value => (value - mean) * (value - mean)));
+            return Math.sqrt(variance) * 100;
+        }
+
+        function calculateOpportunityScore(symbol) {
+            const closes = getHistoricalCloses(symbol);
+            const lows = getHistoricalLows(symbol);
+            const highs = getHistoricalHighs(symbol);
+            const opens = getHistoricalOpens(symbol);
+            const volumes = getHistoricalVolumes(symbol);
+
+            const lookback = 60;
+            if (closes.length < lookback || lows.length < lookback || highs.length < lookback || volumes.length < lookback) {
+                return 0;
+            }
+
+            const pointCloses = closes.slice(-lookback);
+            const pointLows = lows.slice(-lookback);
+            const pointHighs = highs.slice(-lookback);
+            const pointVolumes = volumes.slice(-lookback);
+
+            const latestClose = pointCloses[pointCloses.length - 1];
+            const prevClose = pointCloses[pointCloses.length - 2];
+            const latestOpen = opens.length ? opens[opens.length - 1] : latestClose;
+            const latestHigh = pointHighs[pointHighs.length - 1];
+            const latestLow = pointLows[pointLows.length - 1];
+            const latestVolume = pointVolumes[pointVolumes.length - 1];
+
+            if (latestClose <= 0) return 0;
+
+            const lowLookback = Math.min(...pointLows);
+            const highLookback = Math.max(...pointHighs);
+            if (lowLookback <= 0 || highLookback <= 0) return 0;
+
+            const reboundPct = ((latestClose - lowLookback) / lowLookback) * 100;
+            const fullDropPct = ((highLookback - lowLookback) / highLookback) * 100;
+
+            if (fullDropPct < 4 || reboundPct < 1.2) return 0;
+
+            const rsi = calculateRSI(pointCloses, 14);
+
+            const avgVol20 = pointVolumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+            const volumeRatio = avgVol20 > 0 ? latestVolume / avgVol20 : 0;
+
+            const support = Math.min(...pointLows.slice(-15));
+            const resistance = Math.max(...pointHighs.slice(-20));
+
+            const lastBody = Math.abs(latestClose - latestOpen);
+            const candleRange = Math.max(0.00001, latestHigh - latestLow);
+            const lowerWick = Math.min(latestOpen, latestClose) - latestLow;
+            const upperWick = latestHigh - Math.max(latestOpen, latestClose);
+            const hammerLike = lowerWick >= lastBody * 2.2 && upperWick <= lastBody * 0.8;
+            const bullishClose = latestClose >= latestOpen;
+
+            let bullishEngulfing = false;
+            if (prevClose) {
+                const prevOpen = opens.length >= 2 ? opens[opens.length - 2] : prevClose;
+                const prevBearish = prevClose < prevOpen;
+                bullishEngulfing = prevBearish && bullishClose && latestClose > prevOpen && latestOpen < prevClose;
+            }
+
+            const reboundScore = Math.max(0, Math.min(100, (Math.min(reboundPct, 20) / 20) * 100));
+            const volumeScore = Math.max(0, Math.min(100, ((volumeRatio - 0.7) / 1.1) * 100));
+
+            const sma20 = calculateSMA(closes, 20) || latestClose;
+            const sma50 = calculateSMA(closes, 50) || latestClose;
+            const trendSignals = (latestClose > sma20 ? 1 : 0) + (sma20 > sma50 ? 1 : 0) + (latestClose > sma50 ? 1 : 0);
+            const trendScore = (trendSignals / 3) * 100;
+
+            const rsiScore = Number.isFinite(rsi) ? Math.max(0, Math.min(100, 100 - Math.abs(rsi - 55) * 3.5)) : 45;
+
+            const breakoutGapPct = resistance > 0 ? ((resistance - latestClose) / resistance) * 100 : 99;
+            const breakoutScore = breakoutGapPct <= 0 ? 95 : Math.max(0, Math.min(100, 100 - breakoutGapPct * 12));
+
+            const candleScore = Math.max(0, Math.min(100, (hammerLike ? 60 : 30) + (bullishClose ? 30 : 0) + (bullishEngulfing ? 40 : 0)));
+
+            // Advanced opportunity metrics matching opportunities.html exactly
+            const macdInfo = calcMACD(pointCloses);
+            let macdScore = 50;
+            if (macdInfo) {
+                if (macdInfo.isRising) macdScore += 20;
+                if (macdInfo.histogram > 0) macdScore += 15;
+                if (macdInfo.isBullishCross) macdScore += 15;
+                if (!macdInfo.isRising && macdInfo.histogram < 0) macdScore -= 15;
+            }
+            macdScore = Math.max(0, Math.min(100, macdScore));
+
+            const bbInfo = calcBollingerBands(pointCloses);
+            let bbScore = 50;
+            if (bbInfo) {
+                if (bbInfo.isNearLower) bbScore += 30;
+                if (bbInfo.isSqueeze) bbScore += 20;
+                if (bbInfo.isNearUpper) bbScore -= 20;
+            }
+            bbScore = Math.max(0, Math.min(100, bbScore));
+
+            const obvSeries = [0];
+            for (let i = 1; i < pointCloses.length; i++) {
+                const prevObv = obvSeries[i - 1];
+                if (pointCloses[i] > pointCloses[i - 1]) {
+                    obvSeries.push(prevObv + pointVolumes[i]);
+                } else if (pointCloses[i] < pointCloses[i - 1]) {
+                    obvSeries.push(prevObv - pointVolumes[i]);
+                } else {
+                    obvSeries.push(prevObv);
+                }
+            }
+            let isObvDivergence = false;
+            if (pointCloses.length >= 20) {
+                const pStart = pointCloses[pointCloses.length - 20];
+                const pEnd = pointCloses[pointCloses.length - 1];
+                const obvStart = obvSeries[obvSeries.length - 20];
+                const obvEnd = obvSeries[obvSeries.length - 1];
+                
+                const priceChange = (pEnd - pStart) / pStart;
+                const obvChange = obvStart !== 0 ? (obvEnd - obvStart) / Math.abs(obvStart) : 0;
+                
+                isObvDivergence = priceChange <= 0.01 && obvChange >= 0.05;
+            }
+            const obvScore = isObvDivergence ? 100 : 50;
+
+            const stock = processedData.find(s => String(s.symbol || '').toUpperCase() === String(symbol || '').toUpperCase());
+            const stockName = stock ? stock.name : '';
+            const sector = getCompanySector(stockName, symbol);
+            const isLeadingSector = window.bestSector && (sector === window.bestSector);
+            const sectorScore = isLeadingSector ? 100 : 50;
+
+            const highs50Val = pointHighs.slice(-50);
+            const high50 = highs50Val.length > 0 ? Math.max(...highs50Val) : resistance;
+            const isBreakout50 = latestClose >= high50 * 0.995 && volumeRatio >= 1.3;
+            const breakout50Score = isBreakout50 ? 100 : 50;
+
+            const volatility = calcVolatility(pointCloses, 20);
+            const liquidityValue = latestClose * Math.max(latestVolume, 0);
+            const liquidityScore = Math.max(0, Math.min(100, (Math.log10(Math.max(1, liquidityValue)) - 1.8) * 16));
+            const volatilityScore = Number.isFinite(volatility) ? Math.max(0, Math.min(100, 100 - Math.abs(volatility - 2.2) * 18)) : 45;
+
+            const weightedScore = (
+                reboundScore * 0.12 +
+                volumeScore * 0.10 +
+                trendScore * 0.12 +
+                macdScore * 0.10 +
+                bbScore * 0.08 +
+                rsiScore * 0.08 +
+                breakoutScore * 0.08 +
+                candleScore * 0.08 +
+                obvScore * 0.08 +
+                sectorScore * 0.08 +
+                breakout50Score * 0.04 +
+                liquidityScore * 0.02 +
+                volatilityScore * 0.02
+            );
+
+            return Math.max(0, Math.min(100, weightedScore));
+        }
+
+        function calcEMA_exact(values, period) {
+            if (!Array.isArray(values) || values.length < period) return [];
+            const multiplier = 2 / (period + 1);
+            const ema = new Array(values.length).fill(null);
+            let seed = 0;
+            for (let i = 0; i < period; i++) seed += values[i];
+            ema[period - 1] = seed / period;
+
+            for (let i = period; i < values.length; i++) {
+                ema[i] = ((values[i] - ema[i - 1]) * multiplier) + ema[i - 1];
+            }
+            return ema;
+        }
+
+        function calcRSISeries_exact(values, period = 14) {
+            if (!Array.isArray(values) || values.length <= period) return [];
+            const deltas = [];
+            for (let i = 1; i < values.length; i++) deltas.push(values[i] - values[i - 1]);
+
+            let gains = 0, losses = 0;
+            for (let i = 0; i < period; i++) {
+                const delta = deltas[i] || 0;
+                if (delta >= 0) gains += delta;
+                else losses -= delta;
+            }
+
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            const series = new Array(values.length).fill(null);
+
+            function rsiFromAverages(gain, loss) {
+                if (loss === 0 && gain === 0) return 50;
+                if (loss === 0) return 100;
+                if (gain === 0) return 0;
+                return 100 - (100 / (1 + (gain / loss)));
+            }
+
+            series[period] = rsiFromAverages(avgGain, avgLoss);
+
+            for (let i = period; i < deltas.length; i++) {
+                const delta = deltas[i];
+                const gain = delta > 0 ? delta : 0;
+                const loss = delta < 0 ? -delta : 0;
+                avgGain = ((avgGain * (period - 1)) + gain) / period;
+                avgLoss = ((avgLoss * (period - 1)) + loss) / period;
+                series[i + 1] = rsiFromAverages(avgGain, avgLoss);
+            }
+            return series;
+        }
+
+        function calcRSI_exact(values, period = 14) {
+            const series = calcRSISeries_exact(values, period).filter(Number.isFinite);
+            return series.length ? series[series.length - 1] : null;
+        }
+
+        function calcMACD_exact(values, shortPeriod = 12, longPeriod = 26, signalPeriod = 9) {
+            if (!Array.isArray(values) || values.length < longPeriod + signalPeriod) return null;
+            const emaShort = calcEMA_exact(values, shortPeriod);
+            const emaLong = calcEMA_exact(values, longPeriod);
+            const macdLine = values.map((_, index) => {
+                if (emaShort[index] === null || emaLong[index] === null) return null;
+                return emaShort[index] - emaLong[index];
+            });
+            const validMacd = macdLine.filter(Number.isFinite);
+            if (validMacd.length < signalPeriod) return null;
+            const signalSeries = calcEMA_exact(validMacd, signalPeriod);
+            const signal = signalSeries[signalSeries.length - 1];
+            const macd = validMacd[validMacd.length - 1];
+            if (!Number.isFinite(macd) || !Number.isFinite(signal)) return null;
+            return { line: macd, signal, histogram: macd - signal };
+        }
+
+        function simpleMovingAverage_exact(values, period) {
+            if (!Array.isArray(values) || values.length < period) return [];
+            const result = new Array(values.length).fill(null);
+            for (let i = period - 1; i < values.length; i++) {
+                const window = values.slice(i - period + 1, i + 1).filter(Number.isFinite);
+                if (window.length === period) {
+                    result[i] = window.reduce((sum, value) => sum + value, 0) / period;
+                }
+            }
+            return result;
+        }
+
+        function calcStochRSI_exact(values, rsiPeriod = 14, stochPeriod = 14, smoothK = 3, smoothD = 3) {
+            const rsiSeries = calcRSISeries_exact(values, rsiPeriod);
+            const raw = rsiSeries.map((_, index) => {
+                if (index < stochPeriod - 1 || !Number.isFinite(rsiSeries[index])) return null;
+                const window = rsiSeries.slice(index - stochPeriod + 1, index + 1).filter(Number.isFinite);
+                if (window.length < stochPeriod) return null;
+                const highest = Math.max(...window);
+                const lowest = Math.min(...window);
+                if (highest === lowest) return 50;
+                return ((rsiSeries[index] - lowest) / (highest - lowest)) * 100;
+            });
+
+            const smoothKSeries = simpleMovingAverage_exact(raw, smoothK);
+            const smoothDSeries = simpleMovingAverage_exact(smoothKSeries, smoothD);
+            const k = smoothKSeries.filter(Number.isFinite).pop();
+            const d = smoothDSeries.filter(Number.isFinite).pop();
+            if (!Number.isFinite(k) || !Number.isFinite(d)) return null;
+            return { k, d };
+        }
+
+        function calcMFI_exact(points, period = 14) {
+            if (!Array.isArray(points) || points.length <= period) return null;
+            const typicalPrices = points.map(p => (p.high + p.low + p.close) / 3);
+            const rawMoneyFlows = points.map((p, i) => typicalPrices[i] * (p.volume || 0));
+
+            let posFlow = 0;
+            let negFlow = 0;
+
+            for (let i = points.length - period; i < points.length; i++) {
+                if (i <= 0) continue;
+                if (typicalPrices[i] > typicalPrices[i - 1]) posFlow += rawMoneyFlows[i];
+                else if (typicalPrices[i] < typicalPrices[i - 1]) negFlow += rawMoneyFlows[i];
+            }
+
+            if (negFlow === 0) return 100;
+            return 100 - (100 / (1 + (posFlow / negFlow)));
+        }
+
+        function calcCCI_exact(points, period = 20) {
+            if (!Array.isArray(points) || points.length < period) return null;
+            const tps = points.map(p => (p.high + p.low + p.close) / 3);
+            const windowTps = tps.slice(-period);
+            const tpSma = windowTps.reduce((a, b) => a + b, 0) / period;
+            const meanDev = windowTps.reduce((acc, tp) => acc + Math.abs(tp - tpSma), 0) / period;
+            const currentTp = tps[tps.length - 1];
+            if (meanDev === 0) return 0;
+            return (currentTp - tpSma) / (0.015 * meanDev);
+        }
+
+        function calcBollingerB_exact(values, period = 20) {
+            if (!Array.isArray(values) || values.length < period) return null;
+            const slice = values.slice(-period);
+            const sum = slice.reduce((a, b) => a + b, 0);
+            const mean = sum / period;
+            const variance = slice.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / period;
+            const stdDev = Math.sqrt(variance);
+            const upper = mean + (2 * stdDev);
+            const lower = mean - (2 * stdDev);
+            const lastClose = values[values.length - 1];
+            if (upper === lower) return 50;
+            return ((lastClose - lower) / (upper - lower)) * 100;
+        }
+
+        function calcWilliamsR_exact(points, period = 14) {
+            if (!Array.isArray(points) || points.length < period) return null;
+            const window = points.slice(-period);
+            const highestHigh = Math.max(...window.map(p => p.high));
+            const lowestLow = Math.min(...window.map(p => p.low));
+            const close = points[points.length - 1].close;
+            if (highestHigh === lowestLow) return -50;
+            return ((highestHigh - close) / (highestHigh - lowestLow)) * -100;
+        }
+
+        function calculateCompositeIndicatorsScore(symbol, p) {
+            const closesAll = getHistoricalCloses(symbol);
+            if (closesAll.length < 50) return -99;
+            
+            const highsAll = getHistoricalHighs(symbol);
+            const lowsAll = getHistoricalLows(symbol);
+            const volumesAll = getHistoricalVolumes(symbol);
+            
+            const lookback = 120;
+            const closes = closesAll.slice(-lookback);
+            const highs = highsAll.slice(-lookback);
+            const lows = lowsAll.slice(-lookback);
+            const volumes = volumesAll.slice(-lookback);
+            
+            const points = closes.map((c, idx) => ({
+                close: c,
+                high: highs[idx] ?? c,
+                low: lows[idx] ?? c,
+                volume: volumes[idx] ?? 0
+            }));
+            
+            const rsi = calcRSI_exact(closes, 14);
+            if (rsi === null) return -99;
+            
+            const macdPack = calcMACD_exact(closes);
+            if (!macdPack) return -99;
+            
+            const stochRsiPack = calcStochRSI_exact(closes, 14, 14, 3, 3);
+            if (!stochRsiPack) return -99;
+            
+            const mfi = calcMFI_exact(points, 14);
+            const cci = calcCCI_exact(points, 20);
+            const percentB = calcBollingerB_exact(closes, 20);
+            const williamsR = calcWilliamsR_exact(points, 14);
+            
+            let score = 0;
+            
+            // 1. RSI
+            if (rsi <= 30) score += 2;
+            else if (rsi >= 70) score -= 2;
+            else if (rsi > 30 && rsi < 50) score += 1;
+            else if (rsi > 50 && rsi < 70) score -= 1;
+
+            // 2. MACD
+            if (macdPack.histogram !== null) {
+                if (macdPack.histogram > 0) score += 2;
+                else score -= 2;
+            }
+
+            // 3. StochRSI
+            if (stochRsiPack.k <= 20) score += 2;
+            else if (stochRsiPack.k >= 80) score -= 2;
+
+            // 4. MFI
+            if (mfi !== null) {
+                if (mfi <= 20) score += 2;
+                else if (mfi >= 80) score -= 2;
+            }
+
+            // 5. CCI
+            if (cci !== null) {
+                if (cci <= -100) score += 1;
+                else if (cci >= 100) score -= 1;
+            }
+
+            // 6. Bollinger %B
+            if (percentB !== null) {
+                if (percentB <= 10) score += 2;
+                else if (percentB >= 90) score -= 2;
+            }
+
+            // 7. Williams %R
+            if (williamsR !== null) {
+                if (williamsR <= -80) score += 1;
+                else if (williamsR >= -20) score -= 1;
+            }
+
+            return score;
+        }
+
+        function matchesQuickFilter(stock, filterKey, portfolioSet) {
+            if (!stock) return false;
+            const recommendation = String(stock.recommendation || '').toLowerCase();
+            const rsi = Number(stock.rsi);
+            const changeValue = Number(stock.changeValue);
+            const symbol = String(stock.symbol || '').toUpperCase();
+
+            switch (filterKey) {
+                case 'all':
+                    return true;
+                case 'golden-opp':
+                    return isGoldenOpportunityExplicit(stock);
+                case 'ai-opp-70':
+                    return calculateOpportunityScore(stock.symbol) >= 70;
+                case 'invest-buy':
+                    {
+                        const symbol = String(stock.symbol || '').toUpperCase();
+                        const closes = getHistoricalCloses(symbol);
+                        if (closes.length < 200) return false;
+                        
+                        const p = Number(stock.currentPrice);
+                        const sma20 = calculateSMA(closes, 20);
+                        const sma50 = calculateSMA(closes, 50);
+                        const sma200 = calculateSMA(closes, 200);
+                        
+                        if (sma50 && sma200 && sma50 > sma200 && p > sma200) {
+                            if (sma20 && (p <= sma20 * 1.01 || p <= sma50 * 1.02)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                case 'indicators-bullish':
+                    {
+                        const symbol = String(stock.symbol || '').toUpperCase();
+                        const p = Number(stock.currentPrice);
+                        const score = calculateCompositeIndicatorsScore(symbol, p);
+                        return score >= 2;
+                    }
+                case 'indicators-strong-bullish':
+                    {
+                        const symbol = String(stock.symbol || '').toUpperCase();
+                        const p = Number(stock.currentPrice);
+                        const score = calculateCompositeIndicatorsScore(symbol, p);
+                        return score >= 5;
+                    }
+                case 'next-session-opp':
+                    return calculateOpportunityScore(stock.symbol) >= minOpportunityScore;
+                case 'rebound':
+                    return isQuickRebound(stock);
+                case 'accumulation':
+                    return isAccumulationStock(stock);
+                case 'strong-buy':
+                    return recommendation === 'strong-buy';
+                case 'buy':
+                    return recommendation === 'buy';
+                case 'neutral':
+                    return recommendation === 'neutral';
+                case 'oversold':
+                    return Number.isFinite(rsi) && rsi <= 35;
+                case 'overbought':
+                    return Number.isFinite(rsi) && rsi >= 70;
+                case 'near-support':
+                    return isNearSupport(stock);
+                case 'near-resistance':
+                    return isNearResistance(stock);
+                case 'positive-change':
+                    return Number.isFinite(changeValue) && changeValue > 0;
+                case 'negative-change':
+                    return Number.isFinite(changeValue) && changeValue < 0;
+                case 'hammer':
+                    return includesHammerPattern(stock);
+                case 'in-portfolio':
+                    return portfolioSet.has(symbol);
+                case 'strong-volume-60':
+                    return hasStrongVolume(stock, volumeDays);
+                case 'near-low-60':
+                    return isNearPeriodLow(stock, nearLowDays, 5);
+                default:
+                    return true;
+            }
+        }
+
+        function getFacetedCount(filterKey, portfolioSet) {
+            const category1 = ['strong-buy', 'buy', 'neutral', 'sell'];
+            const category2 = ['oversold', 'overbought'];
+            const category3 = ['near-support', 'near-resistance'];
+            const category4 = ['positive-change', 'negative-change'];
+            
+            let activeTemp = new Set(activeQuickFilters);
+            if (category1.includes(filterKey)) {
+                category1.forEach(k => activeTemp.delete(k));
+            } else if (category2.includes(filterKey)) {
+                category2.forEach(k => activeTemp.delete(k));
+            } else if (category3.includes(filterKey)) {
+                category3.forEach(k => activeTemp.delete(k));
+            } else if (category4.includes(filterKey)) {
+                category4.forEach(k => activeTemp.delete(k));
+            } else {
+                activeTemp.delete(filterKey);
+            }
+
+            const term = String(document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            let tempRows = processedData.filter(stock => {
+                for (const k of activeTemp) {
+                    if (!matchesQuickFilter(stock, k, portfolioSet)) return false;
+                }
+                return true;
+            });
+
+            if (term) {
+                tempRows = tempRows.filter(s =>
+                    String(s.symbol || '').toLowerCase().includes(term) ||
+                    String(s.name || '').toLowerCase().includes(term)
+                );
+            }
+
+            return tempRows.filter(stock => matchesQuickFilter(stock, filterKey, portfolioSet)).length;
+        }
+
+        function getCurrentFilteredRows() {
+            const term = String(document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const portfolioSet = getPortfolioSymbolSet();
+
+            let rows = processedData.filter(stock => {
+                if (!activeQuickFilters.size) return true;
+                for (const filterKey of activeQuickFilters) {
+                    if (!matchesQuickFilter(stock, filterKey, portfolioSet)) return false;
+                }
+                return true;
+            });
+            if (term) {
+                rows = rows.filter(s =>
+                    String(s.symbol || '').toLowerCase().includes(term) ||
+                    String(s.name || '').toLowerCase().includes(term)
+                );
+            }
+            return rows;
+        }
+
+        function renderQuickFilterCards() {
+            const host = document.getElementById('quickFilterCards');
+            if (!host) return;
+            const portfolioSet = getPortfolioSymbolSet();
+
+            host.innerHTML = quickFilterDefs.map(filter => {
+                let count = 0;
+                if (filter.key === 'all') {
+                    count = processedData.length;
+                } else {
+                    count = getFacetedCount(filter.key, portfolioSet);
+                }
+                const isAllActive = filter.key === 'all' && activeQuickFilters.size === 0;
+                const isActive = isAllActive || activeQuickFilters.has(filter.key);
+                const activeClass = isActive ? 'active' : '';
+                const isDisabled = count === 0 && filter.key !== 'all' && !isActive;
+                let label = filter.label;
+                if (filter.key === 'near-low-60') {
+                    label = `قريب من الأدنى ${nearLowDays}ي (≤5%)`;
+                } else if (filter.key === 'strong-volume-60') {
+                    label = `حجم أعلى من متوسط ${volumeDays}ي`;
+                } else if (filter.key === 'next-session-opp') {
+                    label = `فرص ممتازة (≥${minOpportunityScore}%)`;
+                }
+                return `
+                    <button type="button" class="filter-card ${activeClass}" onclick="setQuickFilter('${filter.key}')" ${isDisabled ? 'disabled' : ''}>
+                        <span class="label"><i class="fas ${filter.icon}"></i>${label}</span>
+                        <span class="count">${count}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // ==================== عرض رسالة خطأ ====================
+        function showError(message) {
+            const noDataMessage = document.getElementById('noDataMessage');
+            noDataMessage.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                <h3 style="color: #ef4444;">❌ خطأ</h3>
+                <p style="color: #94a3b8;">${message}</p>
+                <button class="btn btn-primary" onclick="goBack()">
+                    <i class="fas fa-arrow-right"></i> العودة للرئيسية
+                </button>
+            `;
+            noDataMessage.style.display = 'block';
+        }
+
+        // ==================== دوال التحليل الفني ====================
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function calculateRSI(prices, period = 14) {
+            if (prices.length < period + 1) return 50;
+            
+            let gains = 0;
+            let losses = 0;
+            
+            for (let i = prices.length - period; i < prices.length; i++) {
+                const diff = prices[i] - prices[i-1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            
+            if (avgLoss === 0) return 70;
+            if (avgGain === 0) return 30;
+            
+            const rs = avgGain / avgLoss;
+            return Math.round((100 - (100 / (1 + rs))) * 10) / 10;
+        }
+
+        function calculateSupportResistance(prices) {
+            if (prices.length < 10) {
+                const lastPrice = prices[prices.length - 1] || 0;
+                return {
+                    support: [lastPrice * 0.95, lastPrice * 0.9, lastPrice * 0.85],
+                    resistance: [lastPrice * 1.05, lastPrice * 1.1, lastPrice * 1.15]
+                };
+            }
+            
+            const last10 = prices.slice(-10);
+            const min = Math.min(...last10);
+            const max = Math.max(...last10);
+            const current = prices[prices.length - 1];
+            const range = max - min;
+            
+            return {
+                support: [current - range * 0.382, current - range * 0.5, current - range * 0.618],
+                resistance: [current + range * 0.382, current + range * 0.5, current + range * 0.618]
+            };
+        }
+
+        function detectCandlePatterns(pricePoints) {
+            const patterns = [];
+            if (pricePoints.length < 2) return patterns;
+            
+            const last = pricePoints[pricePoints.length - 1];
+            const prev = pricePoints[pricePoints.length - 2];
+            
+            if (last.price > prev.price * 1.03) patterns.push('صاعدة قوية');
+            if (last.price < prev.price * 0.97) patterns.push('هابطة قوية');
+            
+            return patterns;
+        }
+
+        function calculateSMA(array, period) {
+            if (!Array.isArray(array) || array.length < period) return null;
+            const slice = array.slice(-period);
+            const sum = slice.reduce((acc, val) => acc + Number(val || 0), 0);
+            return sum / period;
+        }
+
+        function calculateSMA(array, period) {
+            if (!Array.isArray(array) || array.length < period) return null;
+            const slice = array.slice(-period);
+            const sum = slice.reduce((acc, val) => acc + Number(val || 0), 0);
+            return sum / period;
+        }
+
+        function getRecommendation(rsi, patterns, price, support, resistance, volumeRatio = 1, dayChange = 0, symbol = '') {
+            let score = 0;
+            let pros = [];
+            let cons = [];
+
+            const safeSupport = Number(support?.[0]);
+            const safeResistance = Number(resistance?.[0]);
+            const safePrice = Number(price);
+            const safeRsi = Number(rsi);
+            const safeVolumeRatio = Number(volumeRatio);
+            const safeDayChange = Number(dayChange);
+
+            // 1. RSI Scoring
+            let rsiText = '';
+            if (safeRsi < 30) {
+                score += 1.0;
+                pros.push(`مؤشر القوة النسبية في ذروة البيع (${safeRsi.toFixed(1)}) - فرصة شراء تجمعية قوية`);
+                rsiText = 'ذروة بيع (فرصة تجميع)';
+            } else if (safeRsi >= 30 && safeRsi < 45) {
+                score += 1.2;
+                pros.push(`مؤشر القوة النسبية في منطقة تجميع آمنة وإيجابية (${safeRsi.toFixed(1)})`);
+                rsiText = 'منطقة تجميع آمنة';
+            } else if (safeRsi >= 45 && safeRsi < 60) {
+                score += 0.8;
+                pros.push(`مؤشر القوة النسبية في نطاق متوازن صاعد (${safeRsi.toFixed(1)})`);
+                rsiText = 'نطاق متوازن وإيجابي';
+            } else if (safeRsi >= 60 && safeRsi <= 70) {
+                score += 0.0;
+                rsiText = 'نطاق محايد';
+            } else {
+                score -= 1.5;
+                cons.push(`مؤشر القوة النسبية في ذروة الشراء (${safeRsi.toFixed(1)}) - مخاطر جني أرباح مرتفعة`);
+                rsiText = 'ذروة شراء (مخاطر عالية)';
+            }
+
+            // 2. Trend & Moving Averages (SMA 20 & SMA 50)
+            let sma20Text = '—';
+            let sma50Text = '—';
+            let smaStatus = 'محايد';
+            if (symbol) {
+                const closes = getHistoricalCloses(symbol);
+                const sma20 = calculateSMA(closes, 20);
+                const sma50 = calculateSMA(closes, 50);
+
+                if (sma20 !== null) sma20Text = sma20.toFixed(2);
+                if (sma50 !== null) sma50Text = sma50.toFixed(2);
+
+                if (sma20 !== null && sma50 !== null) {
+                    if (sma20 > sma50) {
+                        score += 0.8;
+                        pros.push(`تقاطع المتوسطات إيجابي (SMA20 > SMA50) - اتجاه عام صاعد (Golden Cross)`);
+                        smaStatus = 'اتجاه صاعد (إيجابي)';
+                    } else {
+                        score -= 0.8;
+                        cons.push(`تقاطع المتوسطات سلبي (SMA20 < SMA50) - اتجاه عام هابط`);
+                        smaStatus = 'اتجاه هابط (سلبي)';
+                    }
+                }
+
+                if (sma20 !== null) {
+                    if (safePrice > sma20) {
+                        score += 0.5;
+                        pros.push(`السعر الحالي أعلى من متوسط 20 يوم (${safePrice.toFixed(2)} > ${sma20.toFixed(2)}) - زخم صاعد قصير المدى`);
+                    } else {
+                        score -= 0.6;
+                        cons.push(`السعر الحالي أدنى من متوسط 20 يوم (${safePrice.toFixed(2)} < ${sma20.toFixed(2)}) - ضعف قصير المدى`);
+                    }
+                }
+            }
+
+            // 3. Volume confirmation
+            let volText = 'تداول طبيعي';
+            if (safeVolumeRatio >= 1.3 && safeDayChange > 0) {
+                score += 1.3;
+                pros.push(`اختراق سيولة مؤكد: حجم التداول أعلى من المتوسط بـ ${((safeVolumeRatio-1)*100).toFixed(0)}% مع صعود السعر`);
+                volText = 'سيولة شرائية كثيفة ومؤكدة';
+            } else if (safeVolumeRatio >= 1.0 && safeDayChange > 0) {
+                score += 0.5;
+                pros.push(`حجم التداول أعلى من المتوسط مع إغلاق إيجابي`);
+                volText = 'سيولة شرائية أعلى من المتوسط';
+            } else if (safeVolumeRatio >= 1.3 && safeDayChange < 0) {
+                score -= 1.2;
+                cons.push(`تصريف سيولة: حجم التداول أعلى من المتوسط بـ ${((safeVolumeRatio-1)*100).toFixed(0)}% مع هبوط السعر`);
+                volText = 'سيولة بيعية تصريفية كثيفة';
+            } else if (safeVolumeRatio <= 0.6) {
+                score -= 0.5;
+                cons.push(`ضعف في التداول والسيولة (Volume Ratio: ${safeVolumeRatio.toFixed(2)})`);
+                volText = 'سيولة ضعيفة / خمول';
+            }
+
+            // 4. Candlestick Patterns
+            let patternText = '—';
+            if (Array.isArray(patterns) && patterns.length > 0) {
+                patternText = patterns.join(', ');
+                if (patterns.includes('صاعدة قوية') || patterns.includes('مطرقة صاعدة') || patterns.includes('ابتلاع صاعد')) {
+                    score += 1.0;
+                    pros.push(`تم اكتشاف نماذج شموع يابانية صاعدة: ${patterns.join(', ')}`);
+                }
+                if (patterns.includes('هابطة قوية') || patterns.includes('شهاب هابط') || patterns.includes('ابتلاع هابط')) {
+                    score -= 1.0;
+                    cons.push(`تم اكتشاف نماذج شموع يابانية هابطة: ${patterns.join(', ')}`);
+                }
+            }
+
+            // 5. Support & Resistance (S&R)
+            const nearSupport = Number.isFinite(safeSupport) && safeSupport > 0 && Number.isFinite(safePrice)
+                ? ((safePrice - safeSupport) / safeSupport) * 100 <= 2.5
+                : false;
+            const nearResistance = Number.isFinite(safeResistance) && safeResistance > 0 && Number.isFinite(safePrice) && safePrice > 0
+                ? ((safeResistance - safePrice) / safePrice) * 100 <= 2
+                : false;
+
+            let srText = 'نطاق متوازن بين الدعم والمقاومة';
+            if (nearSupport) {
+                score += 1.0;
+                pros.push(`السعر قريب من الدعم الأول (${safeSupport.toFixed(2)} ج) - نقطة دخول منخفضة المخاطر`);
+                srText = 'قريب جداً من الدعم (دخول ممتاز)';
+            }
+            if (Number.isFinite(safeSupport) && safeSupport > 0 && safePrice < safeSupport * 0.97) {
+                score -= 1.2;
+                cons.push(`كسر الدعم الأول للأسفل (${safePrice.toFixed(2)} ج < ${safeSupport.toFixed(2)} ج) - سلبي للغاية`);
+                srText = 'كسر الدعم الأول للأسفل (خروج)';
+            }
+            if (nearResistance) {
+                score -= 0.8;
+                cons.push(`السعر قريب جداً من المقاومة الأولى (${safeResistance.toFixed(2)} ج) - مخاطر تراجع مؤقت`);
+                srText = 'قريب جداً من المقاومة (انتظر الاختراق)';
+            }
+
+            // Safe guards for Strong Buy
+            const strongBuyGate = (
+                safeRsi >= 32 && safeRsi <= 62 &&
+                safeDayChange >= -0.5 &&
+                safeVolumeRatio >= 0.95 &&
+                !nearResistance
+            );
+
+            let recommendation = 'neutral';
+            if (score >= 2.4 && strongBuyGate) {
+                recommendation = 'strong-buy';
+            } else if (score >= 1.2) {
+                recommendation = 'buy';
+            } else if (score <= -1.0) {
+                recommendation = 'sell';
+            }
+
+            return {
+                recommendation,
+                score,
+                pros,
+                cons,
+                values: {
+                    rsi: safeRsi,
+                    rsiText,
+                    volumeRatio: safeVolumeRatio,
+                    volText,
+                    patternText,
+                    sma20: sma20Text,
+                    sma50: sma50Text,
+                    smaStatus,
+                    support: safeSupport > 0 ? safeSupport.toFixed(2) : '—',
+                    resistance: safeResistance > 0 ? safeResistance.toFixed(2) : '—',
+                    srStatus: srText
+                }
+            };
+        }
+
+        // ==================== دوال عرض الجدول ====================
+        function displayStocks(stocks) {
+            let html = '';
+            
+            stocks.forEach(stock => {
+                const changeClass = stock.changeValue >= 0 ? 'price-up' : 'price-down';
+                const changeSign = stock.changeValue >= 0 ? '+' : '';
+                const volumeSnapshot = getVolumeSnapshot(stock);
+                
+                let badgeClass = 'badge-neutral';
+                let badgeText = 'محايد';
+                
+                if (stock.recommendation === 'strong-buy') {
+                    badgeClass = 'badge-strong-buy';
+                    badgeText = '⭐ شراء قوي';
+                } else if (stock.recommendation === 'buy') {
+                    badgeClass = 'badge-buy';
+                    badgeText = '✅ شراء';
+                } else if (stock.recommendation === 'sell') {
+                    badgeClass = 'badge-sell';
+                    badgeText = '⚠️ تجنب/بيع';
+                }
+
+                const stockPatterns = Array.isArray(stock.patterns) ? stock.patterns : [];
+                const patternsHtml = stockPatterns.slice(0, 2).map(p => 
+                    `<span class="pattern-tag">${p}</span>`
+                ).join(' ') || '—';
+
+                const support1 = Number(stock.support?.[0]);
+                const resistance1 = Number(stock.resistance?.[0]);
+                const supportText = Number.isFinite(support1) ? support1.toFixed(2) : '—';
+                const resistanceText = Number.isFinite(resistance1) ? resistance1.toFixed(2) : '—';
+
+                const optEntry = getOptimalEntryPrice(stock);
+                const diffPercent = stock.currentPrice > 0 ? ((optEntry - stock.currentPrice) / stock.currentPrice) * 100 : 0;
+                let diffHtml = '';
+                if (diffPercent > 0.05) {
+                    diffHtml = `<span style="color: #10b981; font-weight: bold;">+${diffPercent.toFixed(1)}%</span>`;
+                } else if (diffPercent < -0.05) {
+                    diffHtml = `<span style="color: #ef4444; font-weight: bold;">${diffPercent.toFixed(1)}%</span>`;
+                } else {
+                    diffHtml = `<span style="color: #94a3b8;">0.0%</span>`;
+                }
+
+                html += `<tr onclick="showAnalysis('${stock.symbol}')">`;
+                html += `<td><strong style="color: #fbbf24;">${stock.symbol}</strong></td>`;
+                html += `<td>${stock.name}</td>`;
+                html += `<td class="${changeClass}">${stock.currentPrice.toFixed(2)}</td>`;
+                html += `<td class="${changeClass}">${changeSign}${stock.change}%</td>`;
+                html += `<td style="font-weight: bold; color: #fbbf24;">${optEntry.toFixed(2)}</td>`;
+                html += `<td>${diffHtml}</td>`;
+                html += `<td>${volumeSnapshot.latestVolume.toLocaleString()} <span class="pattern-tag">${volumeSnapshot.stateText}</span></td>`;
+                html += `<td>${stock.rsi}</td>`;
+                const periodLow = getPeriodLow(stock.symbol, nearLowDays);
+                html += `<td class="price-down">${Number.isFinite(periodLow) ? periodLow.toFixed(2) : '—'}</td>`;
+                html += `<td class="price-down">${supportText}</td>`;
+                html += `<td class="price-up">${resistanceText}</td>`;
+                html += `<td>${patternsHtml}</td>`;
+                html += `<td onclick="event.stopPropagation(); showRecommendationDetails('${stock.symbol}')"><span class="badge ${badgeClass}" style="cursor: pointer; display: inline-block; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">${badgeText}</span></td>`;
+                html += `<td>
+                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.85em;" 
+                            onclick="event.stopPropagation(); addToPortfolio('${stock.symbol}', '${stock.name}', ${stock.currentPrice})">
+                        <i class="fas fa-plus"></i> أضف
+                    </button>
+                </td>`;
+                html += `</tr>`;
+            });
+
+            document.getElementById('tableBody').innerHTML = html;
+        }
+
+        function refreshTableView() {
+            const sorted = sortStocks(getCurrentFilteredRows(), currentSort.column, currentSort.direction);
+            displayStocks(sorted);
+        }
+
+        // ==================== دوال الترتيب والبحث ====================
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+
+            refreshTableView();
+        }
+
+        function sortStocks(stocks, column, direction) {
+            return [...stocks].sort((a, b) => {
+                let valA, valB;
+                
+                switch(column) {
+                    case 'optEntry':
+                        valA = getOptimalEntryPrice(a);
+                        valB = getOptimalEntryPrice(b);
+                        break;
+                    case 'optEntryDiff':
+                        {
+                            const entryA = getOptimalEntryPrice(a);
+                            const entryB = getOptimalEntryPrice(b);
+                            valA = a.currentPrice > 0 ? ((entryA - a.currentPrice) / a.currentPrice) * 100 : 0;
+                            valB = b.currentPrice > 0 ? ((entryB - b.currentPrice) / b.currentPrice) * 100 : 0;
+                        }
+                        break;
+                    case 'symbol':
+                        valA = a.symbol;
+                        valB = b.symbol;
+                        break;
+                    case 'name':
+                        valA = a.name;
+                        valB = b.name;
+                        break;
+                    case 'price':
+                        valA = a.currentPrice;
+                        valB = b.currentPrice;
+                        break;
+                    case 'change':
+                        valA = a.changeValue;
+                        valB = b.changeValue;
+                        break;
+                    case 'volume':
+                        valA = getVolumeSnapshot(a).latestVolume;
+                        valB = getVolumeSnapshot(b).latestVolume;
+                        break;
+                    case 'rsi':
+                        valA = a.rsi;
+                        valB = b.rsi;
+                        break;
+                    case 'recommendation':
+                        const order = { 'strong-buy': 3, 'buy': 2, 'neutral': 1 };
+                        valA = order[a.recommendation] || 0;
+                        valB = order[b.recommendation] || 0;
+                        break;
+                    default:
+                        valA = a[column];
+                        valB = b[column];
+                }
+                
+                if (direction === 'asc') {
+                    return valA > valB ? 1 : -1;
+                } else {
+                    return valA < valB ? 1 : -1;
+                }
+            });
+        }
+
+        function filterTable() {
+            renderQuickFilterCards();
+            refreshTableView();
+        }
+
+        window.setQuickFilter = function(filterKey) {
+            const key = filterKey || 'all';
+            
+            if (key === 'next-session-opp') {
+                if (activeQuickFilters.has('next-session-opp')) {
+                    activeQuickFilters.delete('next-session-opp');
+                } else {
+                    const input = prompt('أدخل الحد الأدنى لنسبة الفرصة (تلقائياً 70%):', String(minOpportunityScore));
+                    if (input === null) return;
+                    const scoreVal = Number(input);
+                    if (!Number.isFinite(scoreVal) || scoreVal < 0 || scoreVal > 100) {
+                        alert('يرجى إدخال رقم صحيح بين 0 و 100.');
+                        return;
+                    }
+                    minOpportunityScore = scoreVal;
+                    activeQuickFilters.add('next-session-opp');
+                }
+                renderQuickFilterCards();
+                refreshTableView();
+                return;
+            }
+            if (key === 'strong-volume-60') {
+                const input = prompt('أدخل عدد الأيام لمتوسط حجم التداول (الافتراضي 60).\nاكتب 0 لإلغاء هذا الفلتر.', String(volumeDays));
+                if (input === null) return;
+                const days = Number(input);
+                if (!Number.isFinite(days) || days < 0) {
+                    alert('يرجى إدخال رقم صحيح للأيام.');
+                    return;
+                }
+
+                if (days === 0) {
+                    activeQuickFilters.delete('strong-volume-60');
+                    renderQuickFilterCards();
+                    refreshTableView();
+                    return;
+                }
+
+                volumeDays = Math.max(5, Math.min(3650, Math.floor(days)));
+                activeQuickFilters.add('strong-volume-60');
+                renderQuickFilterCards();
+                refreshTableView();
+                return;
+            }
+
+            if (key === 'near-low-60') {
+                const input = prompt('أدخل عدد الأيام لفحص القرب من الأدنى (الافتراضي 60).\nاكتب 0 لإلغاء هذا الفلتر.', String(nearLowDays));
+                if (input === null) return;
+                const days = Number(input);
+                if (!Number.isFinite(days) || days < 0) {
+                    alert('يرجى إدخال رقم صحيح للأيام.');
+                    return;
+                }
+
+                if (days === 0) {
+                    activeQuickFilters.delete('near-low-60');
+                    renderQuickFilterCards();
+                    refreshTableView();
+                    return;
+                }
+
+                nearLowDays = Math.max(5, Math.min(3650, Math.floor(days)));
+                updatePeriodLowHeader();
+                activeQuickFilters.add('near-low-60');
+                renderQuickFilterCards();
+                refreshTableView();
+                return;
+            }
+
+            if (key === 'all') {
+                activeQuickFilters.clear();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = '';
+            } else {
+                const category1 = ['strong-buy', 'buy', 'neutral', 'sell'];
+                const category2 = ['oversold', 'overbought'];
+                const category3 = ['near-support', 'near-resistance'];
+                const category4 = ['positive-change', 'negative-change'];
+                const category5 = ['indicators-bullish', 'indicators-strong-bullish'];
+
+                if (activeQuickFilters.has(key)) {
+                    activeQuickFilters.delete(key);
+                } else {
+                    if (category1.includes(key)) {
+                        category1.forEach(k => { if (k !== key) activeQuickFilters.delete(k); });
+                    } else if (category2.includes(key)) {
+                        category2.forEach(k => { if (k !== key) activeQuickFilters.delete(k); });
+                    } else if (category3.includes(key)) {
+                        category3.forEach(k => { if (k !== key) activeQuickFilters.delete(k); });
+                    } else if (category4.includes(key)) {
+                        category4.forEach(k => { if (k !== key) activeQuickFilters.delete(k); });
+                    } else if (category5.includes(key)) {
+                        category5.forEach(k => { if (k !== key) activeQuickFilters.delete(k); });
+                    }
+                    activeQuickFilters.add(key);
+                }
+            }
+            renderQuickFilterCards();
+            refreshTableView();
+        };
+
+        // ==================== دوال إضافية ====================
+        window.goBack = function() {
+            window.location.href = '../index.html';
+        };
+
+        window.refreshData = function() {
+            // إعادة تحميل البيانات من sessionStorage
+            loadData();
+        };
+
+        window.addToPortfolio = function(symbol, name, price) {
+            // التحقق من وجود بيانات المحفظة
+            let portfolio = [];
+            const savedPortfolio = localStorage.getItem('userPortfolio');
+            
+            if (savedPortfolio) {
+                try {
+                    portfolio = JSON.parse(savedPortfolio);
+                } catch (e) {
+                    console.error('خطأ في قراءة المحفظة:', e);
+                }
+            }
+            
+            // التحقق إذا كان السهم موجوداً بالفعل
+            const existing = portfolio.find(s => s.symbol === symbol);
+            
+            if (existing) {
+                const newQty = existing.quantity + 1;
+                if (confirm(`⚠️ السهم ${symbol} موجود بالفعل في المحفظة\nهل تريد زيادة الكمية من ${existing.quantity} إلى ${newQty}؟`)) {
+                    existing.quantity = newQty;
+                    localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+                    alert(`✅ تم تحديث كمية ${symbol} إلى ${newQty}`);
+                }
+            } else {
+                // إضافة سهم جديد
+                const newStock = {
+                    symbol: symbol,
+                    name: name,
+                    quantity: 1,
+                    entryPrice: price,
+                    addedDate: new Date().toLocaleDateString('ar-EG')
+                };
+                
+                portfolio.push(newStock);
+                localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+                alert(`✅ تم إضافة ${symbol} إلى المحفظة`);
+            }
+        };
+
+        window.showAnalysis = function(symbol) {
+            openStockAnalysis(symbol);
+        };
+
+        // ==================== بدء التحميل ====================
+        // تنفيذ التحميل فور تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            loadData();
+        });
+    </script>
+
+    <!-- نافذة تفاصيل التوصية المنبثقة -->
+    <div id="recommendationDetailModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11, 15, 25, 0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); direction:rtl;">
+        <div class="modal-content" style="background:#1e293b; color:#f8fafc; border:1px solid #334155; border-radius:16px; width:92%; max-width:600px; padding:24px; box-shadow:0 20px 25px -5px rgba(0, 0, 0, 0.5); position:relative; max-height:85vh; overflow-y:auto;">
+            <button onclick="closeRecommendationDetails()" style="position:absolute; top:16px; left:16px; background:none; border:none; color:#94a3b8; font-size:1.8em; cursor:pointer; line-height:1;">&times;</button>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:16px; margin-bottom:20px;">
+                <div>
+                    <h3 id="recModalSymbol" style="margin:0; font-size:1.6em; color:#fbbf24;">—</h3>
+                    <span id="recModalName" style="color:#94a3b8; font-size:0.95em;">—</span>
+                </div>
+                <div style="text-align:left;">
+                    <span id="recModalBadge" class="badge badge-neutral" style="font-size:1.1em; padding:6px 16px;">—</span>
+                </div>
+            </div>
+
+            <!-- Score visualization -->
+            <div style="background:#0f172a; border-radius:12px; padding:16px; margin-bottom:20px; border:1px solid #1e293b; text-align:center;">
+                <div style="color:#94a3b8; font-size:0.9em; margin-bottom:6px;">التقييم الكمي العام (Score)</div>
+                <div style="display:flex; justify-content:center; align-items:baseline; gap:6px;">
+                    <span id="recModalScore" style="font-size:2.4em; font-weight:800; color:#fbbf24;">0.0</span>
+                    <span style="color:#64748b; font-size:1.1em;">/ 5.0</span>
+                </div>
+                <div style="width:100%; background:#334155; height:6px; border-radius:10px; margin-top:12px; overflow:hidden; position:relative;">
+                    <div id="recModalProgressBar" style="width:50%; background:linear-gradient(90deg, #10b981, #34d399); height:100%; border-radius:10px; transition:width 0.4s ease;"></div>
+                </div>
+            </div>
+
+            <!-- Indicator details -->
+            <h4 style="margin:0 0 12px 0; color:#e2e8f0; border-right:3px solid #fbbf24; padding-right:8px;">تفاصيل المؤشرات الفنية</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                <div style="background:#152033; padding:12px; border-radius:8px; border:1px solid #1e293b;">
+                    <span style="font-size:0.8em; color:#64748b; display:block;">مؤشر القوة النسبية (RSI)</span>
+                    <strong id="recValRSI" style="color:#f8fafc; font-size:1.1em;">—</strong>
+                    <span id="recTextRSI" style="font-size:0.8em; color:#94a3b8; display:block; margin-top:4px;">—</span>
+                </div>
+                <div style="background:#152033; padding:12px; border-radius:8px; border:1px solid #1e293b;">
+                    <span style="font-size:0.8em; color:#64748b; display:block;">حجم التداول والسيولة</span>
+                    <strong id="recValVolume" style="color:#f8fafc; font-size:1.1em;">—</strong>
+                    <span id="recTextVolume" style="font-size:0.8em; color:#94a3b8; display:block; margin-top:4px;">—</span>
+                </div>
+                <div style="background:#152033; padding:12px; border-radius:8px; border:1px solid #1e293b;">
+                    <span style="font-size:0.8em; color:#64748b; display:block;">المتوسطات المتحركة (SMA)</span>
+                    <div style="font-size:0.9em; margin-top:2px;">
+                        <span>SMA20: <strong id="recValSMA20" style="color:#fbbf24;">—</strong></span> | 
+                        <span>SMA50: <strong id="recValSMA50" style="color:#a855f7;">—</strong></span>
+                    </div>
+                    <span id="recTextSMA" style="font-size:0.8em; color:#94a3b8; display:block; margin-top:4px;">—</span>
+                </div>
+                <div style="background:#152033; padding:12px; border-radius:8px; border:1px solid #1e293b;">
+                    <span style="font-size:0.8em; color:#64748b; display:block;">الدعم والمقاومة الأفوقية</span>
+                    <div style="font-size:0.9em; margin-top:2px;">
+                        <span>دعم: <strong id="recValSupport" style="color:#10b981;">—</strong></span> | 
+                        <span>مقاومة: <strong id="recValResistance" style="color:#ef4444;">—</strong></span>
+                    </div>
+                    <span id="recTextSR" style="font-size:0.8em; color:#94a3b8; display:block; margin-top:4px;">—</span>
+                </div>
+            </div>
+
+            <!-- Candlestick Patterns Detected -->
+            <div id="recModalPatternArea" style="background:#152033; padding:12px; border-radius:8px; border:1px solid #1e293b; margin-bottom:20px; display:none;">
+                <span style="font-size:0.8em; color:#64748b; display:block;">نماذج الشموع اليابانية المرصودة</span>
+                <div id="recModalPatternTags" style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
+            </div>
+
+            <!-- Detailed Pros and Cons -->
+            <h4 style="margin:0 0 12px 0; color:#e2e8f0; border-right:3px solid #fbbf24; padding-right:8px;">أسباب التوصية بالتفصيل</h4>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div style="background:rgba(16, 185, 129, 0.08); border-right:4px solid #10b981; border-radius:4px; padding:12px;">
+                    <div style="color:#10b981; font-weight:bold; margin-bottom:8px;"><i class="fas fa-arrow-up"></i> العوامل المحفزة للإيجابية</div>
+                    <ul id="recModalPros" style="margin:0; padding-right:18px; line-height:1.6; font-size:0.92em; color:#cbd5e1;"></ul>
+                </div>
+                <div style="background:rgba(239, 68, 68, 0.08); border-right:4px solid #ef4444; border-radius:4px; padding:12px;">
+                    <div style="color:#ef4444; font-weight:bold; margin-bottom:8px;"><i class="fas fa-warning"></i> العوامل المقيدة / السلبيات</div>
+                    <ul id="recModalCons" style="margin:0; padding-right:18px; line-height:1.6; font-size:0.92em; color:#cbd5e1;"></ul>
+                </div>
+            </div>
+            
+            <div style="margin-top:24px; text-align:center;">
+                <button class="btn btn-warning" onclick="closeRecommendationDetails(); showAnalysis(document.getElementById('recModalSymbol').textContent)" style="width:100%; padding:10px; font-weight:bold;">
+                    <i class="fas fa-chart-line"></i> فتح نافذة التحليل الفني والرسوم الكاملة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.showRecommendationDetails = function(symbol) {
+            const stock = processedData.find(s => s.symbol === symbol);
+            if (!stock || !stock.recommendationDetails) return;
+
+            const r = stock.recommendationDetails;
+            document.getElementById('recModalSymbol').textContent = stock.symbol;
+            document.getElementById('recModalName').textContent = stock.name;
+            
+            const badge = document.getElementById('recModalBadge');
+            badge.className = 'badge';
+            if (r.recommendation === 'strong-buy') {
+                badge.classList.add('badge-strong-buy');
+                badge.textContent = '🔥 شراء قوي';
+            } else if (r.recommendation === 'buy') {
+                badge.classList.add('badge-buy');
+                badge.textContent = '✅ شراء';
+            } else if (r.recommendation === 'sell') {
+                badge.classList.add('badge-sell');
+                badge.textContent = '⚠️ تجنب/بيع';
+            } else {
+                badge.classList.add('badge-neutral');
+                badge.textContent = 'محايد';
+            }
+
+            // Score and Progress bar (scale from -5 to +5 maps to 0% to 100%)
+            // Let's normalize score to 0 to 5 for UI display
+            const displayScore = Math.max(0, Math.min(5, r.score));
+            document.getElementById('recModalScore').textContent = displayScore.toFixed(1);
+            const pct = Math.max(5, Math.min(100, (displayScore / 5) * 100));
+            document.getElementById('recModalProgressBar').style.width = `${pct}%`;
+            
+            // Indicator Values
+            document.getElementById('recValRSI').textContent = r.values.rsi ? r.values.rsi.toFixed(1) : '—';
+            document.getElementById('recTextRSI').textContent = r.values.rsiText;
+
+            document.getElementById('recValVolume').textContent = r.values.volumeRatio ? r.values.volumeRatio.toFixed(2) : '—';
+            document.getElementById('recTextVolume').textContent = r.values.volText;
+
+            document.getElementById('recValSMA20').textContent = r.values.sma20;
+            document.getElementById('recValSMA50').textContent = r.values.sma50;
+            document.getElementById('recTextSMA').textContent = r.values.smaStatus;
+
+            document.getElementById('recValSupport').textContent = r.values.support;
+            document.getElementById('recValResistance').textContent = r.values.resistance;
+            document.getElementById('recTextSR').textContent = r.values.srStatus;
+
+            // Pattern tags
+            const patternArea = document.getElementById('recModalPatternArea');
+            const patternTags = document.getElementById('recModalPatternTags');
+            if (r.values.patternText && r.values.patternText !== '—') {
+                patternArea.style.display = 'block';
+                patternTags.innerHTML = stock.patterns.map(p => `<span class="pattern-tag">${p}</span>`).join(' ');
+            } else {
+                patternArea.style.display = 'none';
+            }
+
+            // Pros and Cons lists
+            const prosList = document.getElementById('recModalPros');
+            const consList = document.getElementById('recModalCons');
+            
+            if (r.pros.length > 0) {
+                prosList.innerHTML = r.pros.map(p => `<li>${p}</li>`).join('');
+            } else {
+                prosList.innerHTML = '<li>لا توجد عوامل إيجابية مسجلة حالياً</li>';
+            }
+
+            if (r.cons.length > 0) {
+                consList.innerHTML = r.cons.map(c => `<li>${c}</li>`).join('');
+            } else {
+                consList.innerHTML = '<li>لا توجد سلبيات أو محاذير معينة</li>';
+            }
+
+            // Display modal
+            document.getElementById('recommendationDetailModal').style.display = 'flex';
+        };
+
+        window.closeRecommendationDetails = function() {
+            document.getElementById('recommendationDetailModal').style.display = 'none';
+        };
+    </script>
+</body>
+</html>

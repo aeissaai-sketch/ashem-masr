@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 تحليل المتوسطات المتحركة (SMA/EMA)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            transition: margin-right .3s ease;
+        }
+
+        .header-box {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 15px;
+            border: 1px solid #fbbf24;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .header-box h1 {
+            color: #fbbf24;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .header-box p {
+            color: #94a3b8;
+            font-size: 0.95em;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 2;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #fbbf24;
+        }
+
+        .selector-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .selector-box select {
+            width: 100%;
+            padding: 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .selector-box select:focus {
+            border-color: #fbbf24;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            background: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #111827;
+            color: #fbbf24;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background: #1e293b;
+        }
+
+        .sort-icon {
+            font-size: 0.8em;
+            margin-right: 5px;
+            opacity: 0.6;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        tr:hover {
+            background: #334155;
+        }
+
+        .up { color: #22c55e; font-weight: bold; }
+        .down { color: #ef4444; font-weight: bold; }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.78em;
+            display: inline-block;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .bg-up {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid #22c55e;
+        }
+
+        .bg-down {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid #ef4444;
+        }
+
+        .bg-cross-up {
+            background: rgba(251, 191, 36, 0.2);
+            color: #f59e0b;
+            border: 1px solid #fbbf24;
+            animation: pulse 2s infinite;
+        }
+
+        .bg-cross-down {
+            background: rgba(147, 51, 234, 0.2);
+            color: #a855f7;
+            border: 1px solid #9333ea;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #94a3b8;
+        }
+
+        .empty-state i {
+            font-size: 4em;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+
+        .cycle-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .cycle-golden {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+        }
+
+        .cycle-death {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+            color: #f87171;
+            border: 1px solid #ef4444;
+        }
+
+        .cycle-neutral {
+            background: rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            border: 1px solid #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- رأس الصفحة -->
+        <div class="header-box">
+            <h1>📈 تحليل المتوسطات المتحركة للمحترفين</h1>
+            <p>متابعة وتحديد اتجاهات الأسهم وحالة التقاطعات الذهبية والكسر اللحظي</p>
+        </div>
+
+        <!-- أدوات التحكم والبحث -->
+        <div class="controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="ابحث عن سهم بالرمز أو الاسم..." onkeyup="renderTable()">
+            </div>
+            <div class="selector-box">
+                <select id="avgType" onchange="renderTable()">
+                    <option value="SMA">المتوسط المتحرك البسيط (SMA) - مؤسساتي</option>
+                    <option value="EMA">المتوسط المتحرك الأسي (EMA) - سريع التجاوب</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- أزرار الفلترة السريعة للتوصيات -->
+        <div class="filter-buttons" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="filter-btn" id="btn-all" onclick="filterByRecommendation('all')" style="padding: 10px 20px; border-radius: 50px; background: #fbbf24; color: #0f172a; border: none; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;"><i class="fas fa-layer-group"></i>الكل (<span id="count-all">0</span>)</button>
+            <button class="filter-btn" id="btn-invest" onclick="filterByRecommendation('invest')" style="padding: 10px 20px; border-radius: 50px; background: #1e293b; color: #4ade80; border: 1px solid #22c55e; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;"><i class="fas fa-gem"></i>شراء استثماري 💎 (<span id="count-invest">0</span>)</button>
+            <button class="filter-btn" id="btn-cautious" onclick="filterByRecommendation('cautious')" style="padding: 10px 20px; border-radius: 50px; background: #1e293b; color: #f59e0b; border: 1px solid #fbbf24; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;"><i class="fas fa-exclamation-triangle"></i>شراء بحذر ⚠️ (<span id="count-cautious">0</span>)</button>
+            <button class="filter-btn" id="btn-wait" onclick="filterByRecommendation('wait')" style="padding: 10px 20px; border-radius: 50px; background: #1e293b; color: #cbd5e1; border: 1px solid #94a3b8; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;"><i class="fas fa-clock"></i>انتظار ⏳ (<span id="count-wait">0</span>)</button>
+            <button class="filter-btn" id="btn-avoid" onclick="filterByRecommendation('avoid')" style="padding: 10px 20px; border-radius: 50px; background: #1e293b; color: #f87171; border: 1px solid #ef4444; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;"><i class="fas fa-times-circle"></i>تجنب ❌ (<span id="count-avoid">0</span>)</button>
+        </div>
+
+        <!-- جدول البيانات الرئيسي -->
+        <div class="table-wrap">
+            <div id="noDataMessage" class="empty-state" style="display: none;">
+                <i class="fas fa-database"></i>
+                <h3>لا توجد بيانات متوفرة</h3>
+                <p>يرجى رفع ملف البيانات من الصفحة الرئيسية أولاً لتشغيل الفرز.</p>
+            </div>
+
+            <table id="averagesTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="setSort('symbol')">الرمز والشركة <span id="sort-symbol" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('currentPrice')">السعر الحالي <span id="sort-currentPrice" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('sma20')">متوسط 20 يوم <span id="sort-sma20" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('sma50')">متوسط 50 يوم <span id="sort-sma50" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('sma100')">متوسط 100 يوم <span id="sort-sma100" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('sma200')">متوسط 200 يوم <span id="sort-sma200" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('crossState')">حالة الدورة (التقاطع الـ 50/200) <span id="sort-crossState" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('rating')">التقييم العام <span id="sort-rating" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('platformRec')">التوصية والتحليل ℹ️ <span id="sort-platformRec" class="sort-icon">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="avgTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- نافذة شرح التوصية الفنية -->
+    <div id="recModal" onclick="closeRecModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid #fbbf24; border-radius: 16px; max-width: 550px; width: 90%; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; color: #e2e8f0; text-align: right;">
+            <button onclick="closeRecModal()" style="position: absolute; top: 15px; left: 15px; background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; transition: color 0.2s;"><i class="fas fa-times"></i></button>
+            <h3 id="modalSymbol" style="color: #fbbf24; font-size: 1.4rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;"></h3>
+            <h4 id="modalRec" style="margin-bottom: 15px; font-weight: bold; font-size: 1.1rem;"></h4>
+            <hr style="border-color: #334155; margin-bottom: 15px;">
+            <p id="modalReasoning" style="line-height: 1.6; font-size: 0.95rem; white-space: pre-line; color: #cbd5e1;"></p>
+        </div>
+    </div>
+
+    <script>
+        let sortState = { key: 'symbol', dir: 'asc' };
+        let activeRecFilter = 'all';
+
+        function filterByRecommendation(filterKey) {
+            activeRecFilter = filterKey;
+            
+            const buttons = {
+                all: { id: 'btn-all', activeBg: '#fbbf24', activeColor: '#0f172a', inactiveBg: '#1e293b', inactiveColor: '#fbbf24', border: '1px solid #fbbf24' },
+                invest: { id: 'btn-invest', activeBg: '#22c55e', activeColor: '#ffffff', inactiveBg: '#1e293b', inactiveColor: '#4ade80', border: '1px solid #22c55e' },
+                cautious: { id: 'btn-cautious', activeBg: '#fbbf24', activeColor: '#0f172a', inactiveBg: '#1e293b', inactiveColor: '#f59e0b', border: '1px solid #fbbf24' },
+                wait: { id: 'btn-wait', activeBg: '#94a3b8', activeColor: '#0f172a', inactiveBg: '#1e293b', inactiveColor: '#cbd5e1', border: '1px solid #94a3b8' },
+                avoid: { id: 'btn-avoid', activeBg: '#ef4444', activeColor: '#ffffff', inactiveBg: '#1e293b', inactiveColor: '#f87171', border: '1px solid #ef4444' }
+            };
+
+            for (const [key, btn] of Object.entries(buttons)) {
+                const el = document.getElementById(btn.id);
+                if (!el) continue;
+                if (key === filterKey) {
+                    el.style.background = btn.activeBg;
+                    el.style.color = btn.activeColor;
+                    el.style.border = 'none';
+                    el.classList.add('active');
+                } else {
+                    el.style.background = btn.inactiveBg;
+                    el.style.color = btn.inactiveColor;
+                    el.style.border = btn.border;
+                    el.classList.remove('active');
+                }
+            }
+
+            renderTable();
+        }
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.dir = 'asc';
+            }
+            renderTable();
+        }
+
+        function getMovingAverageRecommendation(currentPrice, sma20, sma50, sma100, sma200, crossState, rating) {
+            let text = 'انتظار ⏳';
+            let className = 'cycle-neutral';
+            let reasoning = '';
+
+            const p = Number(currentPrice);
+            
+            // 1. Avoid (تجنب)
+            if (crossState === -1 && (!sma20 || p < sma20) && (!sma50 || p < sma50) && (!sma100 || p < sma100) && (!sma200 || p < sma200)) {
+                text = 'تجنب ❌';
+                className = 'bg-down';
+                reasoning = "السهم يمر باتجاه هابط استراتيجي قوي (ترتيب سلبي هابط)، حيث يقع متوسط 50 يوماً أدنى من متوسط 200 يوم، كما يتداول السعر حالياً أسفل جميع المتوسطات المتحركة الرئيسية (20، 50، 100، 200 يوم).\n\nقوة زخم الهبوط مستمرة ولا توجد أي إشارات سيولة شرائية أو ارتداد فني؛ لذلك ينصح بتجنب السهم تماماً والانتظار لحين تأسيس قاع حقيقي ودخول المشتري.";
+                return { text, class: className, reasoning };
+            }
+
+            // 2. Investment Buy (شراء استثماري)
+            if (crossState === 1 && sma50 && sma200 && p > sma200) {
+                if (sma20 && (p <= sma20 * 1.01 || p <= sma50 * 1.02)) {
+                    text = 'شراء استثماري 💎';
+                    className = 'bg-up';
+                    reasoning = `السهم في اتجاه صاعد رئيسي طويل الأجل (ترتيب ذهبي صاعد)، حيث يقع متوسط 50 يوماً أعلى من متوسط 200 يوم والسعر يتداول فوق متوسط 200 يوم (${sma200.toFixed(2)} ج.م).\n\nالسعر يمر حالياً بتصحيح أو ارتكاز هادئ قريب من دعوم المتوسطات المتوسطة (متوسط 20 أو 50 يوم)، مما يجعله فرصة تجميعية ممتازة ومنخفضة المخاطر استثمارياً مع الاتجاه العام الصاعد (Buy the Dip).`;
+                    return { text, class: className, reasoning };
+                }
+            }
+
+            // 3. Cautious Buy (شراء بحذر)
+            if (crossState === -1 && sma20 && sma50 && p > sma20 && p > sma50) {
+                text = 'شراء بحذر ⚠️';
+                className = 'bg-cross-up';
+                const limitStr = sma200 ? `عند مستوى متوسط 200 يوم البالغ (${sma200.toFixed(2)} ج.م)` : 'الرئيسية';
+                reasoning = `السهم يقع في دورة هبوط رئيسية طويلة الأجل (ترتيب سلبي هابط)، ومتوسط 50 أدنى من متوسط 200 يوم.\n\nبالرغم من الارتداد الإيجابي اللحظي فوق المتوسطات القصيرة (20 و 50 يوم)، إلا أن السهم يقترب من المقاومة التاريخية القوية ${limitStr}؛ لذا يعتبر الشراء هنا مضاربياً بحذر شديد مع ضرورة الالتزام بوقف خسارة قريب عند كسر متوسط 50 يوماً.`;
+                return { text, class: className, reasoning };
+            }
+
+            // 4. Wait (انتظار / ترقب)
+            if (sma20 && p > sma20 * 1.08) {
+                text = 'انتظار ⏳';
+                className = 'cycle-neutral';
+                reasoning = "السهم في اتجاه صاعد ولكن السعر حالياً متضخم وبعيد جداً عن المتوسطات المتحركة (مخاطر جني أرباح مرتفعة).\n\nينصح بالانتظار وعدم الشراء بالأسعار الحالية لحين حدوث تصحيح هادئ يقترب فيه السعر من مستويات الدعم (متوسط 20 أو 50 يوم) للحصول على نقطة دخول آمنة وعائد أفضل مخاطرة.";
+                return { text, class: className, reasoning };
+            }
+
+            // Generic wait/hold case
+            text = 'انتظار ⏳';
+            className = 'cycle-neutral';
+            reasoning = "السعر حالياً يتداول في نطاق عرضي متذبذب أو يمر بمرحلة انتقالية بين المتوسطات دون اتجاه واضح (فوق بعض المتوسطات وأسفل الأخرى).\n\nالتوصية هي الانتظار والترقب لحين استقرار السلوك السعري أو اختراق مقاومة هامة أو الارتكاز على دعم قوي لتأكيد الاتجاه القادم.";
+            return { text, class: className, reasoning };
+        }
+
+        window.openRecModal = function(symbol, name, recText, reasoning) {
+            document.getElementById('modalSymbol').innerHTML = `<i class="fas fa-chart-line"></i> ${symbol} - ${name}`;
+            document.getElementById('modalRec').innerHTML = `التوصية: <span class="badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; font-size: 0.9em; padding: 5px 12px;">${recText}</span>`;
+            document.getElementById('modalReasoning').textContent = reasoning;
+            document.getElementById('recModal').style.display = 'flex';
+        };
+
+        window.closeRecModal = function() {
+            document.getElementById('recModal').style.display = 'none';
+        };
+
+        // حساب المتوسط الحسابي البسيط (SMA)
+        function calcSMA(values, period) {
+            if (!values || values.length < period) return null;
+            const slice = values.slice(-period);
+            const sum = slice.reduce((a, b) => a + b, 0);
+            return Number((sum / period).toFixed(2));
+        }
+
+        // حساب المتوسط الأسي (EMA)
+        function calcEMA(values, period) {
+            if (!values || values.length < period) return null;
+            let k = 2 / (period + 1);
+            let sum = 0;
+            for (let i = 0; i < period; i++) {
+                sum += values[i];
+            }
+            let emaVal = sum / period;
+            for (let i = period; i < values.length; i++) {
+                emaVal = values[i] * k + emaVal * (1 - k);
+            }
+            return Number(emaVal.toFixed(2));
+        }
+
+        // تحديد حالة السعر مقارنة بالمتوسط مع كشف الكسر الفوري
+        function getStatusBadge(price, prevPrice, avg, prevAvg) {
+            if (!avg) return '<small style="color: #64748b;">بيانات غير كافية</small>';
+            
+            let isBullishCross = (prevPrice < prevAvg && price >= avg);
+            let isBearishCross = (prevPrice > prevAvg && price <= avg);
+
+            if (isBullishCross) {
+                return `
+                    <span class="badge bg-cross-up">🔥 اختراق صاعد</span>
+                    <div style="font-size:0.75em; color:#f59e0b; margin-top:2px;">اخترق المتوسط لأعلى</div>
+                `;
+            }
+            if (isBearishCross) {
+                return `
+                    <span class="badge bg-cross-down">⚠️ كسر هابط</span>
+                    <div style="font-size:0.75em; color:#a855f7; margin-top:2px;">كسر المتوسط لأسفل</div>
+                `;
+            }
+
+            return price >= avg ? 
+                `<span class="badge bg-up">فوق المتوسط ↑</span>` : 
+                `<span class="badge bg-down">تحت المتوسط ↓</span>`;
+        }
+
+        function updateSortIcons() {
+            const keys = ['symbol', 'currentPrice', 'sma20', 'sma50', 'sma100', 'sma200', 'crossState', 'rating', 'platformRec'];
+            keys.forEach(k => {
+                const icon = document.getElementById(`sort-${k}`);
+                if (!icon) return;
+                icon.textContent = sortState.key === k ? (sortState.dir === 'asc' ? '▲' : '▼') : '↕';
+            });
+        }
+
+        function renderTable() {
+            const raw = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+            const noDataMsg = document.getElementById('noDataMessage');
+            const table = document.getElementById('averagesTable');
+
+            if (!raw) {
+                if (noDataMsg) noDataMsg.style.display = 'block';
+                if (table) table.style.display = 'none';
+                return;
+            }
+            
+            if (noDataMsg) noDataMsg.style.display = 'none';
+            if (table) table.style.display = 'table';
+            
+            const data = JSON.parse(raw);
+            const source = data?.companies ?? data;
+            const companies = Array.isArray(source) ? source : Object.values(source || {});
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const type = document.getElementById('avgType').value;
+            const tbody = document.getElementById('avgTableBody');
+
+            updateSortIcons();
+
+            const items = companies.map(c => {
+                const prices = (c.historical || []).map(h => parseFloat(h.close)).filter(p => !isNaN(p));
+                if (prices.length === 0) return null;
+
+                const currentPrice = prices[prices.length - 1];
+                const prevPrice = prices.length >= 2 ? prices[prices.length - 2] : currentPrice;
+
+                // اختيار الدالة بناء على النوع المختار (SMA/EMA)
+                const calcFunc = type === 'EMA' ? calcEMA : calcSMA;
+
+                const sma20 = calcFunc(prices, 20);
+                const sma50 = calcFunc(prices, 50);
+                const sma100 = calcFunc(prices, 100);
+                const sma200 = calcFunc(prices, 200);
+
+                // حساب القيم السابقة للكشف عن الاختراق/الكسر
+                const prevPrices = prices.slice(0, -1);
+                const prevSma20 = calcFunc(prevPrices, 20);
+                const prevSma50 = calcFunc(prevPrices, 50);
+                const prevSma100 = calcFunc(prevPrices, 100);
+                const prevSma200 = calcFunc(prevPrices, 200);
+
+                // تقييم حالة الدورة الكبرى (تقاطع الـ 50 والـ 200)
+                let crossState = 0; // 1 = Golden, -1 = Death, 0 = Neutral
+                let cycleText = 'تجميع عرضي';
+                let cycleClass = 'cycle-neutral';
+                if (sma50 && sma200) {
+                    if (sma50 > sma200) {
+                        crossState = 1;
+                        cycleText = '🌟 ترتيب ذهبي (صاعد)';
+                        cycleClass = 'cycle-golden';
+                    } else if (sma50 < sma200) {
+                        crossState = -1;
+                        cycleText = '💀 ترتيب سلبي (هابط)';
+                        cycleClass = 'cycle-death';
+                    }
+                }
+
+                // حساب التقييم العام بناء على عدد المتوسطات التي يقع السعر فوقها
+                let score = 0;
+                let count = 0;
+                [sma20, sma50, sma100, sma200].forEach(val => { 
+                    if (val) { 
+                        score += (currentPrice >= val ? 1 : -1); 
+                        count++; 
+                    } 
+                });
+
+                let rating = 'محايد';
+                let ratingClass = '';
+                if (count > 0) {
+                    if (score === count) { rating = 'صاعد قوي 🔥'; ratingClass = 'up'; }
+                    else if (score > 0) { rating = 'إيجابي 📈'; ratingClass = 'up'; }
+                    else if (score === -count) { rating = 'هابط قوي ❄️'; ratingClass = 'down'; }
+                    else if (score < 0) { rating = 'سلبي 📉'; ratingClass = 'down'; }
+                }
+
+                const recObj = getMovingAverageRecommendation(currentPrice, sma20, sma50, sma100, sma200, crossState, rating);
+
+                return {
+                    symbol: c.symbol,
+                    name: c.shortName || '',
+                    currentPrice,
+                    prevPrice,
+                    sma20, prevSma20,
+                    sma50, prevSma50,
+                    sma100, prevSma100,
+                    sma200, prevSma200,
+                    crossState,
+                    cycleText,
+                    cycleClass,
+                    score,
+                    rating,
+                    ratingClass,
+                    platformRec: recObj.text,
+                    platformRecClass: recObj.class,
+                    platformRecReason: recObj.reasoning
+                };
+            }).filter(i => i !== null);
+
+            // حساب أعداد التوصيات لتحديث أزرار الفلترة
+            let countAll = items.length;
+            let countInvest = items.filter(i => String(i.platformRec).includes('استثمار')).length;
+            let countCautious = items.filter(i => String(i.platformRec).includes('حذر')).length;
+            let countWait = items.filter(i => String(i.platformRec).includes('انتظار')).length;
+            let countAvoid = items.filter(i => String(i.platformRec).includes('تجنب')).length;
+
+            const elAll = document.getElementById('count-all');
+            const elInvest = document.getElementById('count-invest');
+            const elCautious = document.getElementById('count-cautious');
+            const elWait = document.getElementById('count-wait');
+            const elAvoid = document.getElementById('count-avoid');
+
+            if (elAll) elAll.textContent = countAll;
+            if (elInvest) elInvest.textContent = countInvest;
+            if (elCautious) elCautious.textContent = countCautious;
+            if (elWait) elWait.textContent = countWait;
+            if (elAvoid) elAvoid.textContent = countAvoid;
+
+            // فلترة العناصر بناءً على التوصية النشطة
+            let filteredItems = items;
+            if (activeRecFilter !== 'all') {
+                filteredItems = items.filter(i => {
+                    const recText = String(i.platformRec);
+                    if (activeRecFilter === 'invest') return recText.includes('استثمار');
+                    if (activeRecFilter === 'cautious') return recText.includes('حذر');
+                    if (activeRecFilter === 'wait') return recText.includes('انتظار');
+                    if (activeRecFilter === 'avoid') return recText.includes('تجنب');
+                    return true;
+                });
+            }
+
+            // الفرز
+            const sorted = filteredItems.sort((a, b) => {
+                let valA = a[sortState.key];
+                let valB = b[sortState.key];
+                
+                if (valA === null) return 1;
+                if (valB === null) return -1;
+
+                if (typeof valA === 'string') {
+                    return sortState.dir === 'asc' 
+                        ? valA.localeCompare(valB, 'ar') 
+                        : valB.localeCompare(valA, 'ar');
+                }
+                return sortState.dir === 'asc' ? valA - valB : valB - valA;
+            });
+
+            tbody.innerHTML = '';
+            sorted.filter(i => 
+                i.symbol.toLowerCase().includes(search) || 
+                i.name.toLowerCase().includes(search)
+            ).forEach(i => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => openStockAnalysis(i.symbol);
+                tr.innerHTML = `
+                    <td><strong>${i.symbol}</strong><br><small style="color: #94a3b8;">${i.name}</small></td>
+                    <td><span class="up" style="font-size: 1.05em;">${i.currentPrice.toFixed(2)}</span></td>
+                    <td>
+                        <span style="font-weight: 500;">${i.sma20 ? i.sma20.toFixed(2) : '—'}</span><br>
+                        ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma20, i.prevSma20)}
+                    </td>
+                    <td>
+                        <span style="font-weight: 500;">${i.sma50 ? i.sma50.toFixed(2) : '—'}</span><br>
+                        ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma50, i.prevSma50)}
+                    </td>
+                    <td>
+                        <span style="font-weight: 500;">${i.sma100 ? i.sma100.toFixed(2) : '—'}</span><br>
+                        ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma100, i.prevSma100)}
+                    </td>
+                    <td>
+                        <span style="font-weight: 500;">${i.sma200 ? i.sma200.toFixed(2) : '—'}</span><br>
+                        ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma200, i.prevSma200)}
+                    </td>
+                    <td>
+                        <span class="cycle-badge ${i.cycleClass}">${i.cycleText}</span>
+                    </td>
+                    <td class="${i.ratingClass}" style="font-weight: bold; font-size: 1.05em;">${i.rating}</td>
+                    <td onclick="event.stopPropagation(); openRecModal('${i.symbol}', '${i.name}', '${i.platformRec}', \`${i.platformRecReason}\`)">
+                        <span class="badge ${i.platformRecClass}" style="cursor: pointer; padding: 6px 12px; font-size: 0.85em; display: inline-flex; align-items: center; gap: 4px;">
+                            ${i.platformRec} <i class="fas fa-info-circle" style="font-size: 0.9em; opacity: 0.8;"></i>
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        window.onload = renderTable;
+    </script>
+</body>
+</html>

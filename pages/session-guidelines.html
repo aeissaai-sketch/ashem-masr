@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💡 إرشادات التعامل في الجلسة القادمة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1400px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        
+        .header { 
+            background: linear-gradient(135deg, #0f172a 0%, #111827 100%); 
+            padding: 20px 25px; 
+            border-bottom: 1px solid #334155; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+        }
+        .header h2 { color: #fbbf24; display: flex; gap: 10px; align-items: center; font-size: 1.6em; }
+        
+        .content { padding: 25px; display: grid; gap: 25px; }
+        
+        /* كروت الأداء السريع */
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .kpi-card { 
+            background: linear-gradient(135deg, #1e293b, #0f172a); 
+            border: 1px solid #334155; 
+            border-radius: 15px; 
+            padding: 20px; 
+            text-align: right; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #fbbf24;
+        }
+        .kpi-card.profit::before { background: #10b981; }
+        .kpi-card.loss::before { background: #ef4444; }
+        
+        .kpi-title { color: #94a3b8; font-size: 0.9em; margin-bottom: 8px; font-weight: 600; }
+        .kpi-val { color: #e2e8f0; font-size: 1.8em; font-weight: 700; }
+        .kpi-desc { color: #cbd5e1; font-size: 0.85em; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+        
+        /* التنبيه الحرج */
+        .critical-alert {
+            background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%);
+            border: 1px solid #ef4444;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .critical-alert i { color: #ef4444; font-size: 2em; margin-top: 3px; }
+        .critical-text h3 { color: #ef4444; font-size: 1.1em; margin-bottom: 6px; }
+        .critical-text p { color: #cbd5e1; font-size: 0.92em; line-height: 1.7; }
+        
+        /* الأقسام واللوحات */
+        .panel { 
+            border: 1px solid #334155; 
+            border-radius: 15px; 
+            background: #0f172a; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .panel h3 { 
+            padding: 16px 20px; 
+            background: #111827; 
+            border-bottom: 1px solid #334155; 
+            color: #fbbf24; 
+            font-size: 1.2em; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .panel-content { padding: 20px; overflow-x: auto; }
+        
+        /* الجداول الاستثمارية */
+        table { width: 100%; border-collapse: collapse; text-align: right; min-width: 800px; }
+        th { background: #1e293b; color: #cbd5e1; padding: 14px; font-weight: 700; border-bottom: 2px solid #334155; font-size: 0.92em; }
+        td { padding: 14px; border-bottom: 1px solid #1e293b; color: #e2e8f0; font-size: 0.88em; line-height: 1.6; }
+        tr:hover td { background: rgba(59,130,246,0.04); }
+        
+        /* شارات الأفعال */
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 0.85em; }
+        .badge-buy { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #10b981; }
+        .badge-hold { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid #3b82f6; }
+        .badge-sell { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
+        
+        .pnl-up { color: #10b981; font-weight: bold; }
+        .pnl-down { color: #ef4444; font-weight: bold; }
+        
+        /* قسم الأسئلة والأخبار */
+        .qa-section {
+            background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.02) 100%);
+            border: 1px dashed #fbbf24;
+            border-radius: 15px;
+            padding: 25px;
+            line-height: 1.8;
+        }
+        .qa-section h3 { color: #fbbf24; font-size: 1.25em; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .qa-section p { color: #cbd5e1; font-size: 0.95em; margin-bottom: 15px; }
+        
+        .news-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
+        .news-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .news-card h4 { color: #fbbf24; font-size: 0.9em; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .news-card p { font-size: 0.9em; color: #e2e8f0; margin: 0 0 10px 0; line-height: 1.6; font-weight: 600; }
+        .news-card p a { color: #60a5fa; text-decoration: none; }
+        .news-card p a:hover { text-decoration: underline; }
+        .news-card span { font-size: 0.78em; color: #94a3b8; }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- الرأس -->
+        <div class="header">
+            <h2><i class="fas fa-lightbulb"></i> إرشادات التعامل في الجلسة القادمة (مباشر وديناميكي)</h2>
+            <div class="header-main">
+                <span class="expert-badge"><i class="fas fa-satellite-dish"></i> بيانات مباشرة وأخبار أونلاين</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- كروت الأداء السريع -->
+            <div class="kpis">
+                <div class="kpi-card" id="kpiValue">
+                    <div class="kpi-title"><i class="fas fa-wallet"></i> القيمة السوقية الإجمالية الحالية</div>
+                    <div class="kpi-val">3,329,388.47 ج.م</div>
+                    <div class="kpi-desc">رأس المال المستثمر: 3,289,713.94 ج.م</div>
+                </div>
+                <div class="kpi-card profit" id="kpiPnl">
+                    <div class="kpi-title"><i class="fas fa-chart-line"></i> صافي الأرباح المحققة والدفترية</div>
+                    <div class="kpi-val">+39,674.53 ج.م</div>
+                    <div class="kpi-desc" style="color: #10b981;"><i class="fas fa-caret-up"></i> +1.21%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title"><i class="fas fa-coins"></i> كاش الأمان المتوفر بالمحفظة</div>
+                    <div class="kpi-val">59,878.00 ج.م</div>
+                    <div class="kpi-desc">يمثل 1.8% كدرع حماية ضد تقلبات EGX70</div>
+                </div>
+            </div>
+
+            <!-- تنبيه حرج جداً -->
+            <div class="critical-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="critical-text">
+                    <h3>🚨 تنبيه حرج جداً: حق اكتتاب فيوتشر كير الطبية (FCMD_R3)</h3>
+                    <p>
+                        تظهر المحفظة وجود 10,000 حق اكتتاب بمتوسط تكلفة 1.44 ج.م وقيمة سوقية حالية 4.36 ج.م (ربح غير محقق +202.78% بقيمة +29,200 ج.م). 
+                        يرجى العلم أن تداول الحقوق في البورصة انتهى رسمياً في 5 يوليو، وانتهت المرحلة الأولى للاكتتاب في 8 يوليو. 
+                        <strong>يجب التواصل مع شركة السمسرة فوراً اليوم للتأكد من موقف هذا البند؛</strong> فإذا لم تكن قد اكتتبت بطلب رسمي وسددت قيمة الزيادة، أو تم تصفية الحقوق نيابة عنك، فإن قيمة هذا البند السوقية قد تصبح صفراً، وهو ما يتطلب معالجة سريعة لإنقاذ ما يمكن إنقاذه.
+                    </p>
+                </div>
+            </div>
+
+            <!-- اللوحة الأولى: أسهم المحفظة بالتفصيل والتوصيات الاستراتيجية -->
+            <div class="panel">
+                <h3><i class="fas fa-folder-open"></i> تحليل أسهم المحفظة الحالية وإجراء التعامل للجلسة القادمة</h3>
+                <div class="panel-content">
+                    <table id="portfolioTable">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>اسم السهم</th>
+                                <th>الكمية</th>
+                                <th>متوسط الشراء</th>
+                                <th>السعر الحالي</th>
+                                <th>الربح/الخسارة</th>
+                                <th>الإجراء المقترح والنصيحة الاستثمارية</th>
+                                <th>مستويات الأمان والأهداف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- الأسهم القيادية التي يتم زيادتها -->
+                            <tr data-symbol="SWDY">
+                                <td><strong>SWDY</strong></td>
+                                <td>السويدى إليكتريك</td>
+                                <td>2,000</td>
+                                <td>89.55 ج.م</td>
+                                <td>92.00 ج.م</td>
+                                <td class="pnl-up">+8.10% (4,898 ج.م)</td>
+                                <td><span class="badge badge-buy">🟢 شراء قوي / زيادة وزن</span><br>سهم قيادي ومتحوط طبيعي للعملة (60% من إيراداته بالخارج). تم رفع وزنه بالكامل بنجاح.</td>
+                                <td>المستهدف: اتجاه صاعد قوي مستمر</td>
+                            </tr>
+                            <tr data-symbol="TMGH">
+                                <td><strong>TMGH</strong></td>
+                                <td>طلعت مصطفى</td>
+                                <td>3,500</td>
+                                <td>98.38 ج.م</td>
+                                <td>101.87 ج.م</td>
+                                <td class="pnl-up">+6.38% (12,220 ج.م)</td>
+                                <td><span class="badge badge-buy">🟢 شراء قوي / زيادة وزن</span><br>مبيعات قياسية بالنصف الأول. تم زيادة الوزن استعداداً لاختراق مقاومة 101.5 ج.م.</td>
+                                <td>المستهدف: 115 - 120 ثم 144.9 ج.م<br>الوقف: 92.00 ج.م</td>
+                            </tr>
+                            <!-- أسهم التخفيف وجني الأرباح -->
+                            <tr data-symbol="HRHO">
+                                <td><strong>HRHO</strong></td>
+                                <td>إي اف جي القابضة</td>
+                                <td>3,750</td>
+                                <td>26.72 ج.م</td>
+                                <td>26.81 ج.م</td>
+                                <td class="pnl-up">+0.34% (675 ج.م)</td>
+                                <td><span class="badge badge-sell">🔴 تخفيف 50%</span><br>سهم مؤسساتي ثقيل وبطيء حالياً. الصعود للأخضر يمثل فرصة مثالية للتسييل ونقل السيولة.</td>
+                                <td>الوقف: 25.00 ج.م</td>
+                            </tr>
+                            <tr data-symbol="IBCT">
+                                <td><strong>IBCT</strong></td>
+                                <td>IBCT</td>
+                                <td>3,500</td>
+                                <td>11.25 ج.م</td>
+                                <td>14.26 ج.م</td>
+                                <td class="pnl-up">+26.76% (10,535 ج.م)</td>
+                                <td><span class="badge badge-sell">🔴 جني أرباح جزئي</span><br>السهم حقق قفزة ممتازة. تم بيع 30% لتأمين الأرباح والاحتفاظ بالباقي مع صعود السهم.</td>
+                                <td>N/A</td>
+                            </tr>
+                            <tr data-symbol="FNAR">
+                                <td><strong>FNAR</strong></td>
+                                <td>الفنار للمقاولات</td>
+                                <td>6,150</td>
+                                <td>10.76 ج.م</td>
+                                <td>13.07 ج.م</td>
+                                <td class="pnl-up">+21.47% (14,204 ج.م)</td>
+                                <td><span class="badge badge-sell">🔴 جني أرباح جزئي</span><br>صعود قوي مدعوم برأس الحكمة. تم تسييل 25% لتأمين الأرباح والاحتفاظ بالباقي للتوزيع المجاني.</td>
+                                <td>الوقف الجديد: 12.30 ج.م<br>المستهدف: 14.20 - 14.50 ج.م</td>
+                            </tr>
+                            <tr data-symbol="ARCC">
+                                <td><strong>ARCC</strong></td>
+                                <td>العربية للأسمنت</td>
+                                <td>0</td>
+                                <td>58.07 ج.م</td>
+                                <td>56.93 ج.م</td>
+                                <td class="pnl-down">-1.96% (-1,710 ج.م)</td>
+                                <td><span class="badge badge-sell">🔴 بيع كامل وتصفية</span><br>تمت تصفية المركز بالكامل لوقف الخسائر ونقل السيولة للأسهم القيادية والساخنة.</td>
+                                <td>تفعيل الخروج الكامل</td>
+                            </tr>
+                            <tr data-symbol="SAUD">
+                                <td><strong>SAUD</strong></td>
+                                <td>بنك البركة مصر</td>
+                                <td>0</td>
+                                <td>22.04 ج.م</td>
+                                <td>21.59 ج.م</td>
+                                <td class="pnl-down">-2.04% (-2,025 ج.م)</td>
+                                <td><span class="badge badge-sell">🔴 بيع كامل وتصفية</span><br>تمت التصفية الكاملة للخروج من القطاع البنكي البطيء وتوجيه السيولة للأسهم الأسرع نمواً.</td>
+                                <td>تفعيل الخروج الكامل</td>
+                            </tr>
+                            <!-- أسهم الاحتفاظ الاستثماري والمتابعة -->
+                            <tr data-symbol="EFID">
+                                <td><strong>EFID</strong></td>
+                                <td>إل إيديتا للأغذية</td>
+                                <td>17,300</td>
+                                <td>28.23 ج.م</td>
+                                <td>27.55 ج.م</td>
+                                <td class="pnl-down">-2.41% (-11,764 ج.م)</td>
+                                <td><span class="badge badge-hold">⚪ احتفاظ بالوزن</span><br>نتائج تشغيلية قياسية ومقبل على توزيع أسهم مجانية. لا نوصي بالزيادة لمنع تركز المخاطر.</td>
+                                <td>المستهدف: ترقب الأسهم المجانية</td>
+                            </tr>
+                            <tr data-symbol="BTFH">
+                                <td><strong>BTFH</strong></td>
+                                <td>بلتون القابضة</td>
+                                <td>116,623</td>
+                                <td>3.01 ج.م</td>
+                                <td>3.10 ج.م</td>
+                                <td class="pnl-up">+2.99% (10,496 ج.م)</td>
+                                <td><span class="badge badge-hold">⚪ احتفاظ بالوزن</span><br>محرك نمو استراتيجي في المحفظة، نمو مالي ممتاز وتوسع إقليمي ناجح.</td>
+                                <td>اتجاه صاعد</td>
+                            </tr>
+                            <tr data-symbol="UBEE">
+                                <td><strong>UBEE</strong></td>
+                                <td>المصرف المتحد</td>
+                                <td>25,000</td>
+                                <td>14.00 ج.م</td>
+                                <td>13.70 ج.م</td>
+                                <td class="pnl-down">-2.14% (-7,500 ج.م)</td>
+                                <td><span class="badge badge-hold">⚪ احتفاظ</span><br>تم استلام كوبون بقيمة 0.75 ج.م مؤخراً وهو ما يغطي التراجع السعري ويجعل الصفقة رابحة.</td>
+                                <td>دعم استقراري</td>
+                            </tr>
+                            <!-- باقي أسهم المحفظة -->
+                            <tr data-symbol="OTHER">
+                                <td><strong>OTHER</strong></td>
+                                <td>باقي أسهم المحفظة</td>
+                                <td>مجمع</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>مستقر</td>
+                                <td><span class="badge badge-hold">⚪ احتفاظ ومراقبة</span><br>تشمل الأسهم الأخرى الأقل وزناً في المحفظة الاستثمارية.</td>
+                                <td>متابعة النطاق العرضي</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- اللوحة الثانية: الأسهم المرشحة للدخول الجديد -->
+            <div class="panel">
+                <h3><i class="fas fa-search-dollar"></i> الأسهم المرشحة للدخول الجديد (خارج المحفظة حالياً)</h3>
+                <div class="panel-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>كود السهم</th>
+                                <th>اسم الشركة</th>
+                                <th>سعر الدخول المقترح</th>
+                                <th>الكمية الاسترشادية المقترحة</th>
+                                <th>التكلفة التقريبية</th>
+                                <th>المستهدف القريب والبعيد</th>
+                                <th>وقف الخسارة</th>
+                                <th>الأسباب الاستراتيجية والأخبار المحفزة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-right: 4px solid #10b981;">
+                                <td><strong>MFPC</strong></td>
+                                <td>موبكو للأسمدة</td>
+                                <td>37.00 - 38.00 ج.م</td>
+                                <td>1,500 سهم</td>
+                                <td>56,250 ج.م</td>
+                                <td>40.00 ج.م</td>
+                                <td>37.00 ج.م</td>
+                                <td>زخم قوي لقطاع البتروكيماويات. السهم قيادي ويشهد تدفقات سيولة مؤسساتية نشطة.</td>
+                            </tr>
+                            <tr style="border-right: 4px solid #10b981;">
+                                <td><strong>ABUK</strong></td>
+                                <td>أبو قير للأسمدة</td>
+                                <td>71.00 - 72.50 ج.م</td>
+                                <td>800 سهم</td>
+                                <td>57,600 ج.م</td>
+                                <td>78.00 - 80.00 ج.م</td>
+                                <td>70.00 ج.م</td>
+                                <td>شهد صعوداً قوياً بنسبة +6% نتيجة دخول سيولة جديدة مستهدفة القطاع؛ مما يدعم مواصلة صعوده.</td>
+                            </tr>
+                            <tr style="border-right: 4px solid #10b981;">
+                                <td><strong>AMOC</strong></td>
+                                <td>أموك للزيوت المعدنية</td>
+                                <td>8.35 - 8.45 ج.م</td>
+                                <td>6,000 سهم</td>
+                                <td>50,400 ج.م</td>
+                                <td>8.80 - 9.20 ج.م</td>
+                                <td>8.23 ج.م</td>
+                                <td>أداء فني ممتاز ونسبة العائد مقابل المخاطرة (Risk/Reward) ممتازة جداً للشراء التكتيكي السريع.</td>
+                            </tr>
+                            <tr style="border-right: 4px solid #3b82f6;">
+                                <td><strong>HELI</strong></td>
+                                <td>مصر الجديدة للإسكان</td>
+                                <td>7.20 - 7.30 ج.م</td>
+                                <td>7,000 سهم</td>
+                                <td>50,750 ج.م</td>
+                                <td>8.00 - 8.50 ج.م</td>
+                                <td>7.20 ج.م</td>
+                                <td>السهم في اتجاه صاعد قوي ويحافظ على مستويات دعمه بعد تصحيح وجني أرباح طفيف وصحي.</td>
+                            </tr>
+                            <tr style="border-right: 4px solid #3b82f6;">
+                                <td><strong>MASR</strong></td>
+                                <td>مدينة مصر للإسكان</td>
+                                <td>8.00 - 8.10 ج.م</td>
+                                <td>6,000 سهم</td>
+                                <td>48,300 ج.م</td>
+                                <td>8.80 - 9.20 ج.م</td>
+                                <td>8.00 ج.م</td>
+                                <td>اتجاه صاعد قوي جداً مع سيطرة واضحة للقوى الشرائية (المشتري مسيطر تماماً وضعف البيع).</td>
+                            </tr>
+                            <tr style="border-right: 4px solid #fbbf24;">
+                                <td><strong>ISMQR</strong></td>
+                                <td>حديد وصلب مناجم ومحاجر</td>
+                                <td>9.00 - 9.30 ج.م (تجميع)</td>
+                                <td>5,000 سهم</td>
+                                <td>45,750 ج.م</td>
+                                <td>10.15 - 10.20 ج.م</td>
+                                <td>9.00 ج.م</td>
+                                <td>تراجع بقوة كجزء من تصحيح طبيعي، مما يجعله فرصة ممتازة للمستثمر متوسط الأجل لبناء مراكز رخيصة.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- اللوحة الثالثة: الأخبار المباشرة أونلاين -->
+            <div class="panel">
+                <h3><i class="fas fa-rss"></i> 📰 أخبار مباشرة أونلاين للأسهم والمحفظة</h3>
+                <div class="panel-content">
+                    <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 12px;" id="newsMetaInfo">
+                        يتم جلب أحدث الأخبار المالية من مصادر البورصة الرسمية و Google News تلقائياً...
+                    </p>
+                    <div class="news-card-grid" id="liveNewsGrid">
+                        <!-- جاري التحميل بالبث المباشر -->
+                        <div style="grid-column: 1/-1; text-align: center; padding: 25px; color: #fbbf24;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top: 10px;">جاري جلب أحدث الأخبار من المصادر المالية أونلاين...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- اللوحة الرابعة: التحليل القائم على الأخبار وجدواه المباشرة -->
+            <div class="qa-section">
+                <h3><i class="fas fa-newspaper"></i> جدوى الاعتماد على الأخبار في دمج قرارات الشراء والبيع</h3>
+                <p>
+                    <strong>الأخبار الجوهرية والقرارات المصيرية للشركات</strong> (مثل توزيعات الأسهم المجانية، صفقات الاستحواذ، الأرباح القياسية، أو الفوز بعقود ضخمة) هي المحرك الحقيقي للسيولة المؤسساتية.
+                </p>
+                <div class="news-card-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 10px;">
+                    <div style="background: rgba(15,23,42,0.4); padding: 15px; border-radius: 10px; border: 1px solid #334155;">
+                        <h5 style="color: #fbbf24; font-size: 0.95em; margin-bottom: 6px;">خبر رأس الحكمة (سهم FNAR)</h5>
+                        <p style="font-size: 0.85em; color: #cbd5e1; line-height: 1.6;">إعلان الفنار للمقاولات عن توقيع عقود أعمال برأس الحكمة بقيمة 27.9 مليون جنيه، مصحوباً بزيادة رأس المال وتوزيع سهم مجاني لكل سهم، قاد السهم لقفزته الأخيرة.</p>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.4); padding: 15px; border-radius: 10px; border: 1px solid #334155;">
+                        <h5 style="color: #fbbf24; font-size: 0.95em; margin-bottom: 6px;">نمو أرباح إيديتا (سهم EFID)</h5>
+                        <p style="font-size: 0.85em; color: #cbd5e1; line-height: 1.6;">تضاعف أرباح الشركة بنسبة +108% في الربع الأول وتوجه الإدارة لتوزيع أسهم مجانية يعد صمام أمان قوي يبرر الاحتفاظ بالسهم والشراء فيه.</p>
+                    </div>
+                    <div style="background: rgba(15,23,42,0.4); padding: 15px; border-radius: 10px; border: 1px solid #334155;">
+                        <h5 style="color: #fbbf24; font-size: 0.95em; margin-bottom: 6px;">التحوط من العملة (سهم SWDY)</h5>
+                        <p style="font-size: 0.85em; color: #cbd5e1; line-height: 1.6;">تحقيق السويدي إليكتريك لـ 60% من إيراداتها بالخارج وبالعملات الأجنبية مع نمو قوي في الأرباح هو الخبر الداعم لجعل السهم ملاذاً آمناً لزيادة الوزن.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript لجعل الصفحة ديناميكية بالكامل وترتبط بالاخبار أونلاين -->
+    <script>
+        // دالة المزامنة وقراءة البيانات المحلية
+        function getProcessedDataMap() {
+            try {
+                const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData') || '[]';
+                const rows = JSON.parse(raw);
+                const map = new Map();
+                if (Array.isArray(rows)) {
+                    rows.forEach(r => {
+                        if (r.symbol) map.set(r.symbol.toUpperCase(), r);
+                    });
+                }
+                return map;
+            } catch (e) {
+                console.error("Error loading processed data:", e);
+                return new Map();
+            }
+        }
+
+        // المحفظة الافتراضية للتحليل كاحتياط
+        const fallbackPortfolio = [
+            { symbol: "UBEE", name: "المصرف المتحد", quantity: 25000, entryPrice: 14.0 },
+            { symbol: "IBCT", name: "IBCT", quantity: 5000, entryPrice: 11.25 },
+            { symbol: "EFID", name: "ايديتا للصناعات الغذائية", quantity: 17300, entryPrice: 28.23 },
+            { symbol: "ORWE", name: "النساجون الشرقيون للسجاد", quantity: 2500, entryPrice: 22.81 },
+            { symbol: "TMGH", name: "مجموعة طلعت مصطفى القابضة", quantity: 2000, entryPrice: 95.76 },
+            { symbol: "HRHO", name: "مجموعة اي اف جي القابضة", quantity: 7500, entryPrice: 26.72 },
+            { symbol: "BTFH", name: "بلتون القابضة", quantity: 116623, entryPrice: 3.01 },
+            { symbol: "ICFC", name: "الدولية للأسمدة والكيماويات", quantity: 5000, entryPrice: 15.5 },
+            { symbol: "FNAR", name: "الفنار للمقاولات", quantity: 8200, entryPrice: 10.76 },
+            { symbol: "SAUD", name: "بنك البركة مصر", quantity: 4500, entryPrice: 22.04 },
+            { symbol: "ARCC", name: "العربية للاسمنت", quantity: 1500, entryPrice: 58.07 },
+            { symbol: "ACTF", name: "اكت فاينانشال للاستشارات", quantity: 22761, entryPrice: 2.74 },
+            { symbol: "FCMD", name: "فيوتشر كير للصناعات الطبية", quantity: 30000, entryPrice: 8.46 },
+            { symbol: "FERC", name: "فيركيم مصر للاسمدة", quantity: 2000, entryPrice: 76.94 },
+            { symbol: "FCMD_R3", name: "فيوتشر كير - حق اكتتاب", quantity: 10000, entryPrice: 1.44 },
+            { symbol: "PRMH", name: "برايم القابضة للاستثمارات المالية", quantity: 50000, entryPrice: 2.7 },
+            { symbol: "KORA", name: "قرة لمشروعات الطاقة والاستثمار", quantity: 20000, entryPrice: 3.37 },
+            { symbol: "ASPI", name: "اسباير كابيتال القابضة", quantity: 200000, entryPrice: 0.301 },
+            { symbol: "SWDY", name: "السويدى اليكتريك", quantity: 711, entryPrice: 85.11 },
+            { symbol: "ISPH", name: "ابن سينا فارما", quantity: 15000, entryPrice: 11.55 },
+            { symbol: "RACC", name: "راية لخدمات مراكز الاتصالات", quantity: 4716, entryPrice: 10.46 },
+            { symbol: "QNBE", name: "بنك قطر الوطني", quantity: 3000, entryPrice: 54.35 },
+            { symbol: "RMDA", name: "العاشر من رمضان - راميدا", quantity: 10000, entryPrice: 4.99 }
+        ];
+
+        async function updateDynamicPortfolio() {
+            const processedMap = getProcessedDataMap();
+            let portfolio = [];
+            try {
+                portfolio = JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+            } catch(e) {}
+            
+            if (!portfolio || portfolio.length === 0) {
+                portfolio = fallbackPortfolio;
+            }
+            
+            const portfolioMap = new Map();
+            portfolio.forEach(item => {
+                portfolioMap.set(item.symbol.toUpperCase(), item);
+            });
+            
+            const tableBody = document.querySelector('#portfolioTable tbody');
+            if (!tableBody) return;
+            
+            const rows = tableBody.querySelectorAll('tr[data-symbol]');
+            let totalCost = 0;
+            let totalValue = 0;
+            let databaseTotalCost = 0;
+            let databaseTotalValue = 0;
+            let hasDatabaseData = false;
+
+            // حساب التكلفة والقيمة الإجمالية الفعلية بناءً على المحفظة المخزنة بالكامل
+            portfolio.forEach(item => {
+                const sym = item.symbol.toUpperCase();
+                let current = item.entryPrice;
+                if (processedMap.has(sym)) {
+                    current = processedMap.get(sym).currentPrice;
+                    hasDatabaseData = true;
+                }
+                databaseTotalCost += item.quantity * item.entryPrice;
+                databaseTotalValue += item.quantity * current;
+            });
+
+            // تحديث الجدول المعروض
+            rows.forEach(row => {
+                const symbol = row.getAttribute('data-symbol');
+                if (symbol === "OTHER") return;
+                
+                let qty = 0;
+                let entry = 0;
+                
+                if (portfolioMap.has(symbol)) {
+                    const pItem = portfolioMap.get(symbol);
+                    qty = pItem.quantity;
+                    entry = pItem.entryPrice;
+                } else {
+                    const qtyText = row.querySelector('td:nth-child(3)').textContent.replace(/,/g, '');
+                    qty = parseInt(qtyText) || 0;
+                    const entryText = row.querySelector('td:nth-child(4)').textContent.replace(/ ج\.م/g, '');
+                    entry = parseFloat(entryText) || 0;
+                }
+                
+                let current = entry;
+                if (processedMap.has(symbol)) {
+                    current = processedMap.get(symbol).currentPrice;
+                } else {
+                    const currText = row.querySelector('td:nth-child(5)').textContent.replace(/ ج\.م/g, '');
+                    current = parseFloat(currText) || entry;
+                }
+                
+                const cost = qty * entry;
+                const val = qty * current;
+                
+                if (!hasDatabaseData) {
+                    totalCost += cost;
+                    totalValue += val;
+                }
+                
+                const pnlAbs = val - cost;
+                const pnlPct = cost > 0 ? (pnlAbs / cost) * 100 : 0;
+                
+                row.querySelector('td:nth-child(3)').textContent = qty.toLocaleString('ar-EG');
+                row.querySelector('td:nth-child(4)').textContent = entry.toFixed(2) + " ج.م";
+                row.querySelector('td:nth-child(5)').textContent = current.toFixed(2) + " ج.م";
+                
+                const pnlCell = row.querySelector('td:nth-child(6)');
+                pnlCell.className = pnlAbs >= 0 ? "pnl-up" : "pnl-down";
+                pnlCell.textContent = (pnlAbs >= 0 ? "+" : "") + pnlPct.toFixed(2) + "% (" + pnlAbs.toLocaleString('ar-EG', {maximumFractionDigits:0}) + " ج.م)";
+            });
+
+            if (hasDatabaseData) {
+                totalCost = databaseTotalCost;
+                totalValue = databaseTotalValue;
+            }
+
+            const totalPnlAbs = totalValue - totalCost;
+            const totalPnlPct = totalCost > 0 ? (totalPnlAbs / totalCost) * 100 : 0;
+            
+            // تحديث كروت الأداء السريع
+            const kpiValue = document.querySelector('#kpiValue');
+            const kpiPnl = document.querySelector('#kpiPnl');
+            
+            if (kpiValue) {
+                kpiValue.querySelector('.kpi-val').textContent = totalValue.toLocaleString('ar-EG', {maximumFractionDigits:2}) + " ج.م";
+                kpiValue.querySelector('.kpi-desc').textContent = "رأس المال المستثمر: " + totalCost.toLocaleString('ar-EG', {maximumFractionDigits:2}) + " ج.م";
+            }
+            if (kpiPnl) {
+                kpiPnl.querySelector('.kpi-val').textContent = (totalPnlAbs >= 0 ? "+" : "") + totalPnlAbs.toLocaleString('ar-EG', {maximumFractionDigits:2}) + " ج.م";
+                const desc = kpiPnl.querySelector('.kpi-desc');
+                desc.textContent = (totalPnlAbs >= 0 ? "▲ " : "▼ ") + totalPnlPct.toFixed(2) + "%";
+                desc.style.color = totalPnlAbs >= 0 ? "#10b981" : "#ef4444";
+                kpiPnl.className = "kpi-card " + (totalPnlAbs >= 0 ? "profit" : "loss");
+            }
+        }
+
+        // ==========================================
+        // مكتبة جلب الأخبار وتوليدها أونلاين
+        // ==========================================
+        async function fetchJsonNoStore(url) {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        }
+
+        async function fetchTextWithFallback(url) {
+            const endpoints = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 7000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const text = await response.text();
+                    if (endpoint.includes('/get?url=')) {
+                        try {
+                            const payload = JSON.parse(text);
+                            const contents = payload?.contents;
+                            if (typeof contents === 'string' && contents.length > 10) return contents;
+                        } catch {}
+                    } else if (text && text.length > 10) {
+                        return text;
+                    }
+                } catch {}
+            }
+            return '';
+        }
+
+        async function fetchRssViaJsonFallback(rssUrl) {
+            const endpoints = [
+                `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 7000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const items = Array.isArray(data?.items) ? data.items : [];
+                    if (!items.length) continue;
+                    return items.map(item => ({
+                        title: String(item?.title || '').trim(),
+                        link: String(item?.link || '').trim(),
+                        pubDate: String(item?.pubDate || '').trim(),
+                        source: String(item?.author || item?.source || '').trim() || 'Google News'
+                    })).filter(x => x.title && x.link);
+                } catch {}
+            }
+            return [];
+        }
+
+        function parseNewsRss(xmlText) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xmlText, 'text/xml');
+            const items = Array.from(xml.querySelectorAll('item'));
+            return items.map(item => ({
+                title: (item.querySelector('title')?.textContent || '').trim(),
+                link: (item.querySelector('link')?.textContent || '').trim(),
+                pubDate: (item.querySelector('pubDate')?.textContent || '').trim(),
+                source: (item.querySelector('source')?.textContent || 'Google News').trim()
+            })).filter(x => x.title && x.link);
+        }
+
+        async function fetchInternetNewsByQuery(query) {
+            const scopedQuery = `${query} when:10d`;
+            const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(scopedQuery)}&hl=ar&gl=EG&ceid=EG:ar`;
+            const xmlText = await fetchTextWithFallback(rssUrl);
+            if (xmlText) {
+                const parsed = parseNewsRss(xmlText);
+                if (parsed.length) return parsed;
+            }
+            return fetchRssViaJsonFallback(rssUrl);
+        }
+
+        // دالة جلب وعرض الأخبار المباشرة أونلاين
+        async function loadLiveNews() {
+            const newsGrid = document.querySelector('#liveNewsGrid');
+            const metaInfo = document.querySelector('#newsMetaInfo');
+            if (!newsGrid) return;
+
+            const queries = [
+                { q: "السويدي اليكتريك", label: "SWDY" },
+                { q: "طلعت مصطفى", label: "TMGH" },
+                { q: "ايديتا", label: "EFID" },
+                { q: "موبكو للأسمدة", label: "MFPC" }
+            ];
+            
+            const allNews = [];
+            const seenTitles = new Set();
+
+            for (const item of queries) {
+                try {
+                    const news = await fetchInternetNewsByQuery(item.q + " البورصة المصرية");
+                    if (news && news.length) {
+                        let count = 0;
+                        for (const n of news) {
+                            if (count >= 2) break;
+                            const titleNorm = n.title.toLowerCase().trim();
+                            if (seenTitles.has(titleNorm)) continue;
+                            seenTitles.add(titleNorm);
+                            
+                            allNews.push({
+                                title: n.title,
+                                link: n.link,
+                                pubDate: n.pubDate,
+                                source: n.source,
+                                keyword: item.label
+                            });
+                            count++;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching news for " + item.q, e);
+                }
+            }
+
+            // إذا لم يتم العثور على أخبار مخصصة، نجلب أخبار البورصة العامة
+            if (allNews.length === 0) {
+                try {
+                    const news = await fetchInternetNewsByQuery("البورصة المصرية الأسهم اليوم");
+                    if (news && news.length) {
+                        news.slice(0, 6).forEach(n => {
+                            allNews.push({
+                                title: n.title,
+                                link: n.link,
+                                pubDate: n.pubDate,
+                                source: n.source,
+                                keyword: "البورصة المصرية"
+                            });
+                        });
+                    }
+                } catch(e) {
+                    console.error("Error fetching fallback news", e);
+                }
+            }
+
+            if (allNews.length === 0) {
+                newsGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 25px; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <p style="margin-top: 10px;">تعذر تحميل الأخبار المباشرة أونلاين حالياً. يرجى التحقق من اتصال الإنترنت أو المحاولة لاحقاً.</p>
+                    </div>
+                `;
+                if (metaInfo) metaInfo.textContent = "آخر تحديث: تعذر الاتصال بمصادر الأخبار.";
+                return;
+            }
+
+            // ترتيب الأخبار حسب الأحدث
+            allNews.sort((a, b) => {
+                const da = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+                const db = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+                return db - da;
+            });
+
+            // عرض الأخبار
+            newsGrid.innerHTML = "";
+            allNews.slice(0, 6).forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                
+                let dateStr = item.pubDate;
+                try {
+                    const d = new Date(item.pubDate);
+                    if (!isNaN(d.getTime())) {
+                        dateStr = d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                } catch(e) {}
+
+                card.innerHTML = `
+                    <div>
+                        <h4><i class="fas fa-satellite"></i> ${item.keyword} - ${item.source}</h4>
+                        <p><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a></p>
+                    </div>
+                    <span><i class="far fa-clock"></i> ${dateStr}</span>
+                `;
+                newsGrid.appendChild(card);
+            });
+
+            if (metaInfo) {
+                metaInfo.innerHTML = `آخر تحديث مباشر: ${new Date().toLocaleString('ar-EG')} (تم جلب الأخبار بنجاح أونلاين).`;
+            }
+        }
+
+        // تشغيل الوظائف عند التحميل
+        document.addEventListener('DOMContentLoaded', async () => {
+            await updateDynamicPortfolio();
+            await loadLiveNews();
+        });
+    </script>
+</body>
+</html>

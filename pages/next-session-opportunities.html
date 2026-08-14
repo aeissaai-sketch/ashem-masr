@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 فرص الجلسة القادمة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1480px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #111827 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:10px; align-items:center; }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+
+        .guide {
+            margin: 12px 22px;
+            padding: 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(14,165,233,.11));
+            border: 1px solid #3b82f6;
+            color: #cbd5e1;
+            line-height: 1.9;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .score-item {
+            background: rgba(15,23,42,.55);
+            border: 1px solid rgba(59,130,246,.28);
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: #dbeafe;
+            font-size: .88em;
+        }
+
+        .tools {
+            padding: 12px 22px;
+            background:#0f172a;
+            border-bottom: 1px solid #334155;
+            display:grid;
+            gap:10px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+
+        .tools label {
+            color: #cbd5e1;
+            font-size: .9em;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tools input {
+            background:#1e293b;
+            border:1px solid #334155;
+            color:#e2e8f0;
+            border-radius:8px;
+            padding:8px 10px;
+        }
+
+        .tools .actions {
+            display: flex;
+            align-items: end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .meta { color:#94a3b8; padding: 10px 22px 0; }
+        .risk-note { color:#fde68a; padding: 4px 22px 0; font-size: .9em; }
+
+        .table-wrap { padding: 15px; overflow-x:auto; background:#0f172a; }
+        table { width: 100%; border-collapse: collapse; min-width: 1450px; }
+        th { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; padding: 11px; text-align:center; white-space: nowrap; }
+        th.sortable { cursor:pointer; user-select:none; }
+        th.sortable:hover { filter: brightness(1.08); }
+        td { border-bottom:1px solid #334155; padding: 10px; text-align:center; vertical-align: top; }
+        tr:hover { background:#334155; }
+
+        .up { color:#10b981; font-weight:bold; }
+        .down { color:#ef4444; font-weight:bold; }
+        .muted { color:#94a3b8; }
+
+        .badge {
+            padding:4px 10px;
+            border-radius:999px;
+            font-size:.82em;
+            font-weight:700;
+            display:inline-block;
+            white-space: nowrap;
+        }
+
+        .b-a { background:#059669; color:#fff; }
+        .b-b { background:#2563eb; color:#fff; }
+        .b-c { background:#6b7280; color:#fff; }
+
+        .advice {
+            text-align: right;
+            line-height: 1.7;
+            min-width: 250px;
+            max-width: 320px;
+            color: #e5e7eb;
+        }
+
+        .small { font-size: .86em; }
+
+        .empty {
+            margin: 20px;
+            padding: 24px;
+            text-align:center;
+            border:1px dashed #fbbf24;
+            border-radius: 12px;
+            color:#fbbf24;
+            background: rgba(251,191,36,.08);
+        }
+
+        /* ===== نظام البطاقات ===== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .stock-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform .2s, border-color .2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .stock-card:hover { transform: translateY(-3px); border-color: #fbbf24; }
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 4px; height: 100%;
+        }
+        .stock-card.grade-a::before { background: #22c55e; }
+        .stock-card.grade-b::before { background: #3b82f6; }
+        .stock-card.grade-c::before { background: #6b7280; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .card-symbol { color: #fbbf24; font-size: 1.3em; font-weight: 800; }
+        .card-name   { color: #94a3b8; font-size: .82em; margin-top: 2px; }
+
+        .conf-wrap {
+            text-align: center;
+            min-width: 72px;
+        }
+        .conf-label { color: #94a3b8; font-size: .74em; margin-bottom: 4px; }
+        .conf-ring {
+            width: 58px; height: 58px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            font-weight: 800;
+            border: 4px solid;
+        }
+        .conf-ring.high   { border-color: #22c55e; color: #22c55e; }
+        .conf-ring.medium { border-color: #3b82f6; color: #3b82f6; }
+        .conf-ring.low    { border-color: #6b7280; color: #6b7280; }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(51,65,85,.5);
+            font-size: .86em;
+        }
+        .card-row:last-child { border-bottom: none; }
+        .card-key   { color: #94a3b8; }
+        .card-val   { color: #e2e8f0; font-weight: 600; }
+        .card-val.up   { color: #10b981; }
+        .card-val.down { color: #ef4444; }
+        .card-val.warn { color: #fbbf24; }
+
+        .card-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .78em;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+        .b-a { background: #059669; color: #fff; }
+        .b-b { background: #2563eb; color: #fff; }
+        .b-c { background: #6b7280; color: #fff; }
+
+        .conf-bar-wrap { margin: 8px 0 0; }
+        .conf-bar-bg {
+            background: #1e293b;
+            border-radius: 999px;
+            height: 6px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        .conf-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width .4s;
+        }
+        .conf-bar-fill.high   { background: linear-gradient(90deg, #22c55e, #84cc16); }
+        .conf-bar-fill.medium { background: linear-gradient(90deg, #3b82f6, #38bdf8); }
+        .conf-bar-fill.low    { background: linear-gradient(90deg, #6b7280, #94a3b8); }
+
+        /* ===== نظام تفاصيل القرار (Modal) ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-card {
+            width: min(780px, 95vw);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #475569;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+        .modal-overlay.open .modal-card {
+            transform: scale(1);
+        }
+        .modal-head {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            background: #0f172a;
+        }
+        .modal-head h3 {
+            color: #fbbf24;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+        .modal-close {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: #cbd5e1;
+            font-size: 1.2em;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            color: #e2e8f0;
+            line-height: 1.7;
+            flex: 1;
+        }
+        .details-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .details-section-title {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+            padding-bottom: 6px;
+        }
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9em;
+            border-bottom: 1px dashed rgba(51, 65, 85, 0.4);
+        }
+        .details-row:last-child {
+            border-bottom: none;
+        }
+        .details-key {
+            color: #94a3b8;
+        }
+        .details-val {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+        .details-val.up { color: #10b981; }
+        .details-val.down { color: #ef4444; }
+        
+        /* علامة تبويب الأخبار */
+        .news-tab-item {
+            border-bottom: 1px solid #334155;
+            padding: 10px 0;
+            text-align: right;
+        }
+        .news-tab-item:last-child {
+            border-bottom: none;
+        }
+        .news-title-link {
+            color: #e2e8f0;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92em;
+            display: block;
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+        .news-title-link:hover {
+            color: #fbbf24;
+        }
+        .news-meta-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.78em;
+            color: #64748b;
+        }
+        .earnings-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .news-loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            color: #cbd5e1;
+            gap: 10px;
+        }
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid rgba(251, 191, 36, 0.1);
+            border-top: 4px solid #fbbf24;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 15px;
+            gap: 5px;
+        }
+        .modal-tab-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 10px 16px;
+            font-size: 0.92em;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .modal-tab-btn.active {
+            color: #fbbf24;
+            border-bottom-color: #fbbf24;
+        }
+        .modal-tab-content {
+            display: none;
+        }
+        .modal-tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 900px) {
+            .guide, .meta, .risk-note { margin-right: 12px; margin-left: 12px; padding-right: 12px; padding-left: 12px; }
+            .tools { margin: 0 12px; border-radius: 10px; }
+            .cards-grid { grid-template-columns: 1fr; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-bullseye"></i> أفضل فرص الجلسة القادمة</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="updateTable()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <div class="guide">
+            <strong>منهج التحليل الشامل المستخدم في الصفحة:</strong>
+            <div class="score-grid">
+                <div class="score-item">الارتداد من القاع الحقيقي (Low): 18%</div>
+                <div class="score-item">دفعة الحجم مقابل متوسط 20 يوم: 15%</div>
+                <div class="score-item">اتجاه السعر مقابل SMA20 و SMA50: 18%</div>
+                <div class="score-item">توازن RSI حول منطقة صحية: 12%</div>
+                <div class="score-item">القرب من الاختراق/المقاومة: 12%</div>
+                <div class="score-item">قراءة الشمعة الأخيرة (انعكاس/زخم): 8%</div>
+                <div class="score-item">سيولة التداول (Value Traded): 10%</div>
+                <div class="score-item">انضباط التذبذب (Volatility): 7%</div>
+            </div>
+            <div style="margin-top:8px">الخطة تخرج لك: <strong>سعر دخول مقترح</strong> + <strong>وقف خسارة</strong> + <strong>هدفين</strong> + <strong>كمية ومبلغ دخول</strong> حسب رأس المال والمخاطرة.</div>
+        </div>
+
+        <div class="tools">
+            <label>رأس المال (جنيه)
+                <input id="capital" type="number" value="100000" min="1000" step="1000">
+            </label>
+            <label>نسبة المخاطرة لكل صفقة %
+                <input id="riskPct" type="number" value="1.5" min="0.2" max="5" step="0.1">
+            </label>
+            <label>أقصى تخصيص للصفقة %
+                <input id="allocPct" type="number" value="20" min="5" max="50" step="1">
+            </label>
+            <label>حد أدنى للدرجة
+                <input id="minScore" type="number" value="55" min="0" max="100" step="1">
+            </label>
+            <label>نافذة التحليل (يوم)
+                <input id="lookback" type="number" value="60" min="30" max="180" step="5">
+            </label>
+            <label>فلترة بالرمز/الشركة
+                <input id="tableFilter" type="text" placeholder="مثال: ORAS أو السويدي">
+            </label>
+            <div class="actions">
+                <button class="btn btn-info" onclick="updateTable()"><i class="fas fa-filter"></i> تطبيق</button>
+                <button class="btn btn-primary" onclick="resetDefaults()"><i class="fas fa-undo"></i> افتراضي</button>
+            </div>
+        </div>
+
+        <div class="meta" id="metaInfo">جاري التحليل...</div>
+        <div class="risk-note">تنبيه: هذه أداة مساعدة لاتخاذ القرار وليست توصية استثمارية ملزمة. التزم بخطة وقف الخسارة دائمًا.</div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد فرص مطابقة الآن</h3>
+            <p>قلّل حد الدرجة أو غيّر إعدادات الفلاتر.</p>
+        </div>
+
+        <div id="cardsGrid" class="cards-grid"></div>
+
+        <!-- HIDDEN TABLE kept for legacy sort placeholders -->
+        <div style="display:none;">
+            <table id="opportunitiesTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="setSort('score')">الدرجة <span id="sort-score"></span></th>
+                        <th>التصنيف</th>
+                        <th class="sortable" onclick="setSort('symbol')">الرمز <span id="sort-symbol"></span></th>
+                        <th class="sortable" onclick="setSort('name')">الشركة <span id="sort-name"></span></th>
+                        <th class="sortable" onclick="setSort('current')">السعر الحالي <span id="sort-current"></span></th>
+                        <th class="sortable" onclick="setSort('reboundPct')">ارتداد من القاع % <span id="sort-reboundPct"></span></th>
+                        <th class="sortable" onclick="setSort('volumeRatio')">نسبة الحجم <span id="sort-volumeRatio"></span></th>
+                        <th class="sortable" onclick="setSort('rsi')">RSI <span id="sort-rsi"></span></th>
+                        <th class="sortable" onclick="setSort('entryPrice')">دخول مقترح <span id="sort-entryPrice"></span></th>
+                        <th class="sortable" onclick="setSort('stopLoss')">وقف خسارة <span id="sort-stopLoss"></span></th>
+                        <th class="sortable" onclick="setSort('target1')">هدف 1 <span id="sort-target1"></span></th>
+                        <th class="sortable" onclick="setSort('target2')">هدف 2 <span id="sort-target2"></span></th>
+                        <th class="sortable" onclick="setSort('qty')">كمية دخول <span id="sort-qty"></span></th>
+                        <th class="sortable" onclick="setSort('entryAmount')">مبلغ الدخول <span id="sort-entryAmount"></span></th>
+                        <th>ملخص النصيحة</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <!-- END HIDDEN TABLE -->
+    </div>
+
+    <!-- Modal Overlay for Opportunity Details -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-tabs" style="padding: 0 20px;">
+                <button id="tab-btn-tech" class="modal-tab-btn active" onclick="switchModalTab('tech')"><i class="fas fa-chart-line"></i> التحليل الفني للقرار</button>
+                <button id="tab-btn-news" class="modal-tab-btn" onclick="switchModalTab('news')"><i class="fas fa-newspaper"></i> الأخبار الفورية</button>
+                <button id="tab-btn-earnings" class="modal-tab-btn" onclick="switchModalTab('earnings')"><i class="fas fa-funnel-dollar"></i> الأرباح والإفصاحات</button>
+            </div>
+            <div class="modal-body">
+                <div id="tab-tech" class="modal-tab-content active"></div>
+                <div id="tab-news" class="modal-tab-content"></div>
+                <div id="tab-earnings" class="modal-tab-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let opportunities = [];
+        let sortState = { key: 'score', direction: 'desc' };
+
+        function getCompanySector(name, symbol) {
+            const n = String(name || '').toLowerCase();
+            const s = String(symbol || '').toUpperCase();
+            
+            if (n.includes('عقار') || n.includes('تعمير') || n.includes('إعمار') || n.includes('اسكان') || n.includes('إسكان') || 
+                n.includes('مطور') || n.includes('أسمنت') || n.includes('حديد') || n.includes('مقاولات') || n.includes('إنشاء') || 
+                n.includes('بناء') || n.includes('مباني') || n.includes('سكن') || n.includes('أوراسكوم للتنمية') || 
+                n.includes('طلعت مصطفى') || n.includes('بالم هيلز') || n.includes('سوديك') || n.includes('مدينة نصر') || 
+                n.includes('مصر الجديدة') || n.includes('المطورون') || s === 'TMGH' || s === 'PHDC' || s === 'OCDI' || s === 'HELI' || s === 'EMFD') {
+                return 'العقارات والإنشاءات';
+            }
+            
+            if (n.includes('بنك') || n.includes('تمويل') || n.includes('استثمار') || n.includes('قابضة') || n.includes('تأمين') || 
+                n.includes('مالية') || n.includes('هيرميس') || n.includes('بلتون') || n.includes('بايونيرز') || 
+                n.includes('سي آي كابيتال') || s === 'COMI' || s === 'HRHO' || s === 'BTFH' || s === 'CICH') {
+                return 'الخدمات المالية والبنوك';
+            }
+            
+            if (n.includes('كيماويات') || n.includes('صناعة') || n.includes('أسلاك') || n.includes('نحاس') || n.includes('ألمنيوم') || 
+                n.includes('كابلات') || n.includes('أسمدة') || n.includes('ورق') || n.includes('زجاج') || n.includes('منسوجات') || 
+                n.includes('ملابس') || n.includes('غزل') || n.includes('نسيج') || n.includes('حديد عز') || s === 'ESRS' || s === 'EKHO' || s === 'MFPC') {
+                return 'الصناعة والمواد الأساسية';
+            }
+            
+            if (n.includes('أغذية') || n.includes('ألبان') || n.includes('سكر') || n.includes('مطاحن') || n.includes('صوامع') || 
+                n.includes('دواجن') || n.includes('زيوت') || n.includes('جهينة') || n.includes('أدوية') || n.includes('مستشفى') || 
+                n.includes('علاج') || n.includes('صيدلة') || s === 'JUFO' || s === 'EDFM' || s === 'OLFI') {
+                return 'الأغذية والرعاية الصحية';
+            }
+            
+            if (n.includes('اتصالات') || n.includes('تكنولوجيا') || n.includes('نظم') || n.includes('معلومات') || 
+                n.includes('فوري') || n.includes('راية') || s === 'ETEL' || s === 'FWRY' || s === 'RAYA') {
+                return 'التكنولوجيا والاتصالات';
+            }
+            
+            if (n.includes('بترول') || n.includes('طاقة') || n.includes('كهرباء') || n.includes('غاز') || n.includes('مياه') || 
+                n.includes('شحن') || n.includes('نقل') || n.includes('حاويات') || n.includes('ملاحة') || n.includes('قناة السويس') || 
+                s === 'ALCN' || s === 'ETRS') {
+                return 'الطاقة والخدمات العامة';
+            }
+            
+            return 'قطاعات أخرى';
+        }
+
+        function readStocksData() {
+            // Try 'stockData' key first (saved by upload page as stockData)
+            const rawStockData = localStorage.getItem('stockData');
+            if (rawStockData) {
+                try {
+                    const data = JSON.parse(rawStockData);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+
+            const processedRaw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!processedRaw) return [];
+            try {
+                const rows = JSON.parse(processedRaw);
+                if (!Array.isArray(rows)) return [];
+                return rows.map(row => ({
+                    symbol: row?.symbol,
+                    shortName: row?.name || row?.symbol,
+                    longName: row?.name || row?.symbol,
+                    historical: []
+                }));
+            } catch {
+                return [];
+            }
+        }
+
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function getSeries(company) {
+            const rows = company.historical || company.daily || [];
+            const points = rows
+                .map(x => {
+                    const close = Number(x.close ?? x.price ?? x.value);
+                    const open = Number(x.open ?? x.o ?? close);
+                    const high = Number(x.high ?? x.h ?? close);
+                    const low = Number(x.low ?? x.l ?? close);
+                    const volume = Number(x.volume ?? x.vol ?? 0);
+                    return { date: x.date, close, open, high, low, volume };
+                })
+                .filter(x => x.date && Number.isFinite(x.close) && Number.isFinite(x.low) && Number.isFinite(x.high));
+
+            points.forEach(point => {
+                if (!Number.isFinite(point.open)) point.open = point.close;
+                if (!Number.isFinite(point.volume)) point.volume = 0;
+                if (point.high < point.low) {
+                    const tmp = point.high;
+                    point.high = point.low;
+                    point.low = tmp;
+                }
+            });
+
+            points.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            return points;
+        }
+
+        function avg(values) {
+            if (!values.length) return 0;
+            return values.reduce((sum, value) => sum + value, 0) / values.length;
+        }
+
+        function clamp(value, min = 0, max = 100) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function sma(values, period) {
+            if (values.length < period) return null;
+            const window = values.slice(-period);
+            return avg(window);
+        }
+
+        function ema(values, period) {
+            if (values.length < period) return null;
+            let k = 2 / (period + 1);
+            let emaVal = sma(values.slice(0, period), period);
+            for (let i = period; i < values.length; i++) {
+                emaVal = values[i] * k + emaVal * (1 - k);
+            }
+            return emaVal;
+        }
+
+        function emaSeries(prices, period) {
+            if (prices.length < period) return [];
+            let k = 2 / (period + 1);
+            let emaArr = new Array(prices.length).fill(null);
+            
+            let sum = 0;
+            for (let i = 0; i < period; i++) {
+                sum += prices[i];
+            }
+            let currentEma = sum / period;
+            emaArr[period - 1] = currentEma;
+            
+            for (let i = period; i < prices.length; i++) {
+                currentEma = prices[i] * k + currentEma * (1 - k);
+                emaArr[i] = currentEma;
+            }
+            return emaArr;
+        }
+
+        function calcMACD(prices) {
+            const ema12 = emaSeries(prices, 12);
+            const ema26 = emaSeries(prices, 26);
+            if (ema26.length === 0) return null;
+            
+            let macdLine = [];
+            for (let i = 0; i < prices.length; i++) {
+                if (ema12[i] !== null && ema26[i] !== null) {
+                    macdLine.push(ema12[i] - ema26[i]);
+                } else {
+                    macdLine.push(null);
+                }
+            }
+            
+            const validMacd = macdLine.filter(x => x !== null);
+            const validSignal = emaSeries(validMacd, 9);
+            
+            let signalLine = new Array(prices.length).fill(null);
+            let validIndex = 0;
+            for (let i = 0; i < prices.length; i++) {
+                if (macdLine[i] !== null) {
+                    signalLine[i] = validSignal[validIndex] ?? null;
+                    validIndex++;
+                }
+            }
+            
+            let histogram = new Array(prices.length).fill(null);
+            for (let i = 0; i < prices.length; i++) {
+                if (macdLine[i] !== null && signalLine[i] !== null) {
+                    histogram[i] = macdLine[i] - signalLine[i];
+                }
+            }
+            
+            const latestIndex = prices.length - 1;
+            const prevIndex = prices.length - 2;
+            
+            return {
+                macdLine: macdLine[latestIndex],
+                signalLine: signalLine[latestIndex],
+                histogram: histogram[latestIndex],
+                prevHistogram: histogram[prevIndex],
+                isBullishCross: (histogram[prevIndex] < 0 && histogram[latestIndex] >= 0),
+                isRising: (histogram[prevIndex] !== null && histogram[latestIndex] !== null && histogram[latestIndex] > histogram[prevIndex])
+            };
+        }
+
+        function calcBollingerBands(prices, period = 20, multiplier = 2) {
+            if (prices.length < period) return null;
+            
+            const window = prices.slice(-period);
+            const mean = avg(window);
+            
+            const variance = window.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / period;
+            const stdDev = Math.sqrt(variance);
+            
+            const upper = mean + multiplier * stdDev;
+            const lower = mean - multiplier * stdDev;
+            const bandwidth = mean > 0 ? (upper - lower) / mean : 0;
+            
+            const latestPrice = prices[prices.length - 1];
+            
+            return {
+                middle: mean,
+                upper: upper,
+                lower: lower,
+                bandwidth: bandwidth,
+                isNearLower: latestPrice <= lower * 1.015,
+                isNearUpper: latestPrice >= upper * 0.985,
+                isSqueeze: bandwidth < 0.06
+            };
+        }
+
+        function calcRSI(closes, period = 14) {
+            if (closes.length < period + 1) return null;
+            let gains = 0;
+            let losses = 0;
+            for (let i = closes.length - period; i < closes.length; i++) {
+                const diff = closes[i] - closes[i - 1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            if (avgLoss === 0 && avgGain === 0) return 50;
+            if (avgLoss === 0) return 70;
+            if (avgGain === 0) return 30;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function calcVolatility(closes, period = 20) {
+            if (closes.length < period + 1) return null;
+            const returns = [];
+            for (let i = closes.length - period; i < closes.length; i++) {
+                const prev = closes[i - 1];
+                const curr = closes[i];
+                if (prev > 0) returns.push((curr - prev) / prev);
+            }
+            if (!returns.length) return null;
+            const mean = avg(returns);
+            const variance = avg(returns.map(value => (value - mean) * (value - mean)));
+            return Math.sqrt(variance) * 100;
+        }
+
+        function classifyScore(score) {
+            if (score >= 75) return { label: 'A - فرصة قوية', cls: 'b-a', grade: 'a', confClass: 'high' };
+            if (score >= 62) return { label: 'B - فرصة جيدة', cls: 'b-b', grade: 'b', confClass: 'medium' };
+            return { label: 'C - متابعة', cls: 'b-c', grade: 'c', confClass: 'low' };
+        }
+
+        function isRealBreakout(row) {
+            // اختراق حقيقي: السعر أعلى من المقاومة + سيولة عالية (نسبة حجم >= 1.3)
+            return row.current >= row.resistance * 0.998 && row.volumeRatio >= 1.3;
+        }
+
+        function recommendationText(row) {
+            const rr1 = row.riskPerShare > 0 ? (row.target1 - row.entryPrice) / row.riskPerShare : 0;
+            const rr2 = row.riskPerShare > 0 ? (row.target2 - row.entryPrice) / row.riskPerShare : 0;
+            const zoneTop = row.entryPrice * 1.01;
+
+            const canBuy = row.qty >= 1 && row.entryAmount > 0;
+            const amountText = canBuy
+                ? `ادخل تقريبًا ${row.qty.toLocaleString('ar-EG')} سهم بقيمة ${row.entryAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه.`
+                : 'المخاطرة/الميزانية لا تسمح بكمية آمنة حاليًا؛ قلّل سعر الدخول أو ارفع رأس المال.';
+
+            return `
+                <div class="advice small">
+                    <div><strong>نقطة الدخول:</strong> من ${row.entryPrice.toFixed(2)} إلى ${zoneTop.toFixed(2)}</div>
+                    <div><strong>وقف الخسارة:</strong> ${row.stopLoss.toFixed(2)}</div>
+                    <div><strong>الهدف 1:</strong> ${row.target1.toFixed(2)} (R/R ${rr1.toFixed(2)})</div>
+                    <div><strong>الهدف 2:</strong> ${row.target2.toFixed(2)} (R/R ${rr2.toFixed(2)})</div>
+                    <div class="muted"><strong>التنفيذ:</strong> 50% دخول أول + 50% بعد تأكيد اختراق.</div>
+                    <div class="muted">${amountText}</div>
+                </div>
+            `;
+        }
+
+        function compareValues(a, b, key) {
+            const av = a[key];
+            const bv = b[key];
+            if (typeof av === 'string' || typeof bv === 'string') {
+                return String(av).localeCompare(String(bv), 'ar', { sensitivity: 'base' });
+            }
+            return (Number(av) || 0) - (Number(bv) || 0);
+        }
+
+        function updateSortIndicators() {
+            const keys = ['score', 'symbol', 'name', 'current', 'reboundPct', 'volumeRatio', 'rsi', 'entryPrice', 'stopLoss', 'target1', 'target2', 'qty', 'entryAmount'];
+            keys.forEach(key => {
+                const indicator = document.getElementById(`sort-${key}`);
+                if (!indicator) return;
+                indicator.textContent = sortState.key === key ? (sortState.direction === 'asc' ? '▲' : '▼') : '';
+            });
+        }
+
+        function getFilteredAndSortedRows() {
+            const filterValue = (document.getElementById('tableFilter')?.value || '').trim().toLowerCase();
+            const filtered = opportunities.filter(row => {
+                if (!filterValue) return true;
+                return row.symbol.toLowerCase().includes(filterValue) || row.name.toLowerCase().includes(filterValue);
+            });
+
+            filtered.sort((a, b) => {
+                const result = compareValues(a, b, sortState.key);
+                return sortState.direction === 'asc' ? result : -result;
+            });
+
+            return filtered;
+        }
+
+        function buildOpportunity(company, settings) {
+            const series = getSeries(company);
+            const minimumRequired = Math.max(55, settings.lookback);
+            if (series.length < minimumRequired) return null;
+
+            const points = series.slice(-settings.lookback);
+            const latest = points[points.length - 1];
+            if (!latest || latest.close <= 0) return null;
+
+            // حساب التغير اليومي ونطاق الجلسة الأخيرة
+            const prevPoint = points[points.length - 2];
+            let dailyChangePct = 0;
+            let dailyChangeVal = 0;
+            if (prevPoint && prevPoint.close > 0) {
+                dailyChangeVal = latest.close - prevPoint.close;
+                dailyChangePct = (dailyChangeVal / prevPoint.close) * 100;
+            }
+
+            const closes = points.map(point => point.close);
+            const highs = points.map(point => point.high);
+            const lows = points.map(point => point.low);
+            const volumes = points.map(point => point.volume);
+
+            const lowLookback = Math.min(...lows);
+            const highLookback = Math.max(...highs);
+            if (!Number.isFinite(lowLookback) || !Number.isFinite(highLookback) || lowLookback <= 0 || highLookback <= 0) return null;
+
+            const reboundPct = ((latest.close - lowLookback) / lowLookback) * 100;
+            const fullDropPct = ((highLookback - lowLookback) / highLookback) * 100;
+            const distanceToHighPct = ((highLookback - latest.close) / highLookback) * 100;
+
+            const closeSeries = series.map(point => point.close);
+            const sma20 = sma(closeSeries, 20);
+            const sma50 = sma(closeSeries, 50);
+            const rsi = calcRSI(closeSeries, 14);
+
+            const recent20 = points.slice(-20);
+            const avgVol20 = avg(recent20.map(point => point.volume));
+            const volumeRatio = avgVol20 > 0 ? latest.volume / avgVol20 : 0;
+
+            const recentHigh20 = Math.max(...recent20.map(point => point.high));
+            const support = Math.min(...points.slice(-15).map(point => point.low));
+            const resistance = recentHigh20;
+
+            const lastBody = Math.abs(latest.close - latest.open);
+            const candleRange = Math.max(0.00001, latest.high - latest.low);
+            const lowerWick = Math.min(latest.open, latest.close) - latest.low;
+            const upperWick = latest.high - Math.max(latest.open, latest.close);
+            const hammerLike = lowerWick >= lastBody * 2.2 && upperWick <= lastBody * 0.8;
+            const bullishClose = latest.close >= latest.open;
+
+            // تحديد شمعة الابتلاع الصعودي (Bullish Engulfing)
+            let bullishEngulfing = false;
+            if (prevPoint) {
+                const prevBearish = prevPoint.close < prevPoint.open;
+                bullishEngulfing = prevBearish && bullishClose && 
+                                   latest.close > prevPoint.open && latest.open < prevPoint.close;
+            }
+
+            const volatility = calcVolatility(closeSeries, 20);
+            const liquidityValue = latest.close * Math.max(latest.volume, 0);
+
+            // حساب OBV والانحراف الصعودي لآخر 20 نقطة
+            const obvSeries = [0];
+            for (let i = 1; i < points.length; i++) {
+                const prevObv = obvSeries[i - 1];
+                if (points[i].close > points[i - 1].close) {
+                    obvSeries.push(prevObv + points[i].volume);
+                } else if (points[i].close < points[i - 1].close) {
+                    obvSeries.push(prevObv - points[i].volume);
+                } else {
+                    obvSeries.push(prevObv);
+                }
+            }
+
+            let isObvDivergence = false;
+            if (points.length >= 20) {
+                const pStart = points[points.length - 20].close;
+                const pEnd = points[points.length - 1].close;
+                const obvStart = obvSeries[obvSeries.length - 20];
+                const obvEnd = obvSeries[obvSeries.length - 1];
+                
+                const priceChange = (pEnd - pStart) / pStart;
+                const obvChange = obvStart !== 0 ? (obvEnd - obvStart) / Math.abs(obvStart) : 0;
+                
+                isObvDivergence = priceChange <= 0.01 && obvChange >= 0.05;
+            }
+            const obvScore = isObvDivergence ? 100 : 50;
+
+            // تحديد قطاع السهم والتحقق من صدارة القطاع
+            const sector = getCompanySector(company.longName || company.shortName || company.name, company.symbol);
+            const isLeadingSector = window.bestSector && (sector === window.bestSector);
+            const sectorScore = isLeadingSector ? 100 : 50;
+
+            // اختراق قمة رئيسية لـ 50 جلسة
+            const highs50Val = highs.slice(-50);
+            const high50 = highs50Val.length > 0 ? Math.max(...highs50Val) : resistance;
+            const isBreakout50 = latest.close >= high50 * 0.995 && volumeRatio >= 1.3;
+            const breakout50Score = isBreakout50 ? 100 : 50;
+
+            // حساب الماكد ونطاقات بولينجر
+            const macdInfo = calcMACD(closeSeries);
+            const bbInfo = calcBollingerBands(closeSeries);
+
+            let macdScore = 50;
+            if (macdInfo) {
+                if (macdInfo.isRising) macdScore += 20;
+                if (macdInfo.histogram > 0) macdScore += 15;
+                if (macdInfo.isBullishCross) macdScore += 15;
+                if (!macdInfo.isRising && macdInfo.histogram < 0) macdScore -= 15;
+            }
+            macdScore = clamp(macdScore);
+
+            let bbScore = 50;
+            if (bbInfo) {
+                if (bbInfo.isNearLower) bbScore += 30;
+                if (bbInfo.isSqueeze) bbScore += 20;
+                if (bbInfo.isNearUpper) bbScore -= 20;
+            }
+            bbScore = clamp(bbScore);
+
+            const reboundScore = clamp((Math.min(reboundPct, 20) / 20) * 100);
+            const volumeScore = clamp(((volumeRatio - 0.7) / 1.1) * 100);
+            const trendSignals = (latest.close > (sma20 || latest.close) ? 1 : 0) + ((sma20 || 0) > (sma50 || 0) ? 1 : 0) + (latest.close > (sma50 || latest.close) ? 1 : 0);
+            const trendScore = clamp((trendSignals / 3) * 100);
+            const rsiScore = Number.isFinite(rsi) ? clamp(100 - Math.abs(rsi - 55) * 3.5) : 45;
+            const breakoutGapPct = resistance > 0 ? ((resistance - latest.close) / resistance) * 100 : 99;
+            const breakoutScore = breakoutGapPct <= 0 ? 95 : clamp(100 - breakoutGapPct * 12);
+            
+            // زيادة درجة الشمعة في حال وجود نموذج انعكاسي قوي مثل الابتلاع الصعودي
+            const candleScore = clamp((hammerLike ? 60 : 30) + (bullishClose ? 30 : 0) + (bullishEngulfing ? 40 : 0));
+            const liquidityScore = clamp((Math.log10(Math.max(1, liquidityValue)) - 1.8) * 16);
+            const volatilityScore = Number.isFinite(volatility) ? clamp(100 - Math.abs(volatility - 2.2) * 18) : 45;
+
+            // الخوارزمية المتقدمة لدمج الماكد وبولينجر باندز والأوزان الجديدة
+            const weightedScore = (
+                reboundScore * 0.12 +
+                volumeScore * 0.10 +
+                trendScore * 0.12 +
+                macdScore * 0.10 +
+                bbScore * 0.08 +
+                rsiScore * 0.08 +
+                breakoutScore * 0.08 +
+                candleScore * 0.08 +
+                obvScore * 0.08 +
+                sectorScore * 0.08 +
+                breakout50Score * 0.04 +
+                liquidityScore * 0.02 +
+                volatilityScore * 0.02
+            );
+
+            const score = clamp(weightedScore);
+            if (score < settings.minScore) return null;
+            if (fullDropPct < 4 || reboundPct < 1.2) return null;
+
+            const pullbackEntry = Math.max(support * 1.01, latest.close * 0.99);
+            const breakoutEntry = resistance * 1.003;
+            const entryPrice = latest.close <= resistance * 0.992 ? pullbackEntry : breakoutEntry;
+            const stopLoss = support * 0.992;
+            const target1 = Math.max(resistance, entryPrice * 1.04);
+            const target2 = Math.max(target1 * 1.03, entryPrice * 1.08);
+
+            const riskPerShare = Math.max(0, entryPrice - stopLoss);
+            const riskAmount = settings.capital * (settings.riskPct / 100);
+            const maxAllocAmount = settings.capital * (settings.allocPct / 100);
+            const qtyByRisk = riskPerShare > 0 ? Math.floor(riskAmount / riskPerShare) : 0;
+            const qtyByBudget = entryPrice > 0 ? Math.floor(maxAllocAmount / entryPrice) : 0;
+            const qty = Math.max(0, Math.min(qtyByRisk, qtyByBudget));
+            const entryAmount = qty * entryPrice;
+
+            return {
+                symbol: company.symbol || '-',
+                name: company.longName || company.shortName || (company.symbol || '-'),
+                score,
+                current: latest.close,
+                reboundPct,
+                volumeRatio,
+                rsi: Number.isFinite(rsi) ? rsi : 0,
+                entryPrice,
+                stopLoss,
+                target1,
+                target2,
+                qty,
+                entryAmount,
+                riskPerShare,
+                distanceToHighPct,
+                support,
+                resistance,
+                dailyChangePct,
+                dailyChangeVal,
+                latestOpen: latest.open,
+                latestHigh: latest.high,
+                latestLow: latest.low,
+                bullishEngulfing,
+                hammerLike,
+                macdInfo,
+                bbInfo,
+                sma20,
+                sma50,
+                reboundScore,
+                volumeScore,
+                trendScore,
+                macdScore,
+                bbScore,
+                rsiScore,
+                breakoutScore,
+                candleScore,
+                liquidityScore,
+                volatilityScore,
+                sector,
+                isLeadingSector,
+                isObvDivergence,
+                isBreakout50,
+                obvVal: obvSeries[obvSeries.length - 1]
+            };
+        }
+
+        function renderCards() {
+            const grid    = document.getElementById('cardsGrid');
+            const noData  = document.getElementById('noData');
+            const meta    = document.getElementById('metaInfo');
+            const rows    = getFilteredAndSortedRows();
+
+            updateSortIndicators();
+
+            if (!rows.length) {
+                noData.style.display = 'block';
+                grid.innerHTML = '';
+                meta.textContent = opportunities.length
+                    ? `لا توجد نتائج بعد الفلترة | إجمالي الفرص: ${opportunities.length}`
+                    : 'لا توجد فرص مطابقة للإعدادات الحالية';
+                return;
+            }
+
+            noData.style.display = 'none';
+
+            grid.innerHTML = rows.map(row => {
+                const cat       = classifyScore(row.score);
+                const confClass = cat.confClass;
+                const confPct   = Math.round(row.score);
+                const breakoutTag = isRealBreakout(row)
+                    ? `<span style="background:#f59e0b;color:#0f172a;padding:2px 8px;border-radius:999px;font-size:.75em;font-weight:700;">⚡ اختراق حقيقي</span>`
+                    : '';
+                
+                // تحديد شارات الأنماط الفنية المكتشفة في الهيدر
+                let patternBadges = '';
+                if (row.bullishEngulfing) {
+                    patternBadges += `<span style="background:#10b981;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">🐂 ابتلاع صعودي</span>`;
+                } else if (row.hammerLike) {
+                    patternBadges += `<span style="background:#059669;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">🔨 مطرقة</span>`;
+                }
+
+                if (row.bbInfo && row.bbInfo.isSqueeze) {
+                    patternBadges += `<span style="background:#8b5cf6;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">⚡ انفجار بولينجر</span>`;
+                } else if (row.bbInfo && row.bbInfo.isNearLower) {
+                    patternBadges += `<span style="background:#2563eb;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">🛡️ دعم بولينجر</span>`;
+                }
+
+                if (row.macdInfo && row.macdInfo.isBullishCross) {
+                    patternBadges += `<span style="background:#0d9488;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">📈 تقاطع ماكد</span>`;
+                }
+
+                // شارات المؤشرات الجديدة
+                if (row.isObvDivergence) {
+                    patternBadges += `<span style="background:#3b82f6;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">📈 سيولة صاعدة (OBV)</span>`;
+                }
+                if (row.isLeadingSector) {
+                    patternBadges += `<span style="background:#fb923c;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">🔥 قطاع قيادي</span>`;
+                }
+                if (row.isBreakout50) {
+                    patternBadges += `<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:999px;font-size:.73em;font-weight:700;margin-right:4px;">🚀 اختراق قمة</span>`;
+                }
+
+                // تفاصيل التغير اليومي
+                const sign = row.dailyChangeVal >= 0 ? '+' : '';
+                const changeClass = row.dailyChangeVal >= 0 ? 'up' : 'down';
+                const changeText = `${sign}${row.dailyChangePct.toFixed(2)}% (${sign}${row.dailyChangeVal.toFixed(2)} ج)`;
+
+                // تفاصيل حركة السهم
+                let patternText = 'شمعة عادية';
+                if (row.bullishEngulfing) patternText = 'ابتلاع صعودي 🐂';
+                else if (row.hammerLike) patternText = 'مطرقة صعودية 🔨';
+                else if (row.current > row.latestOpen) patternText = 'شمعة صاعدة 📈';
+                else if (row.current < row.latestOpen) patternText = 'شمعة هابطة 📉';
+
+                const rangeText = `إغلاق: ${row.current.toFixed(2)} | افتح: ${row.latestOpen.toFixed(2)} | أعلى: ${row.latestHigh.toFixed(2)} | أدنى: ${row.latestLow.toFixed(2)}`;
+
+                let macdText = 'مستقر';
+                let macdClass = '';
+                if (row.macdInfo) {
+                    const trendIcon = row.macdInfo.isRising ? '📈' : '📉';
+                    const trendName = row.macdInfo.isRising ? 'صاعد' : 'هابط';
+                    macdText = `الهستوجرام: ${row.macdInfo.histogram.toFixed(3)} (${trendName} ${trendIcon})`;
+                    macdClass = row.macdInfo.isRising ? 'up' : 'down';
+                }
+
+                let bbText = 'تداول طبيعي';
+                if (row.bbInfo) {
+                    if (row.bbInfo.isSqueeze) bbText = 'انفجار سعري وشيك ⚡ (نطاق ضيق)';
+                    else if (row.bbInfo.isNearLower) bbText = 'قريب من دعم القناة 🛡️';
+                    else if (row.bbInfo.isNearUpper) bbText = 'قريب من مقاومة القناة ⚠️';
+                }
+
+                return `
+                <div class="stock-card grade-${cat.grade}" onclick="openStockAnalysis('${row.symbol}')">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-symbol">${row.symbol}</div>
+                            <div class="card-name">${row.name}</div>
+                            <span class="card-badge ${cat.cls}">${cat.label}</span>
+                            ${breakoutTag}
+                            ${patternBadges}
+                        </div>
+                        <div class="conf-wrap">
+                            <div class="conf-label">نسبة ثقة</div>
+                            <div class="conf-ring ${confClass}">${confPct}%</div>
+                        </div>
+                    </div>
+                    <div class="conf-bar-wrap">
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill ${confClass}" style="width:${confPct}%"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div class="card-row"><span class="card-key">القطاع</span><span class="card-val" style="color:#fb923c; font-size:0.85em; font-weight:700;">${row.sector}</span></div>
+                        <div class="card-row"><span class="card-key">السعر الحالي</span><span class="card-val warn">${row.current.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">تغير آخر جلسة</span><span class="card-val ${changeClass}">${changeText}</span></div>
+                        <div class="card-row"><span class="card-key">حركة آخر جلسة</span><span class="card-val" style="font-size: 0.88em; color: #cbd5e1;">${patternText}</span></div>
+                        <div class="card-row" style="font-size: 0.8em; border-bottom: none; padding-top: 2px;"><span class="card-val muted" style="text-align: right; width: 100%; font-family: monospace;">${rangeText}</span></div>
+                        <div class="card-row"><span class="card-key">مؤشر MACD</span><span class="card-val ${macdClass}" style="font-size:0.85em;">${macdText}</span></div>
+                        <div class="card-row"><span class="card-key">نطاقات بولينجر</span><span class="card-val" style="font-size:0.85em; color:#cbd5e1;">${bbText}</span></div>
+                        <div class="card-row"><span class="card-key">RSI</span><span class="card-val ${row.rsi <= 35 ? 'up' : row.rsi >= 65 ? 'down' : ''}">${row.rsi.toFixed(1)}</span></div>
+                        <div class="card-row"><span class="card-key">نسبة الحجم</span><span class="card-val ${row.volumeRatio >= 1.3 ? 'up' : ''}">${row.volumeRatio.toFixed(2)}x</span></div>
+                        <div class="card-row"><span class="card-key">ارتداد من القاع %</span><span class="card-val up">${row.reboundPct.toFixed(2)}%</span></div>
+                        <div class="card-row"><span class="card-key">دخول مقترح</span><span class="card-val">${row.entryPrice.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">وقف خسارة</span><span class="card-val down">${row.stopLoss.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">هدف 1 / هدف 2</span><span class="card-val up">${row.target1.toFixed(2)} / ${row.target2.toFixed(2)}</span></div>
+                        <div class="card-row"><span class="card-key">كمية / مبلغ</span><span class="card-val">${row.qty.toLocaleString('ar-EG')} سهم · ${row.entryAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج</span></div>
+                    </div>
+                    <button class="btn btn-info show-reasons-btn" style="width:100%; margin-top:10px; font-size:0.85em; justify-content:center; padding:8px 12px; border-radius:8px;" onclick="event.stopPropagation(); showOpportunityDetails('${row.symbol}')">
+                        <i class="fas fa-brain"></i> أسباب القرار بالتفصيل
+                    </button>
+                </div>`;
+            }).join('');
+
+            const avgScore   = avg(rows.map(r => r.score));
+            const avgRebound = avg(rows.map(r => r.reboundPct));
+            const breakouts  = rows.filter(r => isRealBreakout(r)).length;
+            meta.textContent = `الظاهر: ${rows.length} | اختراقات حقيقية: ${breakouts} | متوسط الدرجة: ${avgScore.toFixed(1)} | متوسط الارتداد: ${avgRebound.toFixed(1)}%`;
+        }
+
+        // alias for legacy calls
+        function renderTable() { renderCards(); }
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.direction = 'desc';
+            }
+            renderTable();
+        }
+
+        function readSettings() {
+            return {
+                capital: Math.max(1000, Number(document.getElementById('capital')?.value || 100000)),
+                riskPct: Math.max(0.2, Number(document.getElementById('riskPct')?.value || 1.5)),
+                allocPct: Math.max(5, Number(document.getElementById('allocPct')?.value || 20)),
+                minScore: Math.max(0, Number(document.getElementById('minScore')?.value || 55)),
+                lookback: Math.max(30, Number(document.getElementById('lookback')?.value || 60))
+            };
+        }
+
+        function updateTable() {
+            const stocks = readStocksData();
+            const settings = readSettings();
+
+            // 1. حساب أداء القطاعات مسبقاً لتحديد القطاع الصاعد الرائد
+            const sectorReturns = {};
+            const sectorCounts = {};
+            
+            stocks.forEach(company => {
+                const series = getSeries(company);
+                if (series.length >= 6) {
+                    const latest = series[series.length - 1];
+                    const prev5 = series[series.length - 6];
+                    if (latest && prev5 && prev5.close > 0) {
+                        const ret5 = ((latest.close - prev5.close) / prev5.close) * 100;
+                        const sector = getCompanySector(company.longName || company.shortName || company.name, company.symbol);
+                        
+                        sectorReturns[sector] = (sectorReturns[sector] || 0) + ret5;
+                        sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
+                    }
+                }
+            });
+            
+            window.sectorAverages = {};
+            let bestSector = '';
+            let bestReturn = -999;
+            
+            for (const sector in sectorReturns) {
+                const avgVal = sectorReturns[sector] / sectorCounts[sector];
+                window.sectorAverages[sector] = avgVal;
+                if (avgVal > bestReturn) {
+                    bestReturn = avgVal;
+                    bestSector = sector;
+                }
+            }
+            window.bestSector = bestSector;
+
+            opportunities = stocks
+                .map(company => buildOpportunity(company, settings))
+                .filter(Boolean)
+                .sort((a, b) => b.score - a.score);
+
+            renderCards();
+        }
+
+        function resetDefaults() {
+            document.getElementById('capital').value = 100000;
+            document.getElementById('riskPct').value = 1.5;
+            document.getElementById('allocPct').value = 20;
+            document.getElementById('minScore').value = 55;
+            document.getElementById('lookback').value = 60;
+            document.getElementById('tableFilter').value = '';
+            updateTable();
+        }
+
+        // ===== نظام تفاصيل القرار والتحقق من الأخبار والأرباح =====
+        let activeModalTab = 'tech';
+        
+        function switchModalTab(tabName) {
+            activeModalTab = tabName;
+            document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.modal-tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        function closeDetailsModal() {
+            const modal = document.getElementById('detailsModal');
+            modal.classList.remove('open');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function parseRSS(text) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/xml');
+                const items = Array.from(doc.querySelectorAll('item'));
+                
+                return items.map(item => {
+                    let title = (item.querySelector('title')?.textContent || '').trim();
+                    let link = (item.querySelector('link')?.textContent || '').trim();
+                    let pubDate = (item.querySelector('pubDate')?.textContent || '').trim();
+                    let source = (item.querySelector('source')?.textContent || 'Google News').trim();
+                    
+                    title = title.replace(/ - [^-]+$/, '');
+                    
+                    return { title, link, pubDate, source };
+                }).filter(item => item.title && item.link).slice(0, 8);
+            } catch (e) {
+                console.error('RSS parse error:', e);
+                return [];
+            }
+        }
+
+        function formatPubDate(dateStr) {
+            try {
+                const d = new Date(dateStr);
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+                }
+            } catch(e) {}
+            return dateStr;
+        }
+
+        async function fetchModalNews(symbol, name) {
+            const newsTab = document.getElementById('tab-news');
+            const earningsTab = document.getElementById('tab-earnings');
+            
+            newsTab.innerHTML = `
+                <div class="news-loading-spinner">
+                    <div class="spinner"></div>
+                    <div>جاري جلب أحدث الأخبار والتقارير فوريًا...</div>
+                </div>
+            `;
+            earningsTab.innerHTML = `
+                <div class="news-loading-spinner">
+                    <div class="spinner"></div>
+                    <div>جاري تصفية وتحليل إعلانات الأرباح والإفصاحات...</div>
+                </div>
+            `;
+            
+            let cached = null;
+            try {
+                cached = JSON.parse(sessionStorage.getItem('news_cache_' + symbol));
+            } catch(e) {}
+            
+            const cacheDuration = 15 * 60 * 1000; // 15 mins cache
+            let newsItems = [];
+            
+            if (cached && (Date.now() - cached.timestamp < cacheDuration)) {
+                newsItems = cached.news;
+            } else {
+                try {
+                    const query = encodeURIComponent(`"${name}" OR "${symbol}" سهم بورصة مصر`);
+                    const rssUrl = `https://news.google.com/rss/search?q=${query}&hl=ar&gl=EG&ceid=EG:ar`;
+                    
+                    const proxies = [
+                        `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
+                        `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
+                        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`
+                    ];
+                    
+                    let text = null;
+                    for (const proxyUrl of proxies) {
+                        try {
+                            const response = await fetch(proxyUrl, { cache: 'no-store' });
+                            if (response.ok) {
+                                text = await response.text();
+                                if (text && text.length > 50) break;
+                            }
+                        } catch(e) {
+                            console.log('Proxy failed for modal news:', proxyUrl, e.message);
+                        }
+                    }
+                    
+                    if (text) {
+                        newsItems = parseRSS(text);
+                        sessionStorage.setItem('news_cache_' + symbol, JSON.stringify({
+                            timestamp: Date.now(),
+                            news: newsItems
+                        }));
+                    }
+                } catch(e) {
+                    console.error('Failed fetching news for modal:', e);
+                }
+            }
+            
+            // Render News Tab
+            if (!newsItems || newsItems.length === 0) {
+                newsTab.innerHTML = `
+                    <div class="empty" style="margin:0; padding:30px 15px;">
+                        <i class="fas fa-newspaper" style="font-size:2em; margin-bottom:10px;"></i>
+                        <p>لم نجد أخبار صحفية حديثة منشورة للسهم حاليًا.</p>
+                        <p style="font-size:0.82em; color:#94a3b8; margin-top:5px;">يمكنك متابعة الإفصاحات الرسمية أو مباشر مصر عبر الأزرار أدناه.</p>
+                    </div>
+                `;
+            } else {
+                newsTab.innerHTML = `
+                    <div class="details-section" style="margin-bottom:10px;">
+                        <div class="details-section-title"><i class="fas fa-newspaper"></i> خلاصة الأخبار المكتشفة (${newsItems.length})</div>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            ${newsItems.map(item => `
+                                <div class="news-tab-item">
+                                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="news-title-link">
+                                        ${escapeHtml(item.title)}
+                                    </a>
+                                    <div class="news-meta-info">
+                                        <span><i class="fas fa-clock"></i> ${formatPubDate(item.pubDate)}</span>
+                                        <span><i class="fas fa-globe"></i> المصدر: ${escapeHtml(item.source)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Render Earnings & Disclosures Tab (filter from newsItems)
+            const earningsKeywords = ['أرباح', 'نتائج', 'خسائر', 'توزيعات', 'كوبون', 'إفصاح', 'قوائم مالية', 'الجمعية العامة', 'نتائج أعمال', 'صافي ربح', 'حق اكتتاب', 'مجلس إدارة', 'توزيع', 'قرر', 'إيرادات', 'مالية'];
+            const earningsItems = newsItems.filter(item => {
+                const titleLower = item.title.toLowerCase();
+                return earningsKeywords.some(kw => titleLower.includes(kw));
+            });
+            
+            if (earningsItems.length === 0) {
+                earningsTab.innerHTML = `
+                    <div class="empty" style="margin:0; padding:30px 15px; border-color:#10b981; background:rgba(16, 185, 129, 0.04); color:#10b981;">
+                        <i class="fas fa-file-invoice-dollar" style="font-size:2em; margin-bottom:10px;"></i>
+                        <p>لا توجد إعلانات أرباح أو قوائم مالية معلنة صراحة في الأخبار الأخيرة.</p>
+                        <p style="font-size:0.82em; color:#cbd5e1; margin-top:5px;">نقترح فحص صفحة إفصاحات البورصة الرسمية مباشرة لمراجعة القوائم المالية المعتمدة.</p>
+                    </div>
+                `;
+            } else {
+                earningsTab.innerHTML = `
+                    <div class="details-section" style="margin-bottom:10px; border-color:#10b981;">
+                        <div class="details-section-title" style="color:#10b981; border-bottom-color:rgba(16,185,129,0.2);"><i class="fas fa-funnel-dollar"></i> إعلانات الأرباح والإفصاحات المكتشفة (${earningsItems.length})</div>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            ${earningsItems.map(item => `
+                                <div class="news-tab-item">
+                                    <span class="earnings-badge"><i class="fas fa-star"></i> إعلان/إفصاح مالي</span>
+                                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="news-title-link" style="margin-top:6px;">
+                                        ${escapeHtml(item.title)}
+                                    </a>
+                                    <div class="news-meta-info">
+                                        <span><i class="fas fa-clock"></i> ${formatPubDate(item.pubDate)}</span>
+                                        <span><i class="fas fa-globe"></i> المصدر: ${escapeHtml(item.source)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const linksHtml = `
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap:wrap;">
+                    <a href="https://www.egx.com.eg/ar/NewsList.aspx?symbol=${symbol}" target="_blank" class="btn btn-alt" style="font-size:0.8em; background:#0f172a; border:1px solid #334155; color:#fbbf24; text-decoration:none; padding:8px 14px; border-radius:8px;"><i class="fas fa-external-link-alt"></i> إفصاحات البورصة الرسمية</a>
+                    <a href="https://www.mubasher.info/markets/EGX/stocks/${symbol}/news" target="_blank" class="btn btn-alt" style="font-size:0.8em; background:#0f172a; border:1px solid #334155; color:#cbd5e1; text-decoration:none; padding:8px 14px; border-radius:8px;"><i class="fas fa-external-link-alt"></i> مباشر مصر</a>
+                </div>
+            `;
+            newsTab.innerHTML += linksHtml;
+            earningsTab.innerHTML += linksHtml;
+        }
+
+        function showOpportunityDetails(symbol) {
+            const opp = opportunities.find(o => o.symbol === symbol);
+            if (!opp) return;
+            
+            switchModalTab('tech');
+            
+            document.getElementById('modalTitle').innerHTML = `<i class="fas fa-brain"></i> أسباب قرار سهم ${opp.symbol} - ${opp.name}`;
+            
+            const techDiv = document.getElementById('tab-tech');
+            
+            let planHtml = `
+            <div class="details-section" style="border-right: 4px solid #fbbf24;">
+                <div class="details-section-title"><i class="fas fa-clipboard-list"></i> خطة التداول المقترحة</div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                    <div style="background:#1e293b; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+                        <div style="font-size:0.75em; color:#94a3b8;">سعر الدخول المقترح</div>
+                        <div style="font-size:1.15em; font-weight:700; color:#fbbf24;">${opp.entryPrice.toFixed(2)} ج</div>
+                    </div>
+                    <div style="background:#1e293b; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+                        <div style="font-size:0.75em; color:#94a3b8;">وقف الخسارة</div>
+                        <div style="font-size:1.15em; font-weight:700; color:#ef4444;">${opp.stopLoss.toFixed(2)} ج</div>
+                    </div>
+                    <div style="background:#1e293b; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+                        <div style="font-size:0.75em; color:#94a3b8;">المستهدف الأول</div>
+                        <div style="font-size:1.15em; font-weight:700; color:#10b981;">${opp.target1.toFixed(2)} ج</div>
+                    </div>
+                    <div style="background:#1e293b; padding:8px 12px; border-radius:8px; border:1px solid #334155;">
+                        <div style="font-size:0.75em; color:#94a3b8;">المستهدف الثاني</div>
+                        <div style="font-size:1.15em; font-weight:700; color:#10b981;">${opp.target2.toFixed(2)} ج</div>
+                    </div>
+                </div>
+                <div style="margin-top:12px; font-size:0.85em; color:#cbd5e1; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; background:rgba(251,191,36,0.06); padding:8px 12px; border-radius:8px; border:1px dashed rgba(251,191,36,0.2);">
+                    <div><strong>الكمية المخططة:</strong> ${opp.qty.toLocaleString('ar-EG')} سهم</div>
+                    <div><strong>رأس المال المخصص:</strong> ${opp.entryAmount.toLocaleString('ar-EG', {maximumFractionDigits:0})} جنيه</div>
+                    <div><strong>المخاطرة المقدرة:</strong> ${(opp.riskPerShare * opp.qty).toLocaleString('ar-EG', {maximumFractionDigits:0})} جنيه</div>
+                </div>
+            </div>
+            `;
+            
+            let rsiStatus = "طبيعي";
+            if (opp.rsi < 30) rsiStatus = "تشبع بيعي قوي (فرصة ارتداد 🟢)";
+            else if (opp.rsi < 45) rsiStatus = "منطقة تجميع هادئة 📈";
+            else if (opp.rsi > 70) rsiStatus = "تشبع شرائي مفرط (مخاطرة مرتفعة ⚠️)";
+            else if (opp.rsi > 60) rsiStatus = "زخم صعودي نشط ⚡";
+            
+            let macdStatusText = "مستقر";
+            if (opp.macdInfo) {
+                if (opp.macdInfo.isBullishCross && opp.macdInfo.isRising) macdStatusText = "تقاطع ذهبي صاعد وزخم متزايد 🚀";
+                else if (opp.macdInfo.isBullishCross) macdStatusText = "تقاطع صعودي إيجابي 📈";
+                else if (opp.macdInfo.isRising) macdStatusText = "زخم يتحسن تدريجياً (ارتداد الهستوجرام)";
+                else macdStatusText = "زخم هابط أو ضعيف 📉";
+            }
+            
+            let bbStatusText = "تداول اعتيادي";
+            if (opp.bbInfo) {
+                if (opp.bbInfo.isSqueeze) bbStatusText = "انضغاط شديد (توقع حركة سعرية عنيفة ⚡)";
+                else if (opp.bbInfo.isNearLower) bbStatusText = "ارتداد من الحد السفلي للقناة (دعم فني ممتاز 🛡️)";
+                else if (opp.bbInfo.isNearUpper) bbStatusText = "ملامسة الحد العلوي (مقاومة قصيرة الأجل ⚠️)";
+            }
+            
+            let candlePattern = "شمعة اعتيادية";
+            if (opp.bullishEngulfing) candlePattern = "ابتلاع صعودي قوي (Bullish Engulfing 🐂) - إشارة انعكاس صاعدة";
+            else if (opp.hammerLike) candlePattern = "شمعة المطرقة الصاعدة (Hammer 🔨) - رفض الهبوط";
+            else if (opp.current > opp.latestOpen) candlePattern = "شمعة خضراء صاعدة 📈";
+            
+            let trendStatusText = "اتجاه هابط";
+            const trendSignals = (opp.current > (opp.sma20 || opp.current) ? 1 : 0) + ((opp.sma20 || 0) > (opp.sma50 || 0) ? 1 : 0) + (opp.current > (opp.sma50 || opp.current) ? 1 : 0);
+            if (trendSignals === 3) trendStatusText = "اتجاه صاعد مثالي (فوق المتوسطات 20 و 50)";
+            else if (trendSignals === 2) trendStatusText = "اتجاه صاعد قيد التكون (تحسن للمتوسطات)";
+            else if (trendSignals === 1) trendStatusText = "بداية ارتداد وتحسن فوق متوسط 20 يوم";
+            
+            let sectorText = `${opp.sector}`;
+            if (opp.isLeadingSector) {
+                sectorText += ` (🔥 قطاع قيادي يتصدر حركة سيولة السوق حالياً)`;
+            }
+            
+            let obvStatusText = `مستقر (OBV: ${opp.obvVal.toLocaleString('ar-EG')})`;
+            if (opp.isObvDivergence) {
+                obvStatusText = `انحراف إيجابي صاعد 🟢 (تجميع مخفي ومستمر من صناع السوق)`;
+            }
+
+            let breakout50Text = `تداول طبيعي`;
+            if (opp.isBreakout50) {
+                breakout50Text = `🚀 اختراق حقيقي لقمة 50 جلسة مصحوباً بسيولة تداول ضخمة!`;
+            }
+
+            let analysisHtml = `
+            <div class="details-section">
+                <div class="details-section-title"><i class="fas fa-chart-bar"></i> تفصيل القراءات الفنية وأسباب القرار</div>
+                
+                <div class="details-row">
+                    <span class="details-key">القطاع والدوران القطاعي</span>
+                    <span class="details-val">${sectorText}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">مؤشر حجم التداول التراكمي (OBV)</span>
+                    <span class="details-val">${obvStatusText}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">اختراق قمة رئيسية (50 جلسة)</span>
+                    <span class="details-val">${breakout50Text}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">حركة آخر جلسة والشموع</span>
+                    <span class="details-val">${candlePattern}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">مؤشر MACD</span>
+                    <span class="details-val">${macdStatusText}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">قنوات بولينجر (BB)</span>
+                    <span class="details-val">${bbStatusText}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">مؤشر القوة النسبية RSI</span>
+                    <span class="details-val" style="direction:ltr;">${opp.rsi.toFixed(1)} (${rsiStatus})</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">الاتجاه العام (Moving Averages)</span>
+                    <span class="details-val">${trendStatusText}</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">نسبة الحجم مقارنة بالمتوسط</span>
+                    <span class="details-val ${opp.volumeRatio >= 1.3 ? 'up' : ''}">${opp.volumeRatio.toFixed(2)}x (تداول ${opp.volumeRatio >= 1.3 ? 'مرتفع ونشط 🔥' : 'اعتيادي'})</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">الارتداد الفني من أدنى قاع</span>
+                    <span class="details-val up">${opp.reboundPct.toFixed(2)}% (من قاع نافذة التحليل)</span>
+                </div>
+                <div class="details-row">
+                    <span class="details-key">القرب من المقاومة / الاختراق</span>
+                    <span class="details-val">${opp.current >= opp.resistance * 0.99 ? 'يخترق المقاومة حالياً 🚀' : `يبعد عن المقاومة (${opp.resistance.toFixed(2)}) بنسبة ${((opp.resistance - opp.current)/opp.resistance*100).toFixed(1)}%`}</span>
+                </div>
+            </div>
+            `;
+            
+            techDiv.innerHTML = planHtml + analysisHtml;
+            
+            const modal = document.getElementById('detailsModal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('open');
+            }, 10);
+            
+            fetchModalNews(opp.symbol, opp.name);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            
+            const hasStocks = Boolean(localStorage.getItem('stockData') || localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData'));
+            if (!hasStocks) {
+                try {
+                    const stamp = Date.now();
+                    const res = await fetch(`../Data/stock_data.json?_ts=${stamp}`, { cache: 'no-store' });
+                    if (res.ok) {
+                        const rawData = await res.json();
+                        const source = rawData.companies || rawData || {};
+                        const list = Array.isArray(source) ? source : Object.values(source);
+                        window.stocksData = list;
+                        localStorage.setItem('stockData', JSON.stringify(list));
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch stock_data.json fallback:", e);
+                }
+            }
+            
+            const filterInput = document.getElementById('tableFilter');
+            if (filterInput) filterInput.addEventListener('input', renderTable);
+            updateTable();
+        });
+    </script>
+</body>
+</html>

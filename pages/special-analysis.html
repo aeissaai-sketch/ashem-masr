@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 تحليل خاص</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1320px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display: flex; gap: 10px; align-items: center; }
+        .btn { border: none; border-radius: 50px; padding: 10px 16px; cursor: pointer; font-weight: 700; display: inline-flex; gap: 8px; align-items: center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+
+        .search-wrap { padding: 18px 22px; background: #0f172a; border-bottom: 1px solid #334155; }
+        .search-grid { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; }
+        .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .search-input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-weight: 700; }
+        .hint { color: #94a3b8; margin-top: 8px; font-size: .9em; line-height: 1.8; }
+        .intraday-box { margin-top: 14px; border: 1px solid #334155; border-radius: 12px; background: #111827; padding: 12px; }
+        .intraday-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .intraday-head h3 { color: #fbbf24; font-size: 1em; }
+        .intraday-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .intraday-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { color: #94a3b8; font-size: .85em; }
+        .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; }
+        .field textarea { min-height: 84px; resize: vertical; }
+        .intraday-meta { margin-top: 10px; color: #cbd5e1; font-size: .9em; }
+        .ocr-status { margin-top: 8px; color: #93c5fd; font-size: .85em; }
+        .intraday-preview { margin-top: 10px; display: none; border: 1px solid #334155; border-radius: 12px; overflow: hidden; background: #0f172a; }
+        .intraday-preview img { display: block; width: 100%; max-height: 340px; object-fit: contain; background: #020617; }
+        .intraday-preview .cap { padding: 8px 10px; color: #94a3b8; font-size: .84em; border-top: 1px solid #334155; }
+
+        .suggestions { margin-top: 10px; border: 1px solid #334155; border-radius: 10px; overflow: hidden; background: #111827; }
+        .s-item { padding: 10px 12px; border-bottom: 1px solid #1f2937; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+        .s-item:last-child { border-bottom: none; }
+        .s-item:hover { background: #1e293b; }
+        .s-symbol { color: #fbbf24; font-weight: 700; }
+        .s-name { color: #cbd5e1; }
+
+        .selected { margin-top: 10px; background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(245,158,11,.05)); border: 1px solid #f59e0b; border-radius: 10px; padding: 10px 12px; display: none; }
+        .selected .sym { color: #fbbf24; font-weight: 700; }
+
+        .results { padding: 16px 22px 24px; }
+        .empty { margin: 12px 0; padding: 20px; border: 1px dashed #fbbf24; border-radius: 12px; color: #fbbf24; background: rgba(251,191,36,.08); text-align: center; }
+        .panel { border: 1px solid #334155; border-radius: 12px; background: #0f172a; margin-bottom: 12px; overflow: hidden; }
+        .panel h3 { padding: 12px 14px; background: #111827; border-bottom: 1px solid #334155; color: #fbbf24; font-size: 1.02em; }
+        .panel-content { padding: 12px 14px; }
+
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+        .kpi { background: linear-gradient(135deg, #1e293b, #334155); border: 1px solid #475569; border-radius: 10px; padding: 10px; text-align: center; }
+        .kpi .k { color: #94a3b8; font-size: .88em; margin-bottom: 4px; }
+        .kpi .v { color: #e2e8f0; font-size: 1.12em; font-weight: 700; }
+
+        .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; font-weight: 700; }
+        .buy { background: rgba(16,185,129,.16); color: #10b981; border: 1px solid #10b981; }
+        .hold { background: rgba(59,130,246,.16); color: #60a5fa; border: 1px solid #3b82f6; }
+        .warn { background: rgba(245,158,11,.16); color: #f59e0b; border: 1px solid #f59e0b; }
+        .sell { background: rgba(239,68,68,.16); color: #ef4444; border: 1px solid #ef4444; }
+
+        .list { list-style: none; display: grid; gap: 8px; }
+        .list li { padding: 10px; border: 1px solid #334155; border-radius: 8px; background: #111827; line-height: 1.8; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { padding: 7px 10px; border-radius: 999px; font-size: .88em; border: 1px solid #334155; background: #111827; color: #e2e8f0; }
+        .chip.up { border-color: #10b981; color: #10b981; }
+        .chip.down { border-color: #ef4444; color: #ef4444; }
+        .chip.neutral { border-color: #f59e0b; color: #f59e0b; }
+        .chip.info { border-color: #3b82f6; color: #60a5fa; }
+
+        .quick-list { display: grid; gap: 10px; }
+        .quick-item { border: 1px solid #334155; border-radius: 10px; background: linear-gradient(135deg, #111827, #1e293b); padding: 12px; cursor: pointer; }
+        .quick-item:hover { border-color: #f59e0b; }
+        .quick-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .quick-symbol { color: #fbbf24; font-weight: 700; font-size: 1.05em; }
+        .quick-name { color: #cbd5e1; font-size: .92em; }
+        .quick-meta { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+        .quick-meta div { border: 1px solid #334155; border-radius: 8px; padding: 8px; background: #0f172a; text-align: center; }
+        .quick-meta .k { color: #94a3b8; font-size: .78em; }
+        .quick-meta .v { margin-top: 3px; font-weight: 700; }
+
+        .cta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .muted { color: #94a3b8; }
+
+        @media (max-width: 880px) {
+            .search-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-bullseye"></i> تحليل خاص</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> تحديث البيانات</button>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+            </div>
+        </div>
+
+        <div class="search-wrap">
+            <div class="search-grid">
+                <input id="searchInput" class="search-input" type="text" placeholder="اكتب الرمز أو اسم الشركة...">
+                <button class="btn btn-info" onclick="searchStocks()"><i class="fas fa-search"></i> بحث</button>
+                <button class="btn btn-primary" onclick="runAnalysis()"><i class="fas fa-crosshairs"></i> تحليل خاص</button>
+            </div>
+            <div class="quick-actions">
+                <button class="btn btn-info" onclick="showPortfolioStocks()"><i class="fas fa-wallet"></i> أسهم محفظتي</button>
+                <button class="btn btn-primary" onclick="showTopSpecialOpportunities()"><i class="fas fa-rocket"></i> أفضل فرص الطريقة</button>
+            </div>
+            <div class="hint">الصفحة تبني خطة مضاربة/تخفيف خسارة اعتماداً على البيانات اليومية المتاحة: دعم، مقاومة، RSI، Stochastic، الحجم، والتذبذب. لا تغني عن متابعة الإطار اللحظي داخل الجلسة.</div>
+            <div class="intraday-box">
+                <div class="intraday-head">
+                    <h3><i class="fas fa-image"></i> إرفاق صورة التداول اللحظي</h3>
+                    <div class="intraday-actions">
+                        <input id="intradayImageInput" type="file" accept="image/*" style="display:none;" onchange="handleIntradayImage(this)">
+                        <button class="btn btn-info" onclick="document.getElementById('intradayImageInput').click()"><i class="fas fa-paperclip"></i> إرفاق صورة</button>
+                        <button class="btn btn-info" onclick="analyzeIntradayImage()"><i class="fas fa-eye"></i> تحليل الصورة</button>
+                        <button class="btn btn-primary" onclick="clearIntradayImage()"><i class="fas fa-trash"></i> إزالة الصورة</button>
+                    </div>
+                </div>
+                <div class="intraday-grid">
+                    <div class="field">
+                        <label for="intradayPriceInput">السعر اللحظي من الصورة</label>
+                        <input id="intradayPriceInput" type="number" step="0.0001" placeholder="مثال: 5.34">
+                    </div>
+                    <div class="field">
+                        <label for="intradayRsiInput">RSI اللحظي</label>
+                        <input id="intradayRsiInput" type="number" step="0.1" placeholder="مثال: 42">
+                    </div>
+                    <div class="field">
+                        <label for="intradayStochKInput">Stochastic K</label>
+                        <input id="intradayStochKInput" type="number" step="0.1" placeholder="مثال: 18">
+                    </div>
+                    <div class="field">
+                        <label for="intradayStochDInput">Stochastic D</label>
+                        <input id="intradayStochDInput" type="number" step="0.1" placeholder="مثال: 14">
+                    </div>
+                    <div class="field">
+                        <label for="intradayVolumeState">الحجم اللحظي</label>
+                        <select id="intradayVolumeState">
+                            <option value="">غير محدد</option>
+                            <option value="strong">أعلى من المعتاد</option>
+                            <option value="normal">طبيعي</option>
+                            <option value="weak">ضعيف</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="intradayCandleBias">قراءة الشمعة/السلوك</label>
+                        <select id="intradayCandleBias">
+                            <option value="">غير محدد</option>
+                            <option value="bounce-support">ارتداد من دعم</option>
+                            <option value="breakout">اختراق مقاومة</option>
+                            <option value="reject-resistance">رفض مقاومة</option>
+                            <option value="break-support">كسر دعم</option>
+                            <option value="sideways">تذبذب محايد</option>
+                        </select>
+                    </div>
+                    <div class="field" style="grid-column: 1 / -1;">
+                        <label for="intradayNotesInput">ملاحظات إضافية من الصورة</label>
+                        <textarea id="intradayNotesInput" placeholder="مثال: شمعة خضراء بعد لمس الدعم، أو فشل واضح قرب المقاومة..."></textarea>
+                    </div>
+                </div>
+                <div id="intradayImageMeta" class="intraday-meta">لا توجد صورة مرفقة حالياً. القراءة اللحظية تعتمد على القيم التي تدخلها من الشاشة.</div>
+                <div id="intradayOcrStatus" class="ocr-status">عند الضغط على "تحليل الصورة" سيحاول النظام استخراج الرمز والمؤشرات الظاهرة من اللقطة تلقائياً.</div>
+                <div id="intradayPreview" class="intraday-preview">
+                    <img id="intradayPreviewImg" alt="معاينة صورة التداول اللحظي">
+                    <div class="cap" id="intradayPreviewCaption"></div>
+                </div>
+            </div>
+            <div id="suggestions" class="suggestions" style="display:none;"></div>
+            <div id="selectedStock" class="selected"></div>
+        </div>
+
+        <div class="results" id="resultsArea">
+            <div class="empty">
+                <h3>🎯 جاهز للتحليل الخاص</h3>
+                <p>ابحث عن سهم، اختره، ثم اضغط "تحليل خاص" للحصول على خطة دخول وخروج عملية.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let companies = [];
+        let processedMap = new Map();
+        let selectedCompany = null;
+        let intradayImage = null;
+        let intradayOcrBusy = false;
+        const MIN_REQUIRED_ANALYSIS_DAYS = 45;
+
+        function toNum(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function normalizeText(text) {
+            return String(text || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[\u064B-\u0652]/g, '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي');
+        }
+
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+
+            const processedRaw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!processedRaw) return [];
+            try {
+                const rows = JSON.parse(processedRaw);
+                if (!Array.isArray(rows)) return [];
+                return rows.map(row => ({
+                    symbol: row?.symbol,
+                    shortName: row?.name || row?.symbol,
+                    longName: row?.name || row?.symbol,
+                    historical: []
+                }));
+            } catch {
+                return [];
+            }
+        }
+
+        function readProcessedMap() {
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!raw) return new Map();
+            try {
+                const rows = JSON.parse(raw);
+                if (!Array.isArray(rows)) return new Map();
+                return new Map(rows.map(row => [String(row.symbol || '').toUpperCase(), row]));
+            } catch {
+                return new Map();
+            }
+        }
+
+        function getPortfolioMap() {
+            try {
+                const rows = JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+                if (!Array.isArray(rows)) return new Map();
+                return new Map(rows.map(item => [String(item.symbol || '').toUpperCase(), item]));
+            } catch {
+                return new Map();
+            }
+        }
+
+        function historyPoints(company) {
+            const rows = company?.historical || company?.daily || [];
+            const points = rows.map(row => ({
+                date: row?.date,
+                open: toNum(row?.open ?? row?.o ?? row?.close ?? row?.price),
+                high: toNum(row?.high ?? row?.h ?? row?.close ?? row?.price),
+                low: toNum(row?.low ?? row?.l ?? row?.close ?? row?.price),
+                close: toNum(row?.close ?? row?.price ?? row?.value),
+                volume: toNum(row?.volume ?? row?.vol ?? 0)
+            })).filter(p => p.date && Number.isFinite(p.close));
+
+            points.forEach(p => {
+                if (!Number.isFinite(p.open)) p.open = p.close;
+                if (!Number.isFinite(p.high)) p.high = Math.max(p.open, p.close);
+                if (!Number.isFinite(p.low)) p.low = Math.min(p.open, p.close);
+                if (!Number.isFinite(p.volume)) p.volume = 0;
+            });
+
+            points.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            return points;
+        }
+
+        function calcSMA(values, period) {
+            if (!Array.isArray(values)) return [];
+            const out = [];
+            for (let i = 0; i < values.length; i++) {
+                if (i < period - 1) {
+                    out.push(null);
+                    continue;
+                }
+                const windowVals = values.slice(i - period + 1, i + 1);
+                const sum = windowVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
+                out.push(sum / period);
+            }
+            return out;
+        }
+
+        function calcRSI(values, period = 14) {
+            if (!Array.isArray(values) || values.length <= period) return null;
+            let gains = 0;
+            let losses = 0;
+            for (let i = values.length - period; i < values.length; i++) {
+                const prev = values[i - 1];
+                const cur = values[i];
+                const diff = cur - prev;
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            if (avgLoss === 0 && avgGain === 0) return 50;
+            if (avgLoss === 0) return 70;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function calcStd(values) {
+            if (!values.length) return 0;
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((acc, v) => acc + ((v - mean) ** 2), 0) / values.length;
+            return Math.sqrt(variance);
+        }
+
+        function calcStochastic(points, period = 14, smoothK = 3, smoothD = 3) {
+            if (!Array.isArray(points) || points.length < period) return { k: [], d: [], lastK: null, lastD: null, prevK: null, prevD: null };
+            const rawK = [];
+            for (let i = 0; i < points.length; i++) {
+                if (i < period - 1) {
+                    rawK.push(null);
+                    continue;
+                }
+                const slice = points.slice(i - period + 1, i + 1);
+                const highest = Math.max(...slice.map(p => p.high));
+                const lowest = Math.min(...slice.map(p => p.low));
+                const range = highest - lowest;
+                rawK.push(range <= 0 ? 50 : ((points[i].close - lowest) / range) * 100);
+            }
+
+            const smoothedK = rawK.map((_, index) => {
+                const chunk = rawK.slice(Math.max(0, index - smoothK + 1), index + 1).filter(Number.isFinite);
+                return chunk.length === smoothK ? chunk.reduce((sum, v) => sum + v, 0) / chunk.length : null;
+            });
+
+            const d = smoothedK.map((_, index) => {
+                const chunk = smoothedK.slice(Math.max(0, index - smoothD + 1), index + 1).filter(Number.isFinite);
+                return chunk.length === smoothD ? chunk.reduce((sum, v) => sum + v, 0) / chunk.length : null;
+            });
+
+            const validK = smoothedK.filter(Number.isFinite);
+            const validD = d.filter(Number.isFinite);
+            return {
+                k: smoothedK,
+                d,
+                lastK: validK.length ? validK[validK.length - 1] : null,
+                lastD: validD.length ? validD[validD.length - 1] : null,
+                prevK: validK.length > 1 ? validK[validK.length - 2] : null,
+                prevD: validD.length > 1 ? validD[validD.length - 2] : null
+            };
+        }
+
+        function detectSupportResistance(points, windowSize = 30) {
+            if (!points.length) return { support: null, resistance: null };
+            const latest = points[points.length - 1];
+            const recent = points.slice(-windowSize);
+            const lows = recent.map(p => p.low).filter(Number.isFinite);
+            const highs = recent.map(p => p.high).filter(Number.isFinite);
+            const support = lows.length ? Math.min(...lows) : latest.low;
+            const resistance = highs.length ? Math.max(...highs) : latest.high;
+            return { support, resistance };
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatRecoTag(type, text) {
+            const cls = type === 'buy' ? 'buy' : type === 'sell' ? 'sell' : type === 'warn' ? 'warn' : 'hold';
+            const icon = type === 'buy' ? 'fa-arrow-up' : type === 'sell' ? 'fa-arrow-down' : type === 'warn' ? 'fa-hourglass-half' : 'fa-eye';
+            return `<span class="badge ${cls}"><i class="fas ${icon}"></i> ${escapeHtml(text)}</span>`;
+        }
+
+        function renderIntradayImagePreview() {
+            const meta = document.getElementById('intradayImageMeta');
+            const status = document.getElementById('intradayOcrStatus');
+            const preview = document.getElementById('intradayPreview');
+            const img = document.getElementById('intradayPreviewImg');
+            const cap = document.getElementById('intradayPreviewCaption');
+            if (!meta || !status || !preview || !img || !cap) return;
+
+            if (!intradayImage) {
+                meta.textContent = 'لا توجد صورة مرفقة حالياً. القراءة اللحظية تعتمد على القيم التي تدخلها من الشاشة.';
+                status.textContent = 'عند الضغط على "تحليل الصورة" سيحاول النظام استخراج الرمز والمؤشرات الظاهرة من اللقطة تلقائياً.';
+                preview.style.display = 'none';
+                img.removeAttribute('src');
+                cap.textContent = '';
+                return;
+            }
+
+            meta.textContent = `تم إرفاق الصورة: ${intradayImage.name}`;
+            img.src = intradayImage.dataUrl;
+            cap.textContent = intradayImage.ocrText
+                ? `تمت محاولة قراءة الصورة. النص المستخرج المختصر: ${intradayImage.ocrText.slice(0, 180)}`
+                : 'بعد الإرفاق، اضغط على "تحليل الصورة" لمحاولة استخراج الرمز والمؤشرات تلقائياً.';
+            preview.style.display = 'block';
+        }
+
+        function handleIntradayImage(input) {
+            const file = input?.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                intradayImage = {
+                    name: file.name,
+                    dataUrl: String(reader.result || '')
+                };
+                renderIntradayImagePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearIntradayImage() {
+            intradayImage = null;
+            intradayOcrBusy = false;
+            const input = document.getElementById('intradayImageInput');
+            if (input) input.value = '';
+            renderIntradayImagePreview();
+        }
+
+        function normalizeImageText(text) {
+            const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+            return String(text || '')
+                .replace(/[٠-٩]/g, digit => String(arabicDigits.indexOf(digit)))
+                .replace(/،/g, ',')
+                .replace(/[|]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function extractNumericByPatterns(text, patterns) {
+            for (const pattern of patterns) {
+                const match = text.match(pattern);
+                if (!match) continue;
+                const value = Number(String(match[1] || '').replace(/,/g, ''));
+                if (Number.isFinite(value)) return value;
+            }
+            return null;
+        }
+
+        function inferSymbolFromOcrText(text) {
+            const normalized = normalizeText(text);
+            for (const company of companies) {
+                const symbol = String(company?.symbol || '').toUpperCase().trim();
+                if (!symbol || symbol.length < 2) continue;
+                const regex = new RegExp(`(^|[^A-Z])${symbol}([^A-Z]|$)`);
+                if (regex.test(normalized)) return symbol;
+            }
+            return null;
+        }
+
+        function extractSignalsFromOcrText(rawText) {
+            const text = normalizeImageText(rawText).toLowerCase();
+            const symbol = inferSymbolFromOcrText(rawText);
+            const rsi = extractNumericByPatterns(text, [
+                /rsi[^\d]{0,12}(\d{1,3}(?:\.\d+)?)/i,
+                /القوه النسبيه[^\d]{0,12}(\d{1,3}(?:\.\d+)?)/i
+            ]);
+            const stochK = extractNumericByPatterns(text, [
+                /stoch(?:astic)?[^\d]{0,12}k[^\d]{0,8}(\d{1,3}(?:\.\d+)?)/i,
+                /%k[^\d]{0,8}(\d{1,3}(?:\.\d+)?)/i
+            ]);
+            const stochD = extractNumericByPatterns(text, [
+                /stoch(?:astic)?[^\d]{0,12}d[^\d]{0,8}(\d{1,3}(?:\.\d+)?)/i,
+                /%d[^\d]{0,8}(\d{1,3}(?:\.\d+)?)/i
+            ]);
+            const price = extractNumericByPatterns(text, [
+                /(?:last|price|close|trade|السعر|اخر سعر|آخر سعر)[^\d]{0,12}(\d{1,4}(?:\.\d+)?)/i
+            ]);
+
+            let volumeState = '';
+            if (/high volume|strong volume|حجم مرتفع|حجم عالي/i.test(text)) volumeState = 'strong';
+            else if (/low volume|weak volume|حجم ضعيف/i.test(text)) volumeState = 'weak';
+            else if (/volume|الحجم/i.test(text)) volumeState = 'normal';
+
+            let candleBias = '';
+            if (/bounce|support rebound|ارتداد.*دعم|دعم/i.test(text)) candleBias = 'bounce-support';
+            if (/breakout|اختراق/i.test(text)) candleBias = 'breakout';
+            if (/reject|resistance reject|رفض.*مقاومه|مقاومه/i.test(text)) candleBias = 'reject-resistance';
+            if (/break support|كسر.*دعم/i.test(text)) candleBias = 'break-support';
+
+            return { symbol, price, rsi, stochK, stochD, volumeState, candleBias, rawText: normalizeImageText(rawText) };
+        }
+
+        function applyOcrSignals(signals) {
+            if (signals.symbol && !selectedCompany) {
+                pickStock(signals.symbol);
+            }
+            if (Number.isFinite(signals.price)) document.getElementById('intradayPriceInput').value = signals.price;
+            if (Number.isFinite(signals.rsi)) document.getElementById('intradayRsiInput').value = signals.rsi;
+            if (Number.isFinite(signals.stochK)) document.getElementById('intradayStochKInput').value = signals.stochK;
+            if (Number.isFinite(signals.stochD)) document.getElementById('intradayStochDInput').value = signals.stochD;
+            if (signals.volumeState) document.getElementById('intradayVolumeState').value = signals.volumeState;
+            if (signals.candleBias) document.getElementById('intradayCandleBias').value = signals.candleBias;
+
+            const notesInput = document.getElementById('intradayNotesInput');
+            if (notesInput && signals.rawText) {
+                const excerpt = signals.rawText.slice(0, 240);
+                notesInput.value = `نص مستخرج آلياً من الصورة: ${excerpt}`;
+            }
+        }
+
+        async function analyzeIntradayImage() {
+            const status = document.getElementById('intradayOcrStatus');
+            if (!intradayImage || !intradayImage.dataUrl) {
+                if (status) status.textContent = 'أرفق صورة أولاً ثم أعد المحاولة.';
+                return;
+            }
+            if (intradayOcrBusy) return;
+            if (!window.Tesseract) {
+                if (status) status.textContent = 'تعذر تحميل محرك قراءة الصورة حالياً.';
+                return;
+            }
+
+            intradayOcrBusy = true;
+            if (status) status.textContent = 'جاري قراءة الصورة واستخراج النص والمؤشرات...';
+
+            try {
+                const result = await window.Tesseract.recognize(intradayImage.dataUrl, 'eng', {
+                    logger: message => {
+                        if (!status) return;
+                        if (message?.status === 'recognizing text' && Number.isFinite(message.progress)) {
+                            status.textContent = `جاري تحليل الصورة... ${Math.round(message.progress * 100)}%`;
+                        }
+                    }
+                });
+
+                const text = String(result?.data?.text || '').trim();
+                intradayImage.ocrText = text;
+                const signals = extractSignalsFromOcrText(text);
+                applyOcrSignals(signals);
+                renderIntradayImagePreview();
+
+                const extracted = [];
+                if (signals.symbol) extracted.push(`الرمز: ${signals.symbol}`);
+                if (Number.isFinite(signals.price)) extracted.push(`السعر: ${signals.price}`);
+                if (Number.isFinite(signals.rsi)) extracted.push(`RSI: ${signals.rsi}`);
+                if (Number.isFinite(signals.stochK)) extracted.push(`K: ${signals.stochK}`);
+                if (Number.isFinite(signals.stochD)) extracted.push(`D: ${signals.stochD}`);
+
+                if (status) {
+                    status.textContent = extracted.length
+                        ? `تم استخراج: ${extracted.join(' | ')}. يمكنك الآن الضغط على "تحليل خاص".`
+                        : 'تمت قراءة الصورة لكن الاستخراج كان محدوداً. إذا كانت المؤشرات غير واضحة، أدخل القيم يدوياً ثم شغّل التحليل.';
+                }
+
+                if (selectedCompany) runAnalysis();
+            } catch {
+                if (status) status.textContent = 'فشلت قراءة الصورة تلقائياً. جرّب صورة أوضح أو أدخل القيم الظاهرة يدوياً.';
+            } finally {
+                intradayOcrBusy = false;
+            }
+        }
+
+        function getIntradayContext() {
+            const price = Number(document.getElementById('intradayPriceInput')?.value);
+            const rsi = Number(document.getElementById('intradayRsiInput')?.value);
+            const stochK = Number(document.getElementById('intradayStochKInput')?.value);
+            const stochD = Number(document.getElementById('intradayStochDInput')?.value);
+            const volumeState = String(document.getElementById('intradayVolumeState')?.value || '');
+            const candleBias = String(document.getElementById('intradayCandleBias')?.value || '');
+            const notes = String(document.getElementById('intradayNotesInput')?.value || '').trim();
+            const hasValues = Number.isFinite(price) || Number.isFinite(rsi) || Number.isFinite(stochK) || Number.isFinite(stochD) || volumeState || candleBias || notes || intradayImage;
+            if (!hasValues) return null;
+
+            return {
+                hasImage: Boolean(intradayImage),
+                imageName: intradayImage?.name || '',
+                price: Number.isFinite(price) ? price : null,
+                rsi: Number.isFinite(rsi) ? rsi : null,
+                stochK: Number.isFinite(stochK) ? stochK : null,
+                stochD: Number.isFinite(stochD) ? stochD : null,
+                volumeState,
+                candleBias,
+                notes
+            };
+        }
+
+        function buildOpportunityList(rows, emptyText) {
+            const resultsArea = document.getElementById('resultsArea');
+            if (!rows.length) {
+                resultsArea.innerHTML = `<div class="empty"><h3>⚠️ لا توجد نتائج</h3><p>${escapeHtml(emptyText)}</p></div>`;
+                return;
+            }
+
+            resultsArea.innerHTML = `
+                <div class="panel">
+                    <h3>📋 قائمة سريعة</h3>
+                    <div class="panel-content quick-list">
+                        ${rows.map(item => `
+                            <div class="quick-item" onclick="pickStock('${escapeHtml(item.symbol)}'); runAnalysis();">
+                                <div class="quick-top">
+                                    <div>
+                                        <div class="quick-symbol">${escapeHtml(item.symbol)}</div>
+                                        <div class="quick-name">${escapeHtml(item.name)}</div>
+                                    </div>
+                                    <div>${formatRecoTag(item.actionType, item.actionLabel)}</div>
+                                </div>
+                                <div class="quick-meta">
+                                    <div><div class="k">السعر</div><div class="v">${item.latest.close.toFixed(2)}</div></div>
+                                    <div><div class="k">RSI</div><div class="v">${Number.isFinite(item.rsi) ? item.rsi.toFixed(1) : '-'}</div></div>
+                                    <div><div class="k">Stoch K</div><div class="v">${Number.isFinite(item.stochasticK) ? item.stochasticK.toFixed(1) : '-'}</div></div>
+                                    <div><div class="k">درجة</div><div class="v">${item.score.toFixed(1)}</div></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function searchStocks() {
+            const query = normalizeText(document.getElementById('searchInput').value);
+            const suggestions = document.getElementById('suggestions');
+            if (!query) {
+                suggestions.style.display = 'none';
+                suggestions.innerHTML = '';
+                return;
+            }
+
+            const matched = companies.filter(company => {
+                const symbol = normalizeText(company?.symbol || '');
+                const shortName = normalizeText(company?.shortName || '');
+                const longName = normalizeText(company?.longName || '');
+                return symbol.includes(query) || shortName.includes(query) || longName.includes(query);
+            }).slice(0, 12);
+
+            if (!matched.length) {
+                suggestions.style.display = 'none';
+                suggestions.innerHTML = '';
+                return;
+            }
+
+            suggestions.innerHTML = matched.map(company => `
+                <div class="s-item" onclick="pickStock('${escapeHtml(company.symbol || '')}')">
+                    <span class="s-symbol">${escapeHtml(company.symbol || '-')}</span>
+                    <span class="s-name">${escapeHtml(company.longName || company.shortName || '-')}</span>
+                </div>
+            `).join('');
+            suggestions.style.display = 'block';
+        }
+
+        function pickStock(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            selectedCompany = companies.find(c => String(c.symbol || '').toUpperCase() === upper) || null;
+            const selectedEl = document.getElementById('selectedStock');
+            const suggestions = document.getElementById('suggestions');
+
+            if (!selectedCompany) {
+                selectedEl.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('searchInput').value = selectedCompany.symbol || '';
+            selectedEl.style.display = 'block';
+            selectedEl.innerHTML = `تم اختيار السهم: <span class="sym">${escapeHtml(selectedCompany.symbol || '-')}</span> - ${escapeHtml(selectedCompany.longName || selectedCompany.shortName || '-')}`;
+            suggestions.style.display = 'none';
+        }
+
+        function buildSpecialDecision(company, processed, intraday = null) {
+            const points = historyPoints(company);
+            if (points.length < MIN_REQUIRED_ANALYSIS_DAYS) return null;
+
+            const closes = points.map(p => p.close);
+            const volumes = points.map(p => p.volume || 0);
+            const latest = points[points.length - 1];
+            const prev = points.length > 1 ? points[points.length - 2] : latest;
+            const srShort = detectSupportResistance(points, 15);
+            const srLong = detectSupportResistance(points, 45);
+            const rsi = Number.isFinite(Number(processed?.rsi)) ? Number(processed.rsi) : calcRSI(closes, 14);
+            const stochastic = calcStochastic(points, 14, 3, 3);
+            const volumeAvg20 = calcSMA(volumes, 20).slice(-1)[0] || 0;
+            const volumeRatio = volumeAvg20 > 0 ? latest.volume / volumeAvg20 : 1;
+            const dayChange = prev.close ? ((latest.close - prev.close) / prev.close) * 100 : 0;
+            const recentReturns = [];
+            for (let i = Math.max(1, closes.length - 20); i < closes.length; i++) {
+                const oldP = closes[i - 1];
+                const newP = closes[i];
+                if (oldP > 0) recentReturns.push(((newP - oldP) / oldP) * 100);
+            }
+            const volatility = calcStd(recentReturns);
+
+            const zoneMargin1 = Math.max(0.8, Math.min(1.8, volatility || 1.1));
+            const zoneMargin2 = Math.max(1.2, Math.min(2.6, (volatility || 1.4) * 1.35));
+            const buyZone1Lower = srShort.support || latest.close;
+            const buyZone1Upper = buyZone1Lower * (1 + zoneMargin1 / 100);
+            const buyZone2Lower = srLong.support || buyZone1Lower * 0.97;
+            const buyZone2Upper = buyZone2Lower * (1 + zoneMargin2 / 100);
+            const sellZone1Lower = (srShort.resistance || latest.close) * 0.992;
+            const sellZone1Upper = (srShort.resistance || latest.close) * 1.004;
+            const sellZone2Lower = Math.max(sellZone1Upper, (srLong.resistance || latest.close) * 0.995);
+            const sellZone2Upper = Math.max(sellZone2Lower * 1.008, (srLong.resistance || latest.close) * 1.02);
+            const stopLoss = buyZone1Lower * (1 - Math.max(0.9, Math.min(1.8, zoneMargin1 * 0.9)) / 100);
+
+            const stochasticCrossUp = Number.isFinite(stochastic.prevK) && Number.isFinite(stochastic.prevD) && Number.isFinite(stochastic.lastK) && Number.isFinite(stochastic.lastD)
+                ? stochastic.prevK <= stochastic.prevD && stochastic.lastK > stochastic.lastD
+                : false;
+            const stochasticCrossDown = Number.isFinite(stochastic.prevK) && Number.isFinite(stochastic.prevD) && Number.isFinite(stochastic.lastK) && Number.isFinite(stochastic.lastD)
+                ? stochastic.prevK >= stochastic.prevD && stochastic.lastK < stochastic.lastD
+                : false;
+
+            const nearBuyZone1 = latest.close >= buyZone1Lower * 0.995 && latest.close <= buyZone1Upper * 1.005;
+            const nearBuyZone2 = latest.close >= buyZone2Lower * 0.992 && latest.close <= buyZone2Upper * 1.005;
+            const nearSellZone1 = latest.close >= sellZone1Lower * 0.995;
+            const volumeImproving = volumeRatio >= 1.05;
+            const volumeWeak = volumeRatio <= 0.75;
+            const rsiRecovering = Number.isFinite(rsi) && rsi >= 35 && rsi <= 50;
+            const rsiHot = Number.isFinite(rsi) && rsi >= 68;
+            const rsiWeak = Number.isFinite(rsi) && rsi <= 32;
+            const priceAboveLongSupport = latest.close >= buyZone2Lower;
+
+            let score = 0;
+            const reasons = [];
+            const chips = [];
+
+            if (nearBuyZone1) { score += 2; reasons.push('السعر قريب من منطقة الدعم الأولى المناسبة للمضاربة.'); chips.push({ cls: 'up', text: 'قرب دعم أول' }); }
+            if (nearBuyZone2) { score += 1; reasons.push('السعر يقترب من منطقة دعم ثانية أعمق لكنها تتطلب تأكيداً أقوى.'); chips.push({ cls: 'neutral', text: 'دعم ثان' }); }
+            if (priceAboveLongSupport) { score += 1; reasons.push('السهم ما زال أعلى الدعم الأعمق، وهذا يحافظ على هيكل التذبذب.'); }
+            else { score -= 2; reasons.push('السعر كسر الدعم الأعمق، ما يضعف فكرة المضاربة داخل النطاق.'); chips.push({ cls: 'down', text: 'كسر دعم' }); }
+
+            if (stochasticCrossUp) { score += 2; reasons.push('Stochastic أعطى تقاطعاً صاعداً مناسباً لارتداد مضاربي.'); chips.push({ cls: 'up', text: 'Stoch صاعد' }); }
+            else if (Number.isFinite(stochastic.lastK) && stochastic.lastK <= 20) { score += 1; reasons.push('Stochastic في منطقة تشبع بيعي ويحتاج تأكيداً نهائياً.'); chips.push({ cls: 'neutral', text: 'تشبع بيعي' }); }
+
+            if (stochasticCrossDown) { score -= 2; reasons.push('Stochastic أعطى إشارة هبوط أو فقدان زخم.'); chips.push({ cls: 'down', text: 'Stoch هابط' }); }
+
+            if (rsiRecovering) { score += 1.5; reasons.push('RSI يتحرك في نطاق مناسب لارتداد دون تشبع شرائي.'); chips.push({ cls: 'up', text: 'RSI متوازن' }); }
+            else if (rsiHot) { score -= 2; reasons.push('RSI مرتفع وقريب من منطقة جني الأرباح.'); chips.push({ cls: 'down', text: 'RSI مرتفع' }); }
+            else if (rsiWeak) { score += 0.5; reasons.push('RSI منخفض جداً؛ الأفضل انتظار ثبات قبل الشراء الكامل.'); chips.push({ cls: 'neutral', text: 'RSI ضعيف' }); }
+
+            if (volumeImproving) { score += 1; reasons.push('الحجم أفضل من متوسط 20 جلسة، ما يدعم الحركة الحالية.'); chips.push({ cls: 'info', text: 'حجم داعم' }); }
+            if (volumeWeak) { score -= 1; reasons.push('الحجم ضعيف، لذا يجب تخفيف الثقة في أي ارتداد.'); chips.push({ cls: 'down', text: 'حجم ضعيف' }); }
+
+            if (nearSellZone1) { score -= 1.5; reasons.push('السعر قريب من مقاومة أولى، وبالتالي نسبة العائد إلى المخاطرة تضعف للدخول الجديد.'); chips.push({ cls: 'down', text: 'قرب مقاومة' }); }
+            if (volatility <= 2.6) { score += 0.5; reasons.push('التذبذب مقبول للمضاربة المنضبطة داخل نطاق سعري.'); }
+            else if (volatility >= 4.1) { score -= 1; reasons.push('التذبذب مرتفع نسبياً، ما يفرض صرامة أكبر في وقف الخسارة.'); chips.push({ cls: 'neutral', text: 'تذبذب مرتفع' }); }
+
+            const intradayReasons = [];
+            const intradayChips = [];
+            let intradaySummary = 'لا توجد قراءة لحظية مضافة.';
+            if (intraday) {
+                intradaySummary = 'تم دمج قراءة لحظية يدوية من صورة التداول مع التحليل التاريخي.';
+
+                if (Number.isFinite(intraday.price)) {
+                    if (intraday.price >= buyZone1Lower * 0.995 && intraday.price <= buyZone1Upper * 1.005) {
+                        score += 1.5;
+                        intradayReasons.push('السعر اللحظي يقع داخل منطقة الشراء الأولى تقريباً.');
+                        intradayChips.push({ cls: 'up', text: 'سعر لحظي قرب الدعم' });
+                    } else if (intraday.price >= sellZone1Lower * 0.995) {
+                        score -= 1.5;
+                        intradayReasons.push('السعر اللحظي قريب من المقاومة الأولى، ما يرجح الحذر أو البيع المضاربي بدلاً من الشراء الجديد.');
+                        intradayChips.push({ cls: 'down', text: 'سعر لحظي قرب المقاومة' });
+                    }
+                }
+
+                if (Number.isFinite(intraday.rsi)) {
+                    if (intraday.rsi >= 35 && intraday.rsi <= 48) {
+                        score += 1;
+                        intradayReasons.push('RSI اللحظي في نطاق مناسب لبداية ارتداد دون تشبع شرائي.');
+                        intradayChips.push({ cls: 'up', text: 'RSI لحظي داعم' });
+                    } else if (intraday.rsi >= 70) {
+                        score -= 1.5;
+                        intradayReasons.push('RSI اللحظي مرتفع ويشير لاحتمال جني أرباح قريب.');
+                        intradayChips.push({ cls: 'down', text: 'RSI لحظي مرتفع' });
+                    }
+                }
+
+                if (Number.isFinite(intraday.stochK) && Number.isFinite(intraday.stochD)) {
+                    if (intraday.stochK <= 25 && intraday.stochK > intraday.stochD) {
+                        score += 1.5;
+                        intradayReasons.push('Stochastic اللحظي في تشبع بيعي مع بداية تقاطع صاعد.');
+                        intradayChips.push({ cls: 'up', text: 'Stoch لحظي صاعد' });
+                    } else if (intraday.stochK >= 80 && intraday.stochK < intraday.stochD) {
+                        score -= 1.5;
+                        intradayReasons.push('Stochastic اللحظي في تشبع شرائي مع إشارة هبوط.');
+                        intradayChips.push({ cls: 'down', text: 'Stoch لحظي هابط' });
+                    }
+                }
+
+                if (intraday.volumeState === 'strong') {
+                    score += 0.75;
+                    intradayReasons.push('الحجم اللحظي أعلى من المعتاد ويدعم الحركة الحالية.');
+                    intradayChips.push({ cls: 'info', text: 'حجم لحظي قوي' });
+                } else if (intraday.volumeState === 'weak') {
+                    score -= 0.75;
+                    intradayReasons.push('الحجم اللحظي ضعيف، لذا تحتاج الحركة لتأكيد إضافي.');
+                    intradayChips.push({ cls: 'neutral', text: 'حجم لحظي ضعيف' });
+                }
+
+                if (intraday.candleBias === 'bounce-support') {
+                    score += 1;
+                    intradayReasons.push('الصورة توحي بارتداد من دعم، وهذا يقوي سيناريو الدخول المضاربي المنضبط.');
+                    intradayChips.push({ cls: 'up', text: 'ارتداد من دعم' });
+                } else if (intraday.candleBias === 'breakout') {
+                    score += 1;
+                    intradayReasons.push('هناك اختراق مقاومة في القراءة اللحظية، ما يسمح بتمديد الهدف إذا استمر الحجم.');
+                    intradayChips.push({ cls: 'up', text: 'اختراق لحظي' });
+                } else if (intraday.candleBias === 'reject-resistance') {
+                    score -= 1;
+                    intradayReasons.push('الصورة تشير إلى رفض مقاومة، لذا الأفضل جني ربح أو انتظار إعادة الاختبار.');
+                    intradayChips.push({ cls: 'down', text: 'رفض مقاومة' });
+                } else if (intraday.candleBias === 'break-support') {
+                    score -= 1.5;
+                    intradayReasons.push('الصورة تشير إلى كسر دعم، وهذا يضعف الخطة ويشدد على وقف الخسارة.');
+                    intradayChips.push({ cls: 'down', text: 'كسر دعم لحظي' });
+                }
+
+                if (intraday.hasImage && intraday.imageName) {
+                    intradayReasons.push(`تمت مراجعة صورة مرفقة باسم ${intraday.imageName} مع الاعتماد على القيم اليدوية المدخلة منها.`);
+                }
+                if (intraday.notes) {
+                    intradayReasons.push(`ملاحظة من الصورة: ${intraday.notes}`);
+                }
+            }
+
+            let actionType = 'hold';
+            let actionLabel = 'انتظار / مراقبة';
+            let actionSummary = 'لا يوجد دخول فوري الآن. انتظر اقتراباً أوضح من الدعم مع تأكيد المؤشرات.';
+
+            if (latest.close < stopLoss || latest.close < buyZone2Lower * 0.995) {
+                actionType = 'sell';
+                actionLabel = 'خروج وقائي';
+                actionSummary = 'السعر كسر منطقة الأمان للمضاربة. الأولوية الآن لحماية رأس المال لا لمطاردة ارتداد غير مؤكد.';
+            } else if (nearSellZone1 && (rsiHot || stochasticCrossDown || (Number.isFinite(stochastic.lastK) && stochastic.lastK >= 80))) {
+                actionType = 'sell';
+                actionLabel = 'جني ربح / تخفيف';
+                actionSummary = 'السهم اقترب من المقاومة مع مؤشرات تشبع، لذا الأفضل البيع الجزئي أو الكامل للصفقة المضاربية.';
+            } else if ((nearBuyZone1 || nearBuyZone2) && score >= 4 && (stochasticCrossUp || (Number.isFinite(stochastic.lastK) && stochastic.lastK <= 25))) {
+                actionType = 'buy';
+                actionLabel = 'شراء مضاربي';
+                actionSummary = 'منطقة السعر الحالية تسمح بدخول مضاربي منضبط بشرط الالتزام الحرفي بوقف الخسارة.';
+            } else if (score >= 2) {
+                actionType = 'warn';
+                actionLabel = 'تجهيز ومراقبة';
+                actionSummary = 'هناك عناصر إيجابية، لكن الإشارة لم تكتمل بعد. الأفضل تجهيز الخطة ومراقبة التقاطع والحجم.';
+            }
+
+            const confidence = Math.max(35, Math.min(95, Math.round(50 + (score * 8))));
+            const entryCandidate = Math.min(buyZone1Upper, Math.max(buyZone1Lower, latest.close));
+            const target1 = (sellZone1Lower + sellZone1Upper) / 2;
+            const target2 = (sellZone2Lower + sellZone2Upper) / 2;
+            const rewardRisk = entryCandidate > stopLoss ? ((target1 - entryCandidate) / (entryCandidate - stopLoss)) : 0;
+
+            return {
+                symbol: String(company?.symbol || '').toUpperCase(),
+                name: company?.longName || company?.shortName || company?.symbol || '-',
+                points,
+                latest,
+                prev,
+                rsi,
+                stochasticK: stochastic.lastK,
+                stochasticD: stochastic.lastD,
+                volumeRatio,
+                volatility,
+                buyZone1Lower,
+                buyZone1Upper,
+                buyZone2Lower,
+                buyZone2Upper,
+                sellZone1Lower,
+                sellZone1Upper,
+                sellZone2Lower,
+                sellZone2Upper,
+                stopLoss,
+                target1,
+                target2,
+                entryCandidate,
+                score,
+                confidence,
+                reasons: [...reasons, ...intradayReasons],
+                chips: [...chips, ...intradayChips],
+                actionType,
+                actionLabel,
+                actionSummary,
+                rewardRisk,
+                stochasticCrossUp,
+                stochasticCrossDown,
+                dayChange,
+                intradaySummary,
+                intradayUsed: Boolean(intraday),
+                intradayContext: intraday
+            };
+        }
+
+        function buildPortfolioAdvice(symbol, decision) {
+            const portfolioItem = getPortfolioMap().get(String(symbol || '').toUpperCase());
+            if (!portfolioItem) {
+                const exampleQty = 25000;
+                const gross = Math.max(0, (decision.target1 - decision.entryCandidate) * exampleQty);
+                return {
+                    badge: formatRecoTag('hold', 'خارج المحفظة حالياً'),
+                    text: `مثال توضيحي فقط: إذا نُفذت صفقة قرب ${decision.entryCandidate.toFixed(2)} ووصل السهم إلى ${decision.target1.toFixed(2)}، فالعائد النظري على ${exampleQty.toLocaleString('ar-EG')} سهم يساوي ${gross.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه قبل العمولات.`
+                };
+            }
+
+            const qty = Number(portfolioItem.quantity || 0);
+            const entry = Number(portfolioItem.entryPrice || 0);
+            const currentLossPct = entry > 0 ? ((decision.latest.close - entry) / entry) * 100 : 0;
+            const cycleProfit = qty > 0 ? Math.max(0, (decision.target1 - decision.entryCandidate) * qty) : 0;
+
+            let adviceType = 'hold';
+            let adviceTitle = 'احتفاظ منضبط';
+            let adviceText = 'يمكن استخدام الخطة الحالية لتقليل متوسط الخسارة تدريجياً عبر صفقات قصيرة داخل النطاق.';
+
+            if (decision.actionType === 'sell') {
+                adviceType = 'sell';
+                adviceTitle = 'تخفيف / حماية';
+                adviceText = 'الإشارة الحالية لا تدعم إضافة جديدة. الأولوية الآن لتخفيف المخاطرة أو جني ربح الصفقة المضاربية إن كانت مفتوحة.';
+            } else if (decision.actionType === 'buy') {
+                adviceType = 'buy';
+                adviceTitle = 'صفقة تخفيف خسارة';
+                adviceText = 'يمكن تنفيذ شراء مضاربي منفصل بكمية محددة ثم البيع عند المقاومة الأولى، مع عدم الخلط بين الصفقة الجديدة والمركز القديم.';
+            } else if (decision.actionType === 'warn') {
+                adviceType = 'warn';
+                adviceTitle = 'انتظار التأكيد';
+                adviceText = 'المستويات واعدة لكن التنفيذ المبكر يرفع المخاطرة. الأفضل انتظار اكتمال إشارة Stochastic أو تحسن الحجم.';
+            }
+
+            return {
+                badge: formatRecoTag(adviceType, `السهم في المحفظة (${adviceTitle})`),
+                text: `${adviceText} | سعر دخولك الحالي: ${entry.toFixed(2)} | العائد الحالي: ${currentLossPct.toFixed(2)}% | ربح الدورة النظرية على كميتك الحالية: ${cycleProfit.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه قبل العمولات.`
+            };
+        }
+
+        function renderPlanSteps(decision) {
+            const stepOne = decision.actionType === 'buy'
+                ? `راقب تنفيذ الشراء داخل المنطقة ${decision.buyZone1Lower.toFixed(2)} - ${decision.buyZone1Upper.toFixed(2)} مع متابعة Stochastic وRSI والحجم.`
+                : `لا تدخل فوراً. راقب عودة السعر إلى المنطقة ${decision.buyZone1Lower.toFixed(2)} - ${decision.buyZone1Upper.toFixed(2)} أو ظهور تقاطع صاعد أوضح.`;
+
+            const stepTwo = `ثبّت وقف الخسارة أسفل ${decision.stopLoss.toFixed(2)} مباشرة. كسر هذا المستوى يلغي الفكرة المضاربية الحالية.`;
+            const stepThree = `الهدف الأول للتخفيف أو البيع المضاربي يقع داخل ${decision.sellZone1Lower.toFixed(2)} - ${decision.sellZone1Upper.toFixed(2)}.`;
+            const stepFour = `إذا اخترق السهم المقاومة الأولى بحجم جيد، يمكن ترك جزء صغير لهدف أعلى داخل ${decision.sellZone2Lower.toFixed(2)} - ${decision.sellZone2Upper.toFixed(2)}.`;
+            return [stepOne, stepTwo, stepThree, stepFour];
+        }
+
+        function runAnalysis() {
+            const resultsArea = document.getElementById('resultsArea');
+
+            if (!selectedCompany) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ لم يتم اختيار سهم</h3>
+                        <p>ابحث ثم اختر السهم أولاً من النتائج.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const symbol = String(selectedCompany.symbol || '').toUpperCase();
+            const processed = processedMap.get(symbol) || null;
+            const intraday = getIntradayContext();
+            const decision = buildSpecialDecision(selectedCompany, processed, intraday);
+
+            if (!decision) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ بيانات غير كافية</h3>
+                        <p>يجب توفر 45 يوم تداول على الأقل لإخراج الخطة الخاصة بشكل منطقي.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const portfolioAdvice = buildPortfolioAdvice(symbol, decision);
+            const steps = renderPlanSteps(decision);
+            const rrType = decision.rewardRisk >= 2 ? 'buy' : decision.rewardRisk >= 1 ? 'hold' : 'warn';
+
+            resultsArea.innerHTML = `
+                <div class="panel">
+                    <h3>📌 ملخص سريع</h3>
+                    <div class="panel-content kpis">
+                        <div class="kpi"><div class="k">الرمز</div><div class="v">${escapeHtml(symbol)}</div></div>
+                        <div class="kpi"><div class="k">الشركة</div><div class="v" style="font-size:1em;">${escapeHtml(decision.name)}</div></div>
+                        <div class="kpi"><div class="k">السعر الحالي</div><div class="v">${decision.latest.close.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">تغير اليوم</div><div class="v">${decision.dayChange.toFixed(2)}%</div></div>
+                        <div class="kpi"><div class="k">درجة الطريقة</div><div class="v">${decision.score.toFixed(1)}</div></div>
+                        <div class="kpi"><div class="k">الثقة</div><div class="v">${decision.confidence}%</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🧠 القرار التنفيذي</h3>
+                    <div class="panel-content decision-grid">
+                        <div>
+                            ${formatRecoTag(decision.actionType, decision.actionLabel)}
+                            <div style="margin-top:8px;">${formatRecoTag(rrType, `نسبة العائد/المخاطرة: ${decision.rewardRisk.toFixed(2)}`)}</div>
+                            <div style="margin-top:8px;">${formatRecoTag(decision.stochasticCrossUp ? 'buy' : (decision.stochasticCrossDown ? 'sell' : 'hold'), `حالة Stochastic: ${Number.isFinite(decision.stochasticK) ? decision.stochasticK.toFixed(1) : '-'} / ${Number.isFinite(decision.stochasticD) ? decision.stochasticD.toFixed(1) : '-'}`)}</div>
+                            <div style="margin-top:8px;">${formatRecoTag(Number.isFinite(decision.rsi) && decision.rsi >= 68 ? 'sell' : (Number.isFinite(decision.rsi) && decision.rsi <= 45 ? 'buy' : 'hold'), `RSI: ${Number.isFinite(decision.rsi) ? decision.rsi.toFixed(1) : '-'}`)}</div>
+                        </div>
+                        <div>
+                            ${portfolioAdvice.badge}
+                            <div style="margin-top:10px;color:#cbd5e1;line-height:1.9;">${portfolioAdvice.text}</div>
+                        </div>
+                    </div>
+                    <div class="panel-content" style="padding-top:0; color:#cbd5e1; line-height:1.9;">
+                        ${escapeHtml(decision.actionSummary)}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🖼️ قراءة الصورة اللحظية</h3>
+                    <div class="panel-content">
+                        <div style="color:#cbd5e1; line-height:1.9; margin-bottom:10px;">${escapeHtml(decision.intradaySummary)}</div>
+                        <div class="kpis">
+                            <div class="kpi"><div class="k">الصورة المرفقة</div><div class="v" style="font-size:1em;">${decision.intradayContext?.hasImage ? escapeHtml(decision.intradayContext.imageName || 'مرفقة') : 'لا توجد'}</div></div>
+                            <div class="kpi"><div class="k">السعر اللحظي</div><div class="v">${Number.isFinite(decision.intradayContext?.price) ? decision.intradayContext.price.toFixed(2) : '-'}</div></div>
+                            <div class="kpi"><div class="k">RSI اللحظي</div><div class="v">${Number.isFinite(decision.intradayContext?.rsi) ? decision.intradayContext.rsi.toFixed(1) : '-'}</div></div>
+                            <div class="kpi"><div class="k">Stoch K / D</div><div class="v">${Number.isFinite(decision.intradayContext?.stochK) ? decision.intradayContext.stochK.toFixed(1) : '-'} / ${Number.isFinite(decision.intradayContext?.stochD) ? decision.intradayContext.stochD.toFixed(1) : '-'}</div></div>
+                            <div class="kpi"><div class="k">الحجم اللحظي</div><div class="v" style="font-size:1em;">${decision.intradayContext?.volumeState === 'strong' ? 'قوي' : decision.intradayContext?.volumeState === 'weak' ? 'ضعيف' : decision.intradayContext?.volumeState === 'normal' ? 'طبيعي' : '-'}</div></div>
+                            <div class="kpi"><div class="k">قراءة السلوك</div><div class="v" style="font-size:1em;">${decision.intradayContext?.candleBias === 'bounce-support' ? 'ارتداد من دعم' : decision.intradayContext?.candleBias === 'breakout' ? 'اختراق مقاومة' : decision.intradayContext?.candleBias === 'reject-resistance' ? 'رفض مقاومة' : decision.intradayContext?.candleBias === 'break-support' ? 'كسر دعم' : decision.intradayContext?.candleBias === 'sideways' ? 'تذبذب محايد' : '-'}</div></div>
+                        </div>
+                        ${decision.intradayContext?.notes ? `<ul class="list" style="margin-top:10px;"><li>${escapeHtml(decision.intradayContext.notes)}</li></ul>` : ''}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🎯 مناطق التنفيذ</h3>
+                    <div class="panel-content kpis">
+                        <div class="kpi"><div class="k">منطقة شراء أولى</div><div class="v">${decision.buyZone1Lower.toFixed(2)} - ${decision.buyZone1Upper.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">منطقة شراء ثانية</div><div class="v">${decision.buyZone2Lower.toFixed(2)} - ${decision.buyZone2Upper.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">سعر دخول مرجح</div><div class="v">${decision.entryCandidate.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">وقف خسارة</div><div class="v">${decision.stopLoss.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">منطقة بيع أولى</div><div class="v">${decision.sellZone1Lower.toFixed(2)} - ${decision.sellZone1Upper.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">منطقة بيع ثانية</div><div class="v">${decision.sellZone2Lower.toFixed(2)} - ${decision.sellZone2Upper.toFixed(2)}</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 المؤشرات الداعمة</h3>
+                    <div class="panel-content">
+                        <div class="chips">
+                            ${decision.chips.map(chip => `<span class="chip ${chip.cls}">${escapeHtml(chip.text)}</span>`).join('') || '<span class="chip info">لا توجد إشارات مميزة حالياً</span>'}
+                        </div>
+                        <div class="kpis" style="margin-top:10px;">
+                            <div class="kpi"><div class="k">RSI</div><div class="v">${Number.isFinite(decision.rsi) ? decision.rsi.toFixed(1) : '-'}</div></div>
+                            <div class="kpi"><div class="k">Stochastic K</div><div class="v">${Number.isFinite(decision.stochasticK) ? decision.stochasticK.toFixed(1) : '-'}</div></div>
+                            <div class="kpi"><div class="k">Stochastic D</div><div class="v">${Number.isFinite(decision.stochasticD) ? decision.stochasticD.toFixed(1) : '-'}</div></div>
+                            <div class="kpi"><div class="k">قوة الحجم</div><div class="v">${decision.volumeRatio.toFixed(2)}x</div></div>
+                            <div class="kpi"><div class="k">التذبذب</div><div class="v">${decision.volatility.toFixed(2)}%</div></div>
+                            <div class="kpi"><div class="k">الهدف الأول النظري</div><div class="v">${decision.target1.toFixed(2)}</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📝 لماذا هذا القرار؟</h3>
+                    <div class="panel-content">
+                        <ul class="list">
+                            ${decision.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('') || '<li>لا توجد أسباب كافية.</li>'}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🪜 خطة التنفيذ خطوة بخطوة</h3>
+                    <div class="panel-content">
+                        <ul class="list">
+                            ${steps.map(step => `<li>${escapeHtml(step)}</li>`).join('')}
+                            <li>هذه الخطة مبنية على البيانات اليومية المتاحة داخل النظام. داخل الجلسة يجب تأكيد التنفيذ على إطار أقصر إن كان متاحاً لديك.</li>
+                        </ul>
+                        <div class="cta-row">
+                            <button class="btn btn-info" onclick="openStockAnalysis('${escapeHtml(symbol)}')"><i class="fas fa-chart-line"></i> فتح الرسم التفصيلي</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showPortfolioStocks() {
+            const portfolioSymbols = Array.from(getPortfolioMap().keys());
+            const rows = portfolioSymbols
+                .map(symbol => {
+                    const company = companies.find(c => String(c.symbol || '').toUpperCase() === symbol);
+                    if (!company) return null;
+                    return buildSpecialDecision(company, processedMap.get(symbol) || null);
+                })
+                .filter(Boolean)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 12);
+
+            buildOpportunityList(rows, 'لا توجد أسهم محفظة قابلة للتحليل حالياً أو لا توجد بيانات كافية.');
+        }
+
+        function showTopSpecialOpportunities() {
+            const rows = companies
+                .map(company => buildSpecialDecision(company, processedMap.get(String(company.symbol || '').toUpperCase()) || null))
+                .filter(Boolean)
+                .filter(row => row.actionType === 'buy' || row.actionType === 'warn')
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 12);
+
+            buildOpportunityList(rows, 'لا توجد حالياً فرص واضحة وفق شروط التحليل الخاص.');
+        }
+
+        function refreshData() {
+            companies = readStocksData();
+            processedMap = readProcessedMap();
+            selectedCompany = null;
+            document.getElementById('searchInput').value = '';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('selectedStock').style.display = 'none';
+            renderIntradayImagePreview();
+
+            const resultsArea = document.getElementById('resultsArea');
+            if (!companies.length) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ لا توجد بيانات أسهم</h3>
+                        <p>ارجع للرئيسية وارفع ملف البيانات أولاً.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsArea.innerHTML = `
+                <div class="empty">
+                    <h3>✅ تم تحميل البيانات</h3>
+                    <p>عدد الأسهم المتاحة للتحليل الخاص: ${companies.length}</p>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+
+            refreshData();
+            renderIntradayImagePreview();
+
+            const input = document.getElementById('searchInput');
+            input.addEventListener('input', searchStocks);
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (!selectedCompany) searchStocks();
+                    else runAnalysis();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ سريعة الارتداد</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:10px; align-items:center; }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+        .guide { margin:12px 22px; padding:12px; border-radius:10px; background:rgba(59,130,246,.12); border:1px solid #3b82f6; color:#cbd5e1; line-height:1.9; }
+        .tools { padding: 12px 22px; background:#0f172a; border-bottom: 1px solid #334155; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .tools input { width:100px; background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:8px 10px; }
+        .tools input.search-input { width:220px; }
+        .meta { color:#94a3b8; }
+        .table-wrap { padding: 15px; overflow-x:auto; background:#0f172a; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; padding: 11px; text-align:center; }
+        th.sortable { cursor:pointer; user-select:none; }
+        th.sortable:hover { filter: brightness(1.08); }
+        td { border-bottom:1px solid #334155; padding: 10px; text-align:center; }
+        tr:hover { background:#334155; }
+        .up { color:#10b981; font-weight:bold; }
+        .down { color:#ef4444; font-weight:bold; }
+        .badge { padding:4px 10px; border-radius:999px; font-size:.82em; font-weight:700; display:inline-block; }
+        .b-strong { background:#059669; color:#fff; }
+        .b-good { background:#2563eb; color:#fff; }
+        .b-watch { background:#6b7280; color:#fff; }
+        .empty { margin: 20px; padding: 24px; text-align:center; border:1px dashed #fbbf24; border-radius: 12px; color:#fbbf24; background: rgba(251,191,36,.08); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-bolt"></i> الأسهم سريعة الارتداد</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="updateTable()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <div class="guide">
+            <strong>منطق الصفحة المطور (بداية الارتداد ونهاية التصحيح):</strong>
+            <br>1) <strong>التصحيح الهابط:</strong> السهم هبط بنسبة 5% أو أكثر من قمة قريبة خلال نافذة أيام البحث.
+            <br>2) <strong>القاع الحديث:</strong> تم تسجيل القاع خلال آخر جلسة أو جلستين فقط (تأكيد القاع).
+            <br>3) <strong>بداية الارتداد:</strong> الجلسة الأخيرة سجلت إغلاقاً صاعداً (أو شمعة مطرقة بذيل سفلي طويل) لتأكيد تغلب المشتري على البائع وبداية الارتفاع.
+        </div>
+
+        <div class="tools">
+            <label>أقل نزول % <input id="dropMin" type="number" value="5" min="1" max="50"></label>
+            <label>أقل ارتداد % <input id="reboundMin" type="number" value="0.5" step="0.1" min="0.1" max="50"></label>
+            <label>أقصى أيام من القاع <input id="maxDaysFromLow" type="number" value="2" min="1" max="40"></label>
+            <label>نافذة أيام <input id="lookback" type="number" value="20" min="10" max="120"></label>
+            <label>فلترة الجدول <input id="tableFilter" class="search-input" type="text" placeholder="ابحث بالرمز أو اسم الشركة"></label>
+            <button class="btn btn-info" onclick="updateTable()"><i class="fas fa-filter"></i> تطبيق</button>
+            <span class="meta" id="metaInfo">جاري التحميل...</span>
+        </div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد بيانات مطابقة</h3>
+            <p>غيّر الفلاتر أو تأكد من رفع البيانات من الصفحة الرئيسية.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="reboundTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="setSort('symbol')">الرمز <span id="sort-symbol"></span></th>
+                        <th class="sortable" onclick="setSort('name')">الشركة <span id="sort-name"></span></th>
+                        <th class="sortable" onclick="setSort('current')">السعر الحالي <span id="sort-current"></span></th>
+                        <th class="sortable" onclick="setSort('low')">القاع <span id="sort-low"></span></th>
+                        <th class="sortable" onclick="setSort('dropPercent')">نسبة النزول % <span id="sort-dropPercent"></span></th>
+                        <th class="sortable" onclick="setSort('reboundPercent')">نسبة الارتداد % <span id="sort-reboundPercent"></span></th>
+                        <th class="sortable" onclick="setSort('remainingToPeakPercent')">المتبقي للقمة % <span id="sort-remainingToPeakPercent"></span></th>
+                        <th class="sortable" onclick="setSort('daysFromLow')">أيام من القاع <span id="sort-daysFromLow"></span></th>
+                        <th class="sortable" onclick="setSort('score')">الدرجة <span id="sort-score"></span></th>
+                        <th>الترشيح</th>
+                        <th>سبب الظهور</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let reboundRows = [];
+        let sortState = { key: 'score', direction: 'desc' };
+
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+
+            const processedRaw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!processedRaw) return [];
+            try {
+                const rows = JSON.parse(processedRaw);
+                if (!Array.isArray(rows)) return [];
+                return rows.map(row => ({
+                    symbol: row?.symbol,
+                    shortName: row?.name || row?.symbol,
+                    longName: row?.name || row?.symbol,
+                    historical: []
+                }));
+            } catch {
+                return [];
+            }
+        }
+
+        function getSeries(company) {
+            const rows = company.historical || company.daily || [];
+            return rows
+                .map(x => {
+                    const close = Number(x.close ?? x.price ?? x.value);
+                    const open = Number(x.open ?? x.o ?? x.close ?? x.price);
+                    const high = Number(x.high ?? x.h ?? x.max ?? x.highest ?? x.close ?? x.price);
+                    const low = Number(x.low ?? x.l ?? x.min ?? x.lowest ?? x.close ?? x.price ?? x.value);
+                    return { close, open, high, low };
+                })
+                .filter(x => Number.isFinite(x.close) && Number.isFinite(x.low));
+        }
+
+        function recommendationBadge(score) {
+            if (score >= 8) return '<span class="badge b-strong">سريع جدًا</span>';
+            if (score >= 6) return '<span class="badge b-good">جيد</span>';
+            return '<span class="badge b-watch">متابعة</span>';
+        }
+
+        function compareValues(a, b, key) {
+            const av = a[key];
+            const bv = b[key];
+            if (typeof av === 'string' || typeof bv === 'string') {
+                return String(av).localeCompare(String(bv), 'ar', { sensitivity: 'base' });
+            }
+            return (Number(av) || 0) - (Number(bv) || 0);
+        }
+
+        function updateSortIndicators() {
+            const keys = ['symbol', 'name', 'current', 'low', 'dropPercent', 'reboundPercent', 'remainingToPeakPercent', 'daysFromLow', 'score'];
+            keys.forEach(key => {
+                const indicator = document.getElementById(`sort-${key}`);
+                if (!indicator) return;
+                indicator.textContent = sortState.key === key ? (sortState.direction === 'asc' ? '▲' : '▼') : '';
+            });
+        }
+
+        function getFilteredAndSortedRows() {
+            const filterValue = (document.getElementById('tableFilter')?.value || '').trim().toLowerCase();
+            const filtered = reboundRows.filter(row => {
+                if (!filterValue) return true;
+                const symbol = (row.symbol || '').toLowerCase();
+                const name = (row.name || '').toLowerCase();
+                return symbol.includes(filterValue) || name.includes(filterValue);
+            });
+
+            filtered.sort((a, b) => {
+                const result = compareValues(a, b, sortState.key);
+                return sortState.direction === 'asc' ? result : -result;
+            });
+
+            return filtered;
+        }
+
+        function renderTable() {
+            const body = document.getElementById('tableBody');
+            const table = document.getElementById('reboundTable');
+            const noData = document.getElementById('noData');
+            const meta = document.getElementById('metaInfo');
+            const dropMin = Number(document.getElementById('dropMin').value || 5);
+            const reboundMin = Number(document.getElementById('reboundMin').value || 2);
+            const maxDaysFromLow = Number(document.getElementById('maxDaysFromLow').value || 12);
+            const rows = getFilteredAndSortedRows();
+
+            updateSortIndicators();
+
+            if (!rows.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                if (reboundRows.length) {
+                    meta.textContent = `لا توجد نتائج بعد الفلترة | إجمالي مطابق للشروط: ${reboundRows.length}`;
+                } else {
+                    meta.textContent = 'لا توجد أسهم مطابقة للشروط';
+                }
+                return;
+            }
+
+            body.innerHTML = rows.map(r => `
+                <tr onclick="openStockAnalysis('${r.symbol}')" style="cursor:pointer;">
+                    <td style="color:#fbbf24;font-weight:700;">${r.symbol}</td>
+                    <td>${r.name}</td>
+                    <td class="up">${r.current.toFixed(2)}</td>
+                    <td class="down">${r.low.toFixed(2)}</td>
+                    <td class="down">${r.dropPercent.toFixed(2)}%</td>
+                    <td class="up">${r.reboundPercent.toFixed(2)}%</td>
+                    <td class="up">${r.remainingToPeakPercent.toFixed(2)}%</td>
+                    <td>${r.daysFromLow}</td>
+                    <td class="up">${r.score.toFixed(2)}</td>
+                    <td>${recommendationBadge(r.score)}</td>
+                    <td>${r.reason}</td>
+                </tr>
+            `).join('');
+
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            meta.textContent = `الظاهر: ${rows.length} | الإجمالي المطابق: ${reboundRows.length} | الشروط: نزول ≥ ${dropMin}% ، ارتداد ≥ ${reboundMin}% ، من القاع ≤ ${maxDaysFromLow} يوم`;
+        }
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.direction = 'desc';
+            }
+            renderTable();
+        }
+
+        function updateTable() {
+            const dropMin = Number(document.getElementById('dropMin').value || 5);
+            const reboundMin = Number(document.getElementById('reboundMin').value || 0.5);
+            const maxDaysFromLow = Number(document.getElementById('maxDaysFromLow').value || 2);
+            const lookback = Number(document.getElementById('lookback').value || 20);
+
+            const stocks = readStocksData();
+            const meta = document.getElementById('metaInfo');
+
+            const rows = [];
+
+            stocks.forEach(company => {
+                const series = getSeries(company);
+                if (series.length < lookback) return;
+
+                const points = series.slice(-lookback);
+                const lastIdx = points.length - 1;
+                const current = points[lastIdx].close;
+                const currentOpen = points[lastIdx].open ?? current;
+                const currentHigh = points[lastIdx].high ?? current;
+                const currentLow = points[lastIdx].low ?? current;
+                const prevClose = lastIdx > 0 ? points[lastIdx - 1].close : current;
+
+                // 1. Hammer/Bullish Shadow calculation
+                const bodySize = Math.abs(current - currentOpen);
+                const lowerShadow = Math.min(currentOpen, current) - currentLow;
+                const totalRange = currentHigh - currentLow;
+                const isHammerPattern = (totalRange > 0) &&
+                                        (lowerShadow >= bodySize * 1.2) &&
+                                        (lowerShadow / totalRange >= 0.5) &&
+                                        (lowerShadow / current * 100 >= 0.8);
+
+                // Check turnaround: close is positive, or green candle, or Hammer shadow
+                const isPositiveLastSession = (current > prevClose) || (current > currentOpen) || isHammerPattern;
+                if (!isPositiveLastSession) return;
+
+                const lowSeries = points.map(point => point.low).filter(Number.isFinite);
+                if (!lowSeries.length) return;
+
+                const low = Math.min(...lowSeries);
+                const lowIndex = points.findIndex(point => point.low === low);
+                if (lowIndex < 0 || low <= 0) return;
+
+                const daysFromLow = points.length - lowIndex - 1;
+                if (daysFromLow > maxDaysFromLow || daysFromLow < 0) return;
+
+                const preLowCloses = points.slice(0, lowIndex + 1).map(point => point.close).filter(Number.isFinite);
+                if (!preLowCloses.length) return;
+
+                const peakBeforeDrop = Math.max(...preLowCloses);
+                if (peakBeforeDrop <= 0) return;
+
+                const dropPercent = ((peakBeforeDrop - low) / peakBeforeDrop) * 100;
+                if (dropPercent < dropMin) return;
+
+                const reboundPercent = ((current - low) / low) * 100;
+                if (reboundPercent < reboundMin) return;
+
+                const remainingToPeakPercent = peakBeforeDrop > 0 ? Math.max(0, ((peakBeforeDrop - current) / peakBeforeDrop) * 100) : 0;
+                if (remainingToPeakPercent < 1) return;
+
+                // Recompute Score
+                const recencyBonus = Math.max(0, (3 - daysFromLow) * 2.0); 
+                const dropSeverityScore = Math.min(dropPercent, 25) * 0.4;
+                const reboundConfirmation = Math.min(reboundPercent, 5) * 0.3;
+                const shadowBonus = isHammerPattern ? 2.5 : 0;
+                const score = dropSeverityScore + recencyBonus + reboundConfirmation + shadowBonus;
+
+                let reason = '';
+                if (isHammerPattern) {
+                    reason = `شمعة مطرقة/ذيل سفلي طويل (${((lowerShadow / totalRange) * 100).toFixed(0)}% من المدى) بعد هبوط ${dropPercent.toFixed(1)}%؛ المشتري تغلب على البائع بالقاع.`;
+                } else {
+                    reason = `هبط بموجة تصحيح ${dropPercent.toFixed(1)}% وسجل القاع منذ ${daysFromLow} جلسة، وبدأ الارتداد بنسبة ${reboundPercent.toFixed(1)}% مع إغلاق إيجابي.`;
+                }
+
+                rows.push({
+                    symbol: company.symbol || '-',
+                    name: company.longName || company.shortName || (company.symbol || '-'),
+                    current,
+                    low,
+                    dropPercent,
+                    reboundPercent,
+                    remainingToPeakPercent,
+                    daysFromLow,
+                    score,
+                    reason
+                });
+            });
+
+            reboundRows = rows;
+            if (!reboundRows.length) {
+                meta.textContent = 'لا توجد أسهم مطابقة للشروط';
+            }
+            renderTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            const tableFilterInput = document.getElementById('tableFilter');
+            if (tableFilterInput) {
+                tableFilterInput.addEventListener('input', renderTable);
+            }
+            updateTable();
+        });
+    </script>
+</body>
+</html>

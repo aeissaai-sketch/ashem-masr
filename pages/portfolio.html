@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💼 محفظتي الاستثمارية</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        :root {
+            --bg0: #0f172a;
+            --bg1: #1e293b;
+            --bg2: #334155;
+            --border1: #334155;
+            --border2: #475569;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --brand1: #fbbf24;
+            --brand2: #f59e0b;
+            --info1: #3b82f6;
+            --info2: #2563eb;
+            --danger1: #ef4444;
+            --danger2: #dc2626;
+            --success: #10b981;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, var(--bg0) 0%, var(--bg1) 100%); min-height: 100vh; padding: 15px; color: var(--text); }
+        .container { max-width: 1400px; margin: 0 auto; background: var(--bg1); border-radius: 20px; overflow: hidden; border: 1px solid var(--border1); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, var(--bg0) 0%, var(--bg1) 100%); padding: 18px 22px; border-bottom: 1px solid var(--border1); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: var(--brand1); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .last-update-badge {
+            color:#cbd5e1;
+            background:var(--bg1);
+            border:1px solid var(--border1);
+            border-radius:999px;
+            padding:4px 10px;
+            font-size:.72em;
+            font-weight:500;
+            white-space:nowrap;
+        }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, var(--brand1), var(--brand2)); color:var(--bg0); }
+        .btn-info { background: linear-gradient(135deg, var(--info1), var(--info2)); color:#fff; }
+        .btn-danger { background: linear-gradient(135deg, var(--danger1), var(--danger2)); color:#fff; }
+        .summary { padding: 16px 22px; background:var(--bg0); border-bottom: 1px solid var(--border1); display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+        .card { background: linear-gradient(135deg, var(--bg1), var(--bg2)); border:1px solid var(--border2); border-radius:12px; padding:14px; text-align:center; }
+        .card .n { color:var(--brand1); font-weight:700; font-size:1.35em; }
+        .card .l { color:var(--muted); font-size:.9em; margin-top:5px; }
+        .editor { padding: 14px 22px; background:var(--bg0); border-bottom: 1px solid var(--border1); display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); align-items:end; }
+        .editor .field { display:flex; flex-direction:column; gap:6px; }
+        .editor label { color:var(--muted); font-size:.88em; }
+        .editor input { background:var(--bg1); border:1px solid var(--border1); color:var(--text); border-radius:8px; padding:10px; }
+        .editor .actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .table-wrap { padding: 15px; overflow-x:auto; background:var(--bg0); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: linear-gradient(135deg, var(--brand1), var(--brand2)); color: var(--bg0); padding: 11px; text-align:center; font-size:.9em; cursor:pointer; user-select:none; }
+        td { border-bottom:1px solid var(--border1); padding: 10px; text-align:center; font-size:.92em; }
+        th.no-sort { cursor:default; }
+        tr:hover { background:var(--bg2); }
+        .up { color:var(--success); font-weight:bold; }
+        .down { color:var(--danger1); font-weight:bold; }
+        .tips { margin: 15px; padding: 14px; background:var(--bg0); border:1px solid var(--border1); border-radius:12px; }
+        .tips h3 { color:var(--brand1); margin-bottom:10px; }
+        .tips-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+        .tip { border:1px solid var(--border1); border-radius:10px; padding:10px; cursor:pointer; }
+        .tip.good { background: rgba(16,185,129,.12); border-color:var(--success); }
+        .tip.warn { background: rgba(245,158,11,.12); border-color:var(--brand2); }
+        .tip.bad { background: rgba(239,68,68,.12); border-color:var(--danger1); }
+        .portfolio-analysis { margin: 15px; padding: 14px; background:var(--bg0); border:1px solid var(--border1); border-radius:12px; }
+        .portfolio-analysis h3 { color:var(--brand1); margin-bottom:10px; }
+        .analysis-cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+        .analysis-card { border:1px solid var(--border1); border-radius:10px; padding:12px; background:linear-gradient(135deg, var(--bg1), var(--bg2)); cursor:pointer; }
+        .analysis-card .top { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px; }
+        .analysis-card .symbol { color:var(--brand1); font-weight:700; font-size:1.05em; }
+        .analysis-card .signal { font-size:.85em; border:1px solid var(--border1); border-radius:999px; padding:3px 9px; }
+        .signal-good { color:var(--success); border-color:var(--success); background:rgba(16,185,129,.12); }
+        .signal-mid { color:#60a5fa; border-color:var(--info1); background:rgba(59,130,246,.12); }
+        .signal-warn { color:var(--brand2); border-color:var(--brand2); background:rgba(245,158,11,.12); }
+        .signal-bad { color:var(--danger1); border-color:var(--danger1); background:rgba(239,68,68,.12); }
+        .analysis-card .company { color:var(--muted); font-size:.9em; margin-bottom:10px; }
+        .analysis-card .metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+        .analysis-card .metric { border:1px solid var(--border1); border-radius:8px; padding:8px; background:var(--bg0); }
+        .analysis-card .metric .k { color:var(--muted); font-size:.82em; }
+        .analysis-card .metric .v { margin-top:3px; font-weight:700; }
+        .liquidity-planner { margin: 15px; padding: 14px; background:var(--bg0); border:1px solid var(--border1); border-radius:12px; }
+        .liquidity-planner h3 { color:var(--brand1); margin-bottom:10px; }
+        .liquidity-tools { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; align-items:end; }
+        .liquidity-tools .field { display:flex; flex-direction:column; gap:6px; }
+        .liquidity-tools label { color:var(--muted); font-size:.88em; }
+        .liquidity-tools input { background:var(--bg1); border:1px solid var(--border1); color:var(--text); border-radius:8px; padding:10px; }
+        .allocation-meta { color:var(--muted); font-size:.9em; margin-top:8px; }
+        .allocation-grid { display:grid; gap:8px; margin-top:10px; }
+        .allocation-row { border:1px solid var(--border1); border-radius:10px; padding:10px; background:linear-gradient(135deg, var(--bg1), var(--bg2)); }
+        .allocation-row .top { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+        .allocation-row .sym { color:var(--brand1); font-weight:700; }
+        .allocation-row .metrics { display:grid; gap:6px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+        .allocation-row .metric { border:1px solid var(--border1); border-radius:8px; padding:7px; background:var(--bg0); }
+        .allocation-row .k { color:var(--muted); font-size:.8em; }
+        .allocation-row .v { font-weight:700; margin-top:2px; }
+        .portfolio-news { margin: 15px; padding: 14px; background:var(--bg0); border:1px solid var(--border1); border-radius:12px; }
+        .portfolio-news-head { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+        .portfolio-news-head h3 { color:var(--brand1); }
+        .portfolio-news-actions { display:flex; align-items:center; gap:8px; }
+        .news-loading { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:.85em; }
+        .news-loading.hidden { display:none; }
+        .btn[disabled] { opacity:.65; cursor:not-allowed; }
+        .portfolio-news-meta { color:var(--muted); font-size:.9em; margin-bottom:10px; }
+        .portfolio-news-list { display:grid; gap:8px; }
+        .portfolio-news-item { border:1px solid var(--border1); border-radius:10px; padding:10px; background:var(--bg1); }
+        .portfolio-news-item a { color:#93c5fd; text-decoration:none; font-weight:600; }
+        .portfolio-news-item a:hover { text-decoration:underline; }
+        .portfolio-news-sub { margin-top:5px; color:var(--muted); font-size:.88em; }
+        .opinion { font-weight:700; padding:6px 10px; border-radius:999px; display:inline-block; border:1px solid transparent; }
+        .opinion-add { color:var(--success); border-color:var(--success); background:rgba(16,185,129,.12); }
+        .opinion-hold { color:#60a5fa; border-color:var(--info1); background:rgba(59,130,246,.12); }
+        .opinion-reduce { color:var(--brand2); border-color:var(--brand2); background:rgba(245,158,11,.12); }
+        .opinion-exit { color:var(--danger1); border-color:var(--danger1); background:rgba(239,68,68,.12); }
+        .opinion-btn { cursor:pointer; }
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:2000; padding:15px; }
+        .modal-overlay.active { display:flex; }
+        .modal-card { width:min(620px, 95vw); background:var(--bg1); border:1px solid var(--border1); border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.5); overflow:hidden; }
+        .modal-head { padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border1); background:var(--bg0); }
+        .modal-head h3 { color:var(--brand1); font-size:1.05em; }
+        .modal-close { background:none; border:none; color:var(--muted); font-size:1.6em; line-height:1; cursor:pointer; }
+        .modal-body { padding:14px 16px; }
+        .reason-list { margin:10px 0 0; padding-right:18px; line-height:1.9; }
+        .muted { color:var(--muted); }
+        .empty { margin: 20px; padding: 24px; text-align:center; border:1px dashed var(--brand1); border-radius: 12px; color:var(--brand1); background: rgba(251,191,36,.08); }
+        .portfolio-actions { padding: 12px 22px; background:var(--bg0); border-bottom:1px solid var(--border1); display:flex; gap:8px; }
+        .modal-form-grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+        .modal-form-grid .field { display:flex; flex-direction:column; gap:6px; }
+        .modal-form-grid label { color:var(--muted); font-size:.88em; }
+        .modal-form-grid input { background:var(--bg1); border:1px solid var(--border1); color:var(--text); border-radius:8px; padding:10px; }
+        .modal-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+        /* --- نافذة تفاصيل الرأي المحسّنة --- */
+        #opinionModal .modal-body { max-height:75vh; overflow-y:auto; }
+        .od-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+        .od-sym { color:#fbbf24; font-size:1.1em; font-weight:800; }
+        .od-score-wrap { margin-bottom:12px; }
+        .od-score-label { display:flex; justify-content:space-between; color:#94a3b8; font-size:.83em; margin-bottom:4px; }
+        .od-score-label strong { color:#e2e8f0; }
+        .od-score-bar { height:7px; background:#0f172a; border-radius:999px; border:1px solid #334155; overflow:hidden; }
+        .od-score-fill { height:100%; border-radius:999px; transition:width .5s; }
+        .od-score-fill.s-high   { background:linear-gradient(90deg,#22c55e,#84cc16); }
+        .od-score-fill.s-medium { background:linear-gradient(90deg,#3b82f6,#38bdf8); }
+        .od-score-fill.s-low    { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .od-score-fill.s-exit   { background:linear-gradient(90deg,#ef4444,#dc2626); }
+        .od-metrics-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:12px; }
+        .od-metric { background:#0f172a; border:1px solid #334155; border-radius:8px; padding:7px 8px; text-align:center; }
+        .od-metric .k { color:#94a3b8; font-size:.75em; margin-bottom:3px; }
+        .od-metric .v { font-weight:700; font-size:.93em; }
+        .od-divider { border:none; border-top:1px solid #334155; margin:10px 0; }
+        .od-reasons-title { color:#94a3b8; font-size:.82em; margin-bottom:6px; font-weight:600; }
+        .od-reason { display:flex; align-items:flex-start; gap:7px; padding:4px 0; border-bottom:1px solid rgba(51,65,85,.35); font-size:.88em; line-height:1.5; }
+        .od-reason:last-child { border-bottom:none; }
+        .od-reason i { margin-top:2px; flex-shrink:0; font-size:.9em; }
+        .od-plan-box { background:#0f172a; border:1px solid #334155; border-radius:10px; padding:11px 13px; margin-top:2px; }
+        .od-plan-title { color:#fbbf24; font-weight:700; margin-bottom:8px; font-size:.9em; }
+        .od-plan-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(51,65,85,.35); font-size:.88em; }
+        .od-plan-row:last-child { border-bottom:none; }
+        .od-plan-key { color:#94a3b8; }
+        .od-plan-val { font-weight:700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-wallet"></i> محفظتي الاستثمارية <span id="portfolioLastUpdate" class="last-update-badge">آخر تحديث: --</span></h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="openStockModalForAdd()"><i class="fas fa-plus"></i> إضافة سهم جديد</button>
+                <button class="btn btn-info" onclick="importPortfolioFileDialog()"><i class="fas fa-file-import"></i> استيراد المحفظة</button>
+                <button class="btn btn-primary" onclick="exportPortfolio()"><i class="fas fa-file-export"></i> تصدير المحفظة</button>
+                <button class="btn btn-info" onclick="exportPortfolioHistory90Days()"><i class="fas fa-clock"></i> تصدير تاريخ 90 يوم</button>
+                <button class="btn btn-primary" onclick="loadPortfolio()"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+        </div>
+
+        <input id="importPortfolioFile" type="file" accept=".json,application/json" style="display:none;">
+
+        <div class="summary">
+            <div class="card"><div class="n" id="sumCount">0</div><div class="l">عدد الأسهم</div></div>
+            <div class="card"><div class="n" id="sumCost">0.00</div><div class="l">إجمالي التكلفة</div></div>
+            <div class="card"><div class="n" id="sumValue">0.00</div><div class="l">القيمة الحالية</div></div>
+            <div class="card"><div class="n" id="sumPL">0.00</div><div class="l">الربح / الخسارة</div></div>
+        </div>
+
+        <div class="portfolio-actions">
+            <button class="btn btn-primary" onclick="openStockModalForAdd()"><i class="fas fa-plus"></i> إضافة سهم جديد</button>
+        </div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ المحفظة فارغة</h3>
+            <p>أضف أسهمًا من صفحة الجدول الرئيسي أولًا.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="portfolioTable" style="display:none;">
+                <thead id="portfolioTableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="tips">
+            <h3><i class="fas fa-lightbulb"></i> تحليل المحفظة والنصائح</h3>
+            <div class="tips-grid" id="tipsGrid">
+                <div style="color:#94a3b8;">لا توجد بيانات بعد</div>
+            </div>
+        </div>
+
+        <div class="portfolio-analysis">
+            <h3><i class="fas fa-layer-group"></i> بطاقات تحليل أسهم المحفظة</h3>
+            <div class="analysis-cards-grid" id="portfolioCardsGrid">
+                <div style="color:#94a3b8;">لا توجد بيانات بعد</div>
+            </div>
+        </div>
+
+        <div class="liquidity-planner" style="border-color:#fbbf24; background:linear-gradient(135deg, rgba(251,191,36,0.05), rgba(15,23,42,0.8));">
+            <h3 style="color:#fbbf24;"><i class="fas fa-sync-alt"></i> 🔄 خوارزمية إعادة التوازن الذكي للمحفظة (Smart Rebalancing)</h3>
+            <div style="color:#94a3b8; font-size:0.9em; margin-bottom:12px;">
+                خوارزمية ذكية تقوم بتحليل أسهم محفظتك تلقائياً لجني الأرباح جزئياً وتدوير السيولة الناتجة نحو أفضل فرص القاع الصاعدة بالسوق (مدمجة بمؤشرات ATR & VWAP).
+            </div>
+            <div id="smartRebalancingContent">
+                <div style="color:#94a3b8;">جاري حساب خطة إعادة التوازن الذكي...</div>
+            </div>
+        </div>
+
+        <div class="liquidity-planner">
+            <h3><i class="fas fa-coins"></i> تخطيط السيولة وزيادة المراكز</h3>
+            <div class="liquidity-tools">
+                <div class="field">
+                    <label for="availableCashInput">مبلغ السيولة المتوفر (جنيه)</label>
+                    <input id="availableCashInput" type="number" min="0" step="1" value="0">
+                </div>
+                <div class="field">
+                    <label for="maxAddStocksInput">أقصى عدد أسهم للتوزيع</label>
+                    <input id="maxAddStocksInput" type="number" min="1" max="10" step="1" value="4">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="renderLiquidityAllocation()"><i class="fas fa-calculator"></i> توزيع السيولة</button>
+                </div>
+            </div>
+            <div class="allocation-meta" id="allocationMeta">أدخل مبلغ السيولة للحصول على خطة زيادة مراكز.</div>
+            <div class="allocation-grid" id="cashAllocationContent">
+                <div style="color:#94a3b8;">لا توجد خطة توزيع بعد.</div>
+            </div>
+        </div>
+
+        <div class="portfolio-news">
+            <div class="portfolio-news-head">
+                <h3><i class="fas fa-newspaper"></i> أخبار أسهم المحفظة (آخر 10 أيام)</h3>
+                <div class="portfolio-news-actions">
+                    <button id="portfolioNewsRefreshBtn" class="btn btn-info" style="padding:8px 12px" onclick="refreshPortfolioNews()"><i class="fas fa-sync-alt"></i> تحديث الأخبار</button>
+                    <div id="portfolioNewsSpinner" class="news-loading hidden"><i class="fas fa-spinner fa-spin"></i><span>جاري التحديث...</span></div>
+                </div>
+            </div>
+            <div class="portfolio-news-meta" id="portfolioNewsMeta">سيتم تحميل الأخبار بعد تحديث المحفظة.</div>
+            <div class="portfolio-news-list" id="portfolioNewsList">
+                <div style="color:#94a3b8;">لا توجد بيانات أخبار بعد</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="opinionModal" class="modal-overlay" onclick="if(event.target===this) closeOpinionModal()">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="opinionTitle">شرح القرار</h3>
+                <button class="modal-close" onclick="closeOpinionModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="opinionBody"></div>
+        </div>
+    </div>
+
+    <div id="stockModal" class="modal-overlay" onclick="if(event.target===this) closeStockModal()">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="stockModalTitle">إضافة سهم جديد</h3>
+                <button class="modal-close" onclick="closeStockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-form-grid">
+                    <div class="field">
+                        <label for="modalSymbolInput">الرمز</label>
+                        <input id="modalSymbolInput" type="text" placeholder="مثال: COMI">
+                    </div>
+                    <div class="field">
+                        <label for="modalNameInput">اسم الشركة</label>
+                        <input id="modalNameInput" type="text" list="stockNameOptions" placeholder="اكتب جزء من الاسم للبحث">
+                        <datalist id="stockNameOptions"></datalist>
+                    </div>
+                    <div class="field">
+                        <label for="modalQtyInput">الكمية</label>
+                        <input id="modalQtyInput" type="number" min="1" step="1" value="1">
+                    </div>
+                    <div class="field">
+                        <label for="modalEntryInput">سعر الدخول</label>
+                        <input id="modalEntryInput" type="number" min="0.0001" step="0.0001" value="1">
+                    </div>
+                    <div class="field">
+                        <label for="modalCurrentInput">السعر الحالي (صندوق فقط)</label>
+                        <input id="modalCurrentInput" type="number" min="0.0001" step="0.0001" placeholder="اختياري">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="saveStockFromModal()"><i class="fas fa-save"></i> حفظ</button>
+                    <button class="btn btn-info" onclick="closeStockModal()"><i class="fas fa-times"></i> إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editIndex = -1;
+        let opinionRows = [];
+        let lastNewsSymbolsKey = '';
+        let newsLoadingCount = 0;
+        let modalEditIndex = -1;
+        let portfolioSort = { key: 'ret', direction: 'desc' };
+        let lastPortfolioRows = [];
+        let lastUpdateBadgeRequestId = 0;
+        const NEWS_CACHE_KEY = 'portfolioNewsCache_v2';
+        const NEWS_CACHE_MINUTES = 15;
+        const AVAILABLE_CASH_KEY = 'portfolioAvailableCash';
+        const INVESTING_NEWS_DOMAIN = 'investing.com';
+        const MARKET_FALLBACK_QUERIES = [
+            'EGX البورصة المصرية أخبار',
+            'site:mubasher.info البورصة المصرية',
+            'site:alborsaanews.com البورصة المصرية',
+            'site:asharqbusiness.com مصر البورصة',
+            'الأسهم المصرية أخبار اليوم'
+        ];
+        const ALLOWED_NEWS_DOMAINS = [
+            'news.google.com',
+            'mubasher.info',
+            'egx.com.eg',
+            'asharqbusiness.com',
+            'asharq.com',
+            'alborsaanews.com',
+            'enterprise.news',
+            'investing.com',
+            'argaam.com',
+            'masrawy.com',
+            'youm7.com',
+            'almalnews.com',
+            'cnn.com',
+            'reuters.com',
+            'zawya.com'
+        ];
+        const ALLOWED_NEWS_SOURCES = [
+            'معلومات مباشر', 'مباشر', 'Mubasher',
+            'البورصة المصرية', 'بورصة مصر', 'EGX',
+            'الشرق', 'Asharq', 'Asharq Business', 'اقتصاد الشرق',
+            'البورصة نيوز', 'Alborsa News',
+            'إنتربرايز', 'Enterprise',
+            'انفستنج', 'Investing',
+            'أرقام', 'Argaam',
+            'مصراوي', 'Masrawy',
+            'اليوم السابع', 'Youm7',
+            'جريدة المال', 'Al Mal', 'Almal News',
+            'رويترز', 'Reuters',
+            'زاوية', 'Zawya'
+        ];
+
+        function number(n) { return Number(n || 0); }
+
+        function formatPrice(value) {
+            const amount = Number(value);
+            if (!Number.isFinite(amount)) return '0.00';
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 4,
+                useGrouping: false
+            }).format(amount);
+        }
+
+        function getSortIndicator(columnKey) {
+            if (portfolioSort.key !== columnKey) return '↕';
+            return portfolioSort.direction === 'asc' ? '↑' : '↓';
+        }
+
+        const PORTFOLIO_TABLE_COLUMNS = [
+            { key: 'symbol', label: 'الرمز', sortable: true, sortIndicatorId: 'sort-symbol' },
+            { key: 'name', label: 'الشركة', sortable: true, sortIndicatorId: 'sort-name' },
+            { key: 'qty', label: 'الكمية', sortable: true, sortIndicatorId: 'sort-qty' },
+            { key: 'entry', label: 'سعر الدخول', sortable: true, sortIndicatorId: 'sort-entry' },
+            { key: 'current', label: 'السعر الحالي', sortable: true, sortIndicatorId: 'sort-current' },
+            { key: 'dayChangePct', label: 'تغير اليوم %', sortable: true, sortIndicatorId: 'sort-dayChangePct' },
+            { key: 'dayChangeAmount', label: 'فرق اليوم (ج.م)', sortable: true, sortIndicatorId: 'sort-dayChangeAmount' },
+            { key: 'cost', label: 'إجمالي التكلفة', sortable: true, sortIndicatorId: 'sort-cost' },
+            { key: 'value', label: 'القيمة الحالية', sortable: true, sortIndicatorId: 'sort-value' },
+            { key: 'pl', label: 'الربح/الخسارة', sortable: true, sortIndicatorId: 'sort-pl' },
+            { key: 'ret', label: 'العائد %', sortable: true, sortIndicatorId: 'sort-ret' },
+            { key: 'opinion', label: 'رأيي', sortable: true, sortIndicatorId: 'sort-opinion' },
+            { key: 'target', label: 'هدف السعر', sortable: true, sortIndicatorId: 'sort-target' },
+            { key: 'actions', label: 'إجراء', sortable: false }
+        ];
+
+        function getDayChangeInfo(symbol, currentPrice, qty) {
+            const sym = String(symbol || '').toUpperCase();
+            let changePct = 0;
+            const processedMap = getProcessedMap();
+            const processed = processedMap.get(sym);
+            if (processed && (processed.change !== undefined && processed.change !== null)) {
+                const parsed = parseFloat(String(processed.change).replace('%', '').trim());
+                if (Number.isFinite(parsed)) changePct = parsed;
+            } else {
+                const stocksDataRaw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+                if (stocksDataRaw) {
+                    try {
+                        const stocksData = JSON.parse(stocksDataRaw);
+                        const source = stocksData?.companies || stocksData;
+                        const comp = source ? (Array.isArray(source) ? source.find(c => String(c?.symbol).toUpperCase() === sym) : source[sym]) : null;
+                        const hist = comp?.historical || comp?.daily || [];
+                        if (hist.length > 0) {
+                            const last = hist[hist.length - 1];
+                            const parsed = parseFloat(String(last?.change || 0).replace('%', '').trim());
+                            if (Number.isFinite(parsed)) changePct = parsed;
+                        }
+                    } catch {}
+                }
+            }
+            let dayChangeAmount = 0;
+            if (currentPrice > 0 && Number.isFinite(changePct) && changePct !== 0) {
+                const prevPrice = currentPrice / (1 + (changePct / 100));
+                dayChangeAmount = qty * (currentPrice - prevPrice);
+            }
+            return { changePct, dayChangeAmount };
+        }
+
+        function renderPortfolioTableHead() {
+            const head = document.getElementById('portfolioTableHead');
+            if (!head) return;
+
+            const columnsHtml = PORTFOLIO_TABLE_COLUMNS.map(col => {
+                const safeLabel = escapeHtml(col.label);
+                if (!col.sortable) {
+                    return `<th class="no-sort">${safeLabel}</th>`;
+                }
+                const indicatorId = col.sortIndicatorId || `sort-${col.key}`;
+                return `<th onclick="setPortfolioSort('${col.key}')">${safeLabel} <span id="${escapeHtml(indicatorId)}">↕</span></th>`;
+            }).join('');
+
+            head.innerHTML = `<tr>${columnsHtml}</tr>`;
+        }
+
+        function renderSortIndicators() {
+            PORTFOLIO_TABLE_COLUMNS.filter(col => col.sortable).forEach(column => {
+                const node = document.getElementById(column.sortIndicatorId || `sort-${column.key}`);
+                if (node) node.textContent = getSortIndicator(column.key);
+            });
+        }
+
+        function setPortfolioSort(columnKey) {
+            if (portfolioSort.key === columnKey) {
+                portfolioSort.direction = portfolioSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                portfolioSort.key = columnKey;
+                portfolioSort.direction = 'asc';
+            }
+            loadPortfolio();
+        }
+
+        function getPortfolioSortValue(row, key) {
+            if (!row) return '';
+            if (key === 'opinion') return String(row.opinion?.text || '');
+            if (key === 'symbol') return String(row.symbol || '').toUpperCase();
+            return row[key];
+        }
+
+        function sortPortfolioRows(rows) {
+            const direction = portfolioSort.direction === 'asc' ? 1 : -1;
+            const key = portfolioSort.key;
+            const numericKeys = new Set(['qty', 'entry', 'current', 'dayChangePct', 'dayChangeAmount', 'cost', 'value', 'pl', 'ret', 'target']);
+
+            return [...rows].sort((left, right) => {
+                const a = getPortfolioSortValue(left, key);
+                const b = getPortfolioSortValue(right, key);
+
+                if (numericKeys.has(key)) {
+                    const na = Number(a || 0);
+                    const nb = Number(b || 0);
+                    if (na === nb) return 0;
+                    return (na > nb ? 1 : -1) * direction;
+                }
+
+                const sa = String(a || '').toLowerCase();
+                const sb = String(b || '').toLowerCase();
+                return sa.localeCompare(sb, 'ar') * direction;
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getPortfolio() {
+            try {
+                return JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function setPortfolio(portfolio) {
+            localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+            // Automatically save to server
+            fetch('/api/save-portfolio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(portfolio)
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    console.log('✅ Portfolio successfully saved to server disk.');
+                } else {
+                    console.error('❌ Failed to save portfolio to server disk:', data.error);
+                }
+            }).catch(e => {
+                console.error('❌ Network error saving portfolio:', e);
+            });
+        }
+
+        async function syncPortfolioFromServer() {
+            try {
+                const stamp = Date.now();
+                const response = await fetch(`../Data/portfolio.json?_ts=${stamp}`, { cache: 'no-store' });
+                if (response.ok) {
+                    const serverPortfolio = await response.json();
+                    if (Array.isArray(serverPortfolio) && serverPortfolio.length > 0) {
+                        localStorage.setItem('userPortfolio', JSON.stringify(serverPortfolio));
+                        console.log('✅ Synchronized portfolio from server disk successfully.');
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not sync portfolio from server:', e);
+            }
+        }
+
+        function isFundStockName(name) {
+            return String(name || '').includes('صندوق');
+        }
+
+        function getPortfolioExportName() {
+            const saved = localStorage.getItem('portfolioFileName');
+            if (saved && saved.trim()) return saved.trim();
+            const date = new Date();
+            return `portfolio_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}.json`;
+        }
+
+        function isJsonFileName(fileName) {
+            return /\.json$/i.test(String(fileName || '').trim());
+        }
+
+        function parseHistoricalDate(value) {
+            if (!value) return null;
+            const raw = String(value).trim().replace(/^['"]|['"]$/g, '');
+            const parts = raw.split('/');
+            if (parts.length === 3) {
+                const day = Number(parts[0]);
+                const month = Number(parts[1]) - 1;
+                const year = Number(parts[2]);
+                if (Number.isFinite(day) && Number.isFinite(month) && Number.isFinite(year)) {
+                    const date = new Date(year, month, day);
+                    if (!Number.isNaN(date.getTime())) return date;
+                }
+            }
+            const parsed = new Date(raw);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function getStockDataCompanies(stocksData) {
+            const source = stocksData?.companies ?? stocksData;
+            if (Array.isArray(source)) return source;
+            if (source && typeof source === 'object') return Object.values(source);
+            return [];
+        }
+
+        function getCompanyHistoryRows(company) {
+            if (Array.isArray(company?.historical)) return company.historical;
+            if (Array.isArray(company?.daily)) return company.daily;
+            return [];
+        }
+
+        async function updatePortfolioLastUpdateBadge(portfolio) {
+            const target = document.getElementById('portfolioLastUpdate');
+            if (!target) return;
+
+            if (!Array.isArray(portfolio) || !portfolio.length) {
+                target.textContent = 'آخر تحديث: --';
+                return;
+            }
+
+            const requestId = ++lastUpdateBadgeRequestId;
+            target.textContent = 'آخر تحديث: جاري التحميل...';
+
+            const stocksData = await loadLatestStocksDataForHistoryExport();
+            if (requestId !== lastUpdateBadgeRequestId) return;
+
+            if (!stocksData) {
+                target.textContent = 'آخر تحديث: غير متاح';
+                return;
+            }
+
+            const companyMap = new Map();
+            getStockDataCompanies(stocksData).forEach(company => {
+                const symbol = String(company?.symbol || '').trim().toUpperCase();
+                if (!symbol) return;
+                companyMap.set(symbol, company);
+            });
+
+            let latestDate = null;
+            portfolio.forEach(item => {
+                const symbol = String(item?.symbol || '').trim().toUpperCase();
+                const company = companyMap.get(symbol);
+                getCompanyHistoryRows(company).forEach(row => {
+                    const date = parseHistoricalDate(row?.date);
+                    if (date && (!latestDate || date > latestDate)) latestDate = date;
+                });
+            });
+
+            if (!latestDate) {
+                target.textContent = 'آخر تحديث: غير متاح';
+                return;
+            }
+
+            target.textContent = `آخر تحديث: ${latestDate.toLocaleDateString('ar-EG')}`;
+        }
+
+        async function fetchJsonNoStore(url) {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        }
+
+        async function loadLatestStocksDataForHistoryExport() {
+            if (window.desktopData && typeof window.desktopData.getStockData === 'function') {
+                try {
+                    const desktopData = await window.desktopData.getStockData();
+                    if (desktopData) return desktopData;
+                } catch {
+                }
+            }
+
+            const stamp = Date.now();
+            const candidates = [
+                `../Data/stock_data.json?_ts=${stamp}`,
+                `../stock_data.json?_ts=${stamp}`,
+                `../../Data/stock_data.json?_ts=${stamp}`,
+                `../../../Data/stock_data.json?_ts=${stamp}`,
+                `stock_data.json?_ts=${stamp}`
+            ];
+
+            for (const url of candidates) {
+                try {
+                    const payload = await fetchJsonNoStore(url);
+                    if (payload) return payload;
+                } catch {
+                }
+            }
+
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    return JSON.parse(raw);
+                } catch {
+                }
+            }
+
+            return null;
+        }
+
+        function getLastTradingRows(historyRows, daysCount = 90) {
+            const normalized = (Array.isArray(historyRows) ? historyRows : [])
+                .map((row, index) => {
+                    const date = parseHistoricalDate(row?.date);
+                    return { row, date, index };
+                });
+
+            normalized.sort((a, b) => {
+                if (a.date && b.date) return a.date - b.date;
+                if (a.date && !b.date) return -1;
+                if (!a.date && b.date) return 1;
+                return a.index - b.index;
+            });
+
+            return normalized.slice(-daysCount).map(item => item.row);
+        }
+
+        function toFiniteNumber(value) {
+            const amount = Number(value);
+            return Number.isFinite(amount) ? amount : null;
+        }
+
+        function normalizeHistoryRow(row) {
+            return {
+                date: String(row?.date || ''),
+                open: toFiniteNumber(row?.open),
+                high: toFiniteNumber(row?.high),
+                low: toFiniteNumber(row?.low),
+                close: toFiniteNumber(row?.close),
+                volume: toFiniteNumber(row?.volume),
+                change: row?.change ?? null
+            };
+        }
+
+        function getPortfolioHistoryExportName() {
+            const date = new Date();
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `portfolio_history_90d_${yyyy}-${mm}-${dd}.json`;
+        }
+
+        async function exportPortfolioHistory90Days() {
+            const portfolio = getPortfolio();
+            if (!portfolio.length) {
+                alert('لا توجد أسهم في المحفظة لتصدير بياناتها التاريخية.');
+                return;
+            }
+
+            const stocksData = await loadLatestStocksDataForHistoryExport();
+            if (!stocksData) {
+                alert('تعذر تحميل البيانات الأصلية للأسهم. افتح بيانات السوق أولاً ثم أعد المحاولة.');
+                return;
+            }
+
+            const companyMap = new Map();
+            getStockDataCompanies(stocksData).forEach(company => {
+                const symbol = String(company?.symbol || '').trim().toUpperCase();
+                if (!symbol) return;
+                companyMap.set(symbol, company);
+            });
+
+            const missingSymbols = [];
+            const rows = portfolio.map(item => {
+                const symbol = String(item?.symbol || '').trim().toUpperCase();
+                const company = companyMap.get(symbol);
+                const history = getLastTradingRows(company?.historical || company?.daily || [], 90).map(normalizeHistoryRow);
+
+                if (!history.length) {
+                    missingSymbols.push(symbol || 'UNKNOWN');
+                }
+
+                return {
+                    symbol,
+                    name: String(item?.name || company?.shortName || company?.longName || symbol),
+                    quantity: Math.max(1, Math.floor(Number(item?.quantity || 1))),
+                    entryPrice: Number(item?.entryPrice || 0),
+                    history90Days: history,
+                    recordsCount: history.length
+                };
+            });
+
+            const payload = {
+                type: 'portfolio-history-export',
+                days: 90,
+                exportedAt: new Date().toISOString(),
+                source: 'stock_data.json (latest no-store)',
+                totalPortfolioStocks: rows.length,
+                stocksWithHistory: rows.filter(row => row.recordsCount > 0).length,
+                missingSymbols,
+                stocks: rows
+            };
+
+            const content = JSON.stringify(payload, null, 2);
+            const fileName = getPortfolioHistoryExportName();
+
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+
+                    const writable = await handle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                    alert(`✅ تم تصدير البيانات التاريخية لآخر 90 يوم لـ ${rows.length} سهم.`);
+                    return;
+                } catch (error) {
+                    if (error && error.name === 'AbortError') return;
+                }
+            }
+
+            const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert(`✅ تم تصدير البيانات التاريخية لآخر 90 يوم لـ ${rows.length} سهم.`);
+        }
+
+        async function exportPortfolio() {
+            const portfolio = getPortfolio();
+            if (!portfolio.length) {
+                alert('لا توجد بيانات في المحفظة لتصديرها.');
+                return;
+            }
+
+            const content = JSON.stringify(portfolio, null, 2);
+            const defaultName = getPortfolioExportName();
+
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: defaultName,
+                        types: [{
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+
+                    const writable = await handle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+
+                    localStorage.setItem('portfolioFileName', handle.name || defaultName);
+                    alert('✅ تم تصدير المحفظة بنجاح (مع إمكانية استبدال ملف قديم بنفس الاسم).');
+                    return;
+                } catch (error) {
+                    if (error && error.name === 'AbortError') return;
+                }
+            }
+
+            const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = defaultName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function importPortfolioFromFile(file) {
+            if (!file) return;
+
+            if (!isJsonFileName(file.name)) {
+                alert('⚠️ الرجاء اختيار ملف بصيغة JSON فقط (.json).');
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                if (!Array.isArray(parsed)) {
+                    alert('⚠️ الملف لا يحتوي على مصفوفة محفظة صحيحة.');
+                    return;
+                }
+
+                const normalized = parsed
+                    .map(item => ({
+                        symbol: String(item?.symbol || '').trim().toUpperCase(),
+                        name: String(item?.name || item?.symbol || '').trim(),
+                        quantity: Math.max(1, Math.floor(Number(item?.quantity || 1))),
+                        entryPrice: Number(item?.entryPrice || 0),
+                        manualCurrentPrice: Number(item?.manualCurrentPrice || 0),
+                        addedDate: item?.addedDate || new Date().toLocaleDateString('ar-EG')
+                    }))
+                    .filter(item => item.symbol && Number.isFinite(item.entryPrice) && item.entryPrice > 0)
+                    .map(item => {
+                        if (isFundStockName(item.name) && Number.isFinite(item.manualCurrentPrice) && item.manualCurrentPrice > 0) {
+                            return item;
+                        }
+                        const { manualCurrentPrice, ...rest } = item;
+                        return rest;
+                    });
+
+                if (!normalized.length) {
+                    alert('⚠️ لا توجد عناصر صالحة داخل الملف.');
+                    return;
+                }
+
+                setPortfolio(normalized);
+                localStorage.setItem('portfolioFileName', file.name || getPortfolioExportName());
+                loadPortfolio();
+                alert(`✅ تم استيراد المحفظة بنجاح (${normalized.length} سهم).`);
+            } catch {
+                alert('❌ فشل في قراءة ملف المحفظة. تأكد أن الملف JSON صحيح.');
+            }
+        }
+
+        async function importPortfolioFileDialog() {
+            if (window.showOpenFilePicker) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        multiple: false,
+                        types: [{
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+
+                    const file = await handle.getFile();
+                    await importPortfolioFromFile(file);
+                    return;
+                } catch (error) {
+                    if (error && error.name === 'AbortError') return;
+                }
+            }
+
+            const input = document.getElementById('importPortfolioFile');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        function getCurrentPriceInfo(item, fallbackPrice) {
+            const itemMarketPrice = number(item?.marketPrice);
+            if (itemMarketPrice > 0) {
+                return { price: itemMarketPrice, source: 'market' };
+            }
+            const symbol = String(item?.symbol || '').toUpperCase();
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!raw) {
+                const manualPrice = number(item?.manualCurrentPrice);
+                if (isFundStockName(item?.name) && manualPrice > 0) {
+                    return { price: manualPrice, source: 'manual' };
+                }
+                return { price: number(fallbackPrice), source: 'entry' };
+            }
+            try {
+                const rows = JSON.parse(raw) || [];
+                const found = rows.find(r => r.symbol === symbol);
+                const marketPrice = found ? number(found.currentPrice) : 0;
+                if (marketPrice > 0) {
+                    return { price: marketPrice, source: 'market' };
+                }
+
+                const manualPrice = number(item?.manualCurrentPrice);
+                if (isFundStockName(item?.name) && manualPrice > 0) {
+                    return { price: manualPrice, source: 'manual' };
+                }
+
+                return { price: number(fallbackPrice), source: 'entry' };
+            } catch (e) {
+                const manualPrice = number(item?.manualCurrentPrice);
+                if (isFundStockName(item?.name) && manualPrice > 0) {
+                    return { price: manualPrice, source: 'manual' };
+                }
+                return { price: number(fallbackPrice), source: 'entry' };
+            }
+        }
+
+        function getProcessedMap() {
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!raw) return new Map();
+            try {
+                const rows = JSON.parse(raw) || [];
+                return new Map(rows.map(r => [(r.symbol || '').toUpperCase(), r]));
+            } catch (e) {
+                return new Map();
+            }
+        }
+
+        function getStockCatalog() {
+            const map = new Map();
+
+            const put = (symbol, name) => {
+                const s = String(symbol || '').trim().toUpperCase();
+                const n = String(name || '').trim();
+                if (!s) return;
+                if (!map.has(s)) {
+                    map.set(s, { symbol: s, name: n || s });
+                    return;
+                }
+                const current = map.get(s);
+                if (!current.name && n) {
+                    current.name = n;
+                    map.set(s, current);
+                }
+            };
+
+            try {
+                const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData') || '[]';
+                const rows = JSON.parse(raw) || [];
+                rows.forEach(row => put(row?.symbol, row?.name || row?.longName || row?.shortName));
+            } catch {
+            }
+
+            getPortfolio().forEach(item => put(item?.symbol, item?.name));
+
+            return Array.from(map.values()).sort((a, b) => {
+                const left = `${a.symbol} ${a.name}`;
+                const right = `${b.symbol} ${b.name}`;
+                return left.localeCompare(right, 'ar');
+            });
+        }
+
+        function updateStockNameSuggestions(queryText = '') {
+            const list = document.getElementById('stockNameOptions');
+            if (!list) return;
+
+            const q = String(queryText || '').trim().toLowerCase();
+            const rows = getStockCatalog();
+            const filtered = !q
+                ? rows.slice(0, 120)
+                : rows.filter(item => item.name.toLowerCase().includes(q) || item.symbol.toLowerCase().includes(q)).slice(0, 120);
+
+            list.innerHTML = filtered
+                .map(item => `<option value="${escapeHtml(item.name)}"></option>`)
+                .join('');
+        }
+
+        function syncNameFromSymbolInput() {
+            const symbolInput = document.getElementById('modalSymbolInput');
+            const nameInput = document.getElementById('modalNameInput');
+            if (!symbolInput || !nameInput) return;
+
+            const symbol = String(symbolInput.value || '').trim().toUpperCase();
+            if (!symbol) return;
+
+            const match = getStockCatalog().find(item => item.symbol === symbol);
+            if (match && match.name) {
+                nameInput.value = match.name;
+            }
+            updateStockNameSuggestions(nameInput.value);
+        }
+
+        function syncSymbolFromNameInput() {
+            const symbolInput = document.getElementById('modalSymbolInput');
+            const nameInput = document.getElementById('modalNameInput');
+            if (!symbolInput || !nameInput) return;
+
+            const name = String(nameInput.value || '').trim().toLowerCase();
+            updateStockNameSuggestions(name);
+            if (!name) return;
+
+            const exact = getStockCatalog().find(item => item.name.toLowerCase() === name);
+            if (exact) {
+                symbolInput.value = exact.symbol;
+            }
+        }
+
+        function clearStockModalForm() {
+            document.getElementById('modalSymbolInput').value = '';
+            document.getElementById('modalNameInput').value = '';
+            document.getElementById('modalQtyInput').value = 1;
+            document.getElementById('modalEntryInput').value = 1;
+            document.getElementById('modalCurrentInput').value = '';
+        }
+
+        function openStockModalForAdd() {
+            modalEditIndex = -1;
+            document.getElementById('stockModalTitle').textContent = 'إضافة سهم جديد';
+            clearStockModalForm();
+            updateStockNameSuggestions('');
+            document.getElementById('stockModal').classList.add('active');
+        }
+
+        function closeStockModal() {
+            document.getElementById('stockModal').classList.remove('active');
+        }
+
+        function openStockModalForEdit(index) {
+            const portfolio = getPortfolio();
+            const item = portfolio[index];
+            if (!item) return;
+
+            modalEditIndex = index;
+            document.getElementById('stockModalTitle').textContent = 'تعديل بيانات السهم';
+            document.getElementById('modalSymbolInput').value = item.symbol || '';
+            document.getElementById('modalNameInput').value = item.name || item.symbol || '';
+            document.getElementById('modalQtyInput').value = number(item.quantity || 1);
+            document.getElementById('modalEntryInput').value = number(item.entryPrice || 0);
+            document.getElementById('modalCurrentInput').value = number(item.manualCurrentPrice || 0) > 0 ? number(item.manualCurrentPrice) : '';
+            updateStockNameSuggestions(document.getElementById('modalNameInput').value);
+            document.getElementById('stockModal').classList.add('active');
+        }
+
+        function saveStockFromModal() {
+            const symbol = String(document.getElementById('modalSymbolInput').value || '').trim().toUpperCase();
+            const name = String(document.getElementById('modalNameInput').value || '').trim();
+            const quantity = Math.floor(number(document.getElementById('modalQtyInput').value));
+            const entryPrice = number(document.getElementById('modalEntryInput').value);
+            const manualCurrentPrice = number(document.getElementById('modalCurrentInput').value);
+
+            if (!symbol) return alert('⚠️ أدخل كود السهم.');
+            if (!quantity || quantity < 1) return alert('⚠️ الكمية يجب أن تكون 1 على الأقل.');
+            if (!entryPrice || entryPrice <= 0) return alert('⚠️ سعر الدخول يجب أن يكون أكبر من صفر.');
+
+            const portfolio = getPortfolio();
+            const oldItem = modalEditIndex >= 0 ? portfolio[modalEditIndex] : null;
+
+            const nextItem = {
+                ...(oldItem || {}),
+                symbol,
+                name: name || symbol,
+                quantity,
+                entryPrice,
+                addedDate: oldItem?.addedDate || new Date().toLocaleDateString('ar-EG')
+            };
+
+            if (isFundStockName(nextItem.name) && Number.isFinite(manualCurrentPrice) && manualCurrentPrice > 0) {
+                nextItem.manualCurrentPrice = manualCurrentPrice;
+            } else {
+                delete nextItem.manualCurrentPrice;
+            }
+
+            if (modalEditIndex >= 0 && portfolio[modalEditIndex]) {
+                portfolio[modalEditIndex] = nextItem;
+            } else {
+                const existingIndex = portfolio.findIndex(s => (s.symbol || '').toUpperCase() === symbol);
+                if (existingIndex >= 0) {
+                    portfolio[existingIndex] = { ...portfolio[existingIndex], ...nextItem };
+                } else {
+                    portfolio.push(nextItem);
+                }
+            }
+
+            setPortfolio(portfolio);
+            closeStockModal();
+            loadPortfolio();
+        }
+
+        function parseNewsRss(xmlText) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xmlText, 'text/xml');
+            const items = Array.from(xml.querySelectorAll('item'));
+            return items.map(item => ({
+                title: (item.querySelector('title')?.textContent || '').trim(),
+                link: (item.querySelector('link')?.textContent || '').trim(),
+                pubDate: (item.querySelector('pubDate')?.textContent || '').trim(),
+                source: (item.querySelector('source')?.textContent || 'Internet').trim()
+            })).filter(x => x.title && x.link);
+        }
+
+        async function fetchTextWithFallback(url) {
+            const endpoints = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 7000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const text = await response.text();
+                    if (endpoint.includes('/get?url=')) {
+                        try {
+                            const payload = JSON.parse(text);
+                            const contents = payload?.contents;
+                            if (typeof contents === 'string' && contents.length > 10) return contents;
+                        } catch {
+                        }
+                    } else if (text && text.length > 10) {
+                        return text;
+                    }
+                } catch {
+                }
+            }
+            return '';
+        }
+
+        async function fetchRssViaJsonFallback(rssUrl) {
+            const endpoints = [
+                `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 7000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const items = Array.isArray(data?.items) ? data.items : [];
+                    if (!items.length) continue;
+                    return items.map(item => ({
+                        title: String(item?.title || '').trim(),
+                        link: String(item?.link || '').trim(),
+                        pubDate: String(item?.pubDate || '').trim(),
+                        source: String(item?.author || item?.source || '').trim() || 'Google News'
+                    })).filter(x => x.title && x.link);
+                } catch {
+                }
+            }
+
+            return [];
+        }
+
+        async function fetchInternetNewsByQuery(query) {
+            const scopedQuery = `${query} when:10d`;
+            const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(scopedQuery)}&hl=ar&gl=EG&ceid=EG:ar`;
+            const xmlText = await fetchTextWithFallback(rssUrl);
+            if (xmlText) {
+                const parsed = parseNewsRss(xmlText);
+                if (parsed.length) return parsed;
+            }
+            return fetchRssViaJsonFallback(rssUrl);
+        }
+
+        async function fetchFallbackMarketNews() {
+            const all = [];
+            for (const query of MARKET_FALLBACK_QUERIES) {
+                try {
+                    const rows = await fetchInternetNewsByQuery(query);
+                    rows.forEach(row => all.push({ ...row, symbol: 'EGX' }));
+                } catch {
+                }
+            }
+
+            const seen = new Set();
+            const unique = [];
+            all.forEach(item => {
+                const key = `${(item.link || '').toLowerCase()}|${(item.title || '').toLowerCase()}`;
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                unique.push(item);
+            });
+
+            const filteredByDate = unique.filter(item => {
+                const d = parseNewsDate(item.pubDate);
+                return isWithinLastDays(d, 10);
+            });
+
+            filteredByDate.sort((a, b) => {
+                const da = parseNewsDate(a.pubDate)?.getTime() || 0;
+                const db = parseNewsDate(b.pubDate)?.getTime() || 0;
+                return db - da;
+            });
+
+            return filteredByDate.slice(0, 20);
+        }
+
+        function buildPortfolioNewsQueries(stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            const name = String(stock?.name || '').trim();
+            const base = [
+                `${symbol} EGX`,
+                `${symbol} سهم`,
+                `${symbol} البورصة المصرية`,
+                `${symbol} Asharq Business`,
+                `${symbol} Mubasher`,
+                `${symbol} Investing`,
+                `${symbol} stock market`
+            ];
+            if (name) {
+                base.push(`${name} البورصة المصرية`);
+                base.push(`${name} سهم`);
+                base.push(`${name} EGX`);
+                base.push(`${name} موقع الشرق اقتصاد`);
+                base.push(`${name} معلومات مباشر`);
+                base.push(`${name} البورصة نيوز`);
+                base.push(`${name} جريدة المال`);
+            }
+
+            const unique = [];
+            const seen = new Set();
+            base.forEach(q => {
+                const key = q.toLowerCase();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                unique.push(q);
+            });
+            return unique.slice(0, 5);
+        }
+
+        function buildInvestingPortfolioQueries(stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            const name = String(stock?.name || '').trim();
+            const base = [
+                `site:investing.com ${symbol} EGX`,
+                `site:investing.com ${symbol} stock`,
+                `site:investing.com ${symbol} Egypt`
+            ];
+
+            if (name) {
+                base.push(`site:investing.com ${name} EGX`);
+                base.push(`site:investing.com ${name} stock`);
+            }
+
+            const unique = [];
+            const seen = new Set();
+            base.forEach(q => {
+                const key = String(q || '').toLowerCase().trim();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                unique.push(q);
+            });
+            return unique.slice(0, 3);
+        }
+
+        function isInvestingNewsItem(item) {
+            const host = extractHostname(item?.link);
+            return host === INVESTING_NEWS_DOMAIN || host.endsWith(`.${INVESTING_NEWS_DOMAIN}`);
+        }
+
+        async function fetchInvestingNewsForPortfolio(portfolioSubset) {
+            const jobs = [];
+            (portfolioSubset || []).forEach(stock => {
+                const symbol = String(stock?.symbol || '').toUpperCase();
+                if (!symbol) return;
+                const queries = buildInvestingPortfolioQueries(stock);
+                queries.forEach(query => {
+                    jobs.push(
+                        fetchInternetNewsByQuery(query)
+                            .then(rows => ({ rows, symbol, stock }))
+                            .catch(() => ({ rows: [], symbol, stock }))
+                    );
+                });
+            });
+
+            if (!jobs.length) return [];
+
+            const out = [];
+            const results = await Promise.all(jobs);
+            results.forEach(result => {
+                (result.rows || [])
+                    .filter(row => isInvestingNewsItem(row) && isNewsRelevantToStock(row, result.stock))
+                    .forEach(row => out.push({ ...row, symbol: result.symbol }));
+            });
+
+            return out;
+        }
+
+        function toUpperArabicSafe(value) {
+            return String(value || '')
+                .replace(/أ|إ|آ/g, 'ا')
+                .replace(/ى/g, 'ي')
+                .replace(/ة/g, 'ه')
+                .toUpperCase();
+        }
+
+        function getCompanyKeywords(name) {
+            const stopWords = new Set(['شركة', 'شركه', 'المصرية', 'المصريه', 'لـ', 'ل', 'و', 'في', 'من', 'على', 'البورصة', 'البورصه', 'سهم']);
+            const clean = toUpperArabicSafe(name).replace(/[()\-_/.,،]/g, ' ');
+            const parts = clean.split(/\s+/).map(w => w.trim()).filter(Boolean);
+            return parts.filter(w => w.length >= 3 && !stopWords.has(w)).slice(0, 4);
+        }
+
+        function extractHostname(link) {
+            try {
+                return new URL(String(link || '')).hostname.toLowerCase();
+            } catch {
+                return '';
+            }
+        }
+
+        function isAllowedNewsSource(item) {
+            const host = extractHostname(item?.link);
+            const sourceText = String(item?.source || '').toLowerCase();
+            const titleText = String(item?.title || '').toLowerCase();
+
+            const domainAllowed = host
+                ? ALLOWED_NEWS_DOMAINS.some(domain => host === domain || host.endsWith(`.${domain}`))
+                : false;
+
+            const sourceAllowed = ALLOWED_NEWS_SOURCES.some(src => {
+                const token = String(src || '').toLowerCase();
+                return token && (sourceText.includes(token) || titleText.includes(token));
+            });
+
+            return domainAllowed || sourceAllowed;
+        }
+
+        function isNewsRelevantToStock(item, stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            if (!symbol) return false;
+
+            const hay = toUpperArabicSafe(`${item?.title || ''} ${item?.link || ''}`);
+            const symRegex = new RegExp(`(^|[^A-Z0-9])${symbol}([^A-Z0-9]|$)`);
+            const hasSymbol = symRegex.test(hay);
+
+            const nameKeywords = getCompanyKeywords(stock?.name || '');
+            const keywordHits = nameKeywords.filter(k => hay.includes(k)).length;
+
+            if (hasSymbol) return true;
+            if (nameKeywords.length >= 2 && keywordHits >= 2) return true;
+            if (nameKeywords.length === 1 && keywordHits === 1) return true;
+            return false;
+        }
+
+        function normalizeRecommendation(recommendation) {
+            if (typeof window.getUnifiedRecommendationMeta === 'function') {
+                return window.getUnifiedRecommendationMeta(recommendation);
+            }
+            const rec = String(recommendation || '').toLowerCase();
+            if (rec.includes('strong-buy')) return { label: 'شراء قوي', cls: 'signal-good' };
+            if (rec.includes('buy')) return { label: 'شراء', cls: 'signal-good' };
+            if (rec.includes('strong-sell')) return { label: 'بيع قوي', cls: 'signal-bad' };
+            if (rec.includes('sell')) return { label: 'بيع', cls: 'signal-bad' };
+            if (rec.includes('reduce')) return { label: 'تقليل', cls: 'signal-warn' };
+            if (rec.includes('hold')) return { label: 'احتفاظ', cls: 'signal-mid' };
+            return { label: 'محايد', cls: 'signal-mid' };
+        }
+
+        function recommendationKey(recommendation) {
+            const meta = normalizeRecommendation(recommendation);
+            if (meta && typeof meta.key === 'string') return meta.key;
+            const rec = String(recommendation || '').toLowerCase();
+            if (rec.includes('strong-buy') || rec.includes('شراء قوي')) return 'strong-buy';
+            if ((rec.includes('buy') || rec.includes('شراء')) && !rec.includes('strong')) return 'buy';
+            if (rec.includes('strong-sell') || rec.includes('بيع قوي')) return 'strong-sell';
+            if ((rec.includes('sell') || rec.includes('بيع')) && !rec.includes('strong')) return 'sell';
+            if (rec.includes('reduce') || rec.includes('تقليل')) return 'reduce';
+            if (rec.includes('hold') || rec.includes('احتفاظ')) return 'hold';
+            return 'neutral';
+        }
+
+        function getAvailableCash() {
+            const input = document.getElementById('availableCashInput');
+            if (!input) return 0;
+            return Math.max(0, Number(input.value || 0));
+        }
+
+        function getMaxAddStocks() {
+            const input = document.getElementById('maxAddStocksInput');
+            const value = Math.floor(Number(input?.value || 4));
+            return Math.max(1, Math.min(10, Number.isFinite(value) ? value : 4));
+        }
+
+        function saveAvailableCash() {
+            localStorage.setItem(AVAILABLE_CASH_KEY, String(getAvailableCash()));
+        }
+
+        function scoreAddCandidate(row) {
+            const key = recommendationKey(row.recommendation);
+            const reasons = [];
+            let score = 0;
+
+            if (row.opinion?.text === 'زيادة مراكز') {
+                score += 2.4;
+                reasons.push('توصية داخل المحفظة: زيادة مراكز');
+            }
+
+            if (key === 'strong-buy') {
+                score += 2.2;
+                reasons.push('التوصية الفنية: شراء قوي');
+            } else if (key === 'buy') {
+                score += 1.4;
+                reasons.push('التوصية الفنية: شراء');
+            }
+
+            if (Number.isFinite(row.rsi)) {
+                if (row.rsi >= 40 && row.rsi <= 62) {
+                    score += 0.9;
+                    reasons.push('RSI في نطاق صحي للزيادة');
+                } else if (row.rsi < 35) {
+                    score += 0.6;
+                    reasons.push('RSI منخفض واحتمال ارتداد');
+                } else if (row.rsi > 72) {
+                    score -= 1.1;
+                }
+            }
+
+            if (row.ret < 0) {
+                score += 0.7;
+                reasons.push('السهم تحت سعر الدخول ويمكن تحسين المتوسط');
+            } else if (row.ret > 18) {
+                score -= 0.8;
+            }
+
+            if (Number.isFinite(row.support) && row.support > 0 && row.current > 0) {
+                const dist = ((row.current - row.support) / row.support) * 100;
+                if (dist >= 0 && dist <= 3) {
+                    score += 0.8;
+                    reasons.push('السعر قريب من دعم فني');
+                }
+            }
+
+            return { score: Math.max(0, score), reasons };
+        }
+
+        function renderLiquidityAllocation(optionalRows) {
+            const rows = Array.isArray(optionalRows) ? optionalRows : lastPortfolioRows;
+            const host = document.getElementById('cashAllocationContent');
+            const meta = document.getElementById('allocationMeta');
+            if (!host || !meta) return;
+
+            const cash = getAvailableCash();
+            saveAvailableCash();
+
+            if (!rows || !rows.length) {
+                meta.textContent = 'لا توجد أسهم في المحفظة لبناء خطة سيولة.';
+                host.innerHTML = '<div style="color:#94a3b8;">أضف أسهماً للمحفظة أولاً.</div>';
+                return;
+            }
+
+            if (cash <= 0) {
+                meta.textContent = 'أدخل مبلغ سيولة أكبر من صفر للحصول على خطة توزيع.';
+                host.innerHTML = '<div style="color:#94a3b8;">لا توجد خطة لأن مبلغ السيولة = 0.</div>';
+                return;
+            }
+
+            const maxStocks = getMaxAddStocks();
+            const candidates = rows
+                .map(row => {
+                    const buyPrice = Number(row.opinion?.plan?.actionPrice) > 0 ? Number(row.opinion.plan.actionPrice) : Number(row.current);
+                    const candidate = scoreAddCandidate(row);
+                    return { ...row, buyPrice, addScore: candidate.score, addReasons: candidate.reasons };
+                })
+                .filter(row => row.buyPrice > 0 && row.addScore > 0)
+                .sort((a, b) => b.addScore - a.addScore)
+                .slice(0, maxStocks);
+
+            if (!candidates.length) {
+                meta.textContent = 'لا توجد أسهم مناسبة حاليًا لزيادة المراكز حسب الإشارات المتاحة.';
+                host.innerHTML = '<div style="color:#94a3b8;">لا توجد فرص زيادة مراكز واضحة الآن.</div>';
+                return;
+            }
+
+            const totalScore = candidates.reduce((sum, row) => sum + row.addScore, 0);
+            if (totalScore <= 0) {
+                meta.textContent = 'تعذر حساب الأوزان حاليًا.';
+                host.innerHTML = '<div style="color:#94a3b8;">الأوزان غير صالحة للحساب.</div>';
+                return;
+            }
+
+            let usedAmount = 0;
+            const plans = candidates.map(row => {
+                const weight = row.addScore / totalScore;
+                const targetAmount = cash * weight;
+                const qty = Math.floor(targetAmount / row.buyPrice);
+                const amount = qty * row.buyPrice;
+                usedAmount += amount;
+                return { ...row, weight, targetAmount, qty, amount };
+            }).filter(row => row.qty > 0);
+
+            if (!plans.length) {
+                meta.textContent = 'السيولة الحالية لا تكفي لشراء سهم واحد وفق أسعار التنفيذ المقترحة.';
+                host.innerHTML = '<div style="color:#94a3b8;">ارفع السيولة أو قلل عدد الأسهم المستهدفة.</div>';
+                return;
+            }
+
+            const remaining = Math.max(0, cash - usedAmount);
+            meta.textContent = `سيولة متاحة: ${cash.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه | المبلغ الموزع: ${usedAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه | المتبقي: ${remaining.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه`;
+
+            host.innerHTML = plans.map(row => {
+                const reasons = row.addReasons.length ? row.addReasons.join(' + ') : 'مطابقة للإشارات الأساسية.';
+                return `
+                    <div class="allocation-row" onclick="openStockAnalysis('${row.symbol}')" style="cursor:pointer;">
+                        <div class="top">
+                            <div class="sym">${row.symbol} - ${escapeHtml(row.name || row.symbol)}</div>
+                            <div class="signal signal-good">وزن ${(row.weight * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="metrics">
+                            <div class="metric"><div class="k">سعر الشراء المقترح</div><div class="v">${formatPrice(row.buyPrice)}</div></div>
+                            <div class="metric"><div class="k">المبلغ المستهدف</div><div class="v">${row.targetAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })}</div></div>
+                            <div class="metric"><div class="k">كمية الشراء</div><div class="v">${row.qty.toLocaleString('ar-EG')} سهم</div></div>
+                            <div class="metric"><div class="k">قيمة التنفيذ</div><div class="v">${row.amount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })}</div></div>
+                        </div>
+                        <div class="muted" style="margin-top:8px;">سبب الاختيار: ${escapeHtml(reasons)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPortfolioAnalysisCards(rows) {
+            const grid = document.getElementById('portfolioCardsGrid');
+            if (!grid) return;
+
+            if (!rows || !rows.length) {
+                grid.innerHTML = '<div style="color:#94a3b8;">لا توجد أسهم في المحفظة لعرض التحليل.</div>';
+                return;
+            }
+
+            grid.innerHTML = rows.map(row => {
+                const signal = normalizeRecommendation(row.recommendation);
+                const retClass = row.ret >= 0 ? 'up' : 'down';
+                const supportText = Number.isFinite(row.support) ? formatPrice(row.support) : 'غير متاح';
+                const resistanceText = Number.isFinite(row.resistance) ? formatPrice(row.resistance) : 'غير متاح';
+                const rsiText = Number.isFinite(row.rsi) ? row.rsi.toFixed(1) : 'غير متاح';
+
+                return `
+                    <div class="analysis-card" onclick="openStockAnalysis('${row.symbol}')">
+                        <div class="top">
+                            <div class="symbol">${escapeHtml(row.symbol)}</div>
+                            <div class="signal ${signal.cls}">${signal.label}</div>
+                        </div>
+                        <div class="company">${escapeHtml(row.name || row.symbol)}</div>
+                        <div class="metrics">
+                            <div class="metric"><div class="k">العائد %</div><div class="v ${retClass}">${row.ret.toFixed(2)}%</div></div>
+                            <div class="metric"><div class="k">RSI</div><div class="v">${rsiText}</div></div>
+                            <div class="metric"><div class="k">السعر الحالي</div><div class="v">${formatPrice(row.current)}</div></div>
+                            <div class="metric"><div class="k">سعر الدخول</div><div class="v">${formatPrice(row.entry)}</div></div>
+                            <div class="metric"><div class="k">الدعم الأول</div><div class="v">${supportText}</div></div>
+                            <div class="metric"><div class="k">المقاومة الأولى</div><div class="v">${resistanceText}</div></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function parseNewsDate(value) {
+            if (!value) return null;
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) return parsed;
+            const clean = String(value).trim();
+            const alt = new Date(clean.replace(/,/g, ''));
+            return isNaN(alt.getTime()) ? null : alt;
+        }
+
+        function isWithinLastDays(dateObj, days) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return false;
+            const now = new Date();
+            const minDate = new Date(now);
+            minDate.setDate(now.getDate() - days);
+            return dateObj >= minDate && dateObj <= now;
+        }
+
+        function renderPortfolioNews(news, infoText) {
+            const meta = document.getElementById('portfolioNewsMeta');
+            const list = document.getElementById('portfolioNewsList');
+            if (!meta || !list) return;
+
+            meta.textContent = infoText || `آخر تحديث: ${new Date().toLocaleString('ar-EG')}`;
+            if (!news || !news.length) {
+                list.innerHTML = '<div style="color:#94a3b8;">لا توجد أخبار لأسهم المحفظة خلال آخر 10 أيام.</div>';
+                return;
+            }
+
+            list.innerHTML = news.map(item => {
+                const published = item.pubDate ? new Date(item.pubDate).toLocaleString('ar-EG') : 'غير محدد';
+                return `
+                    <div class="portfolio-news-item">
+                        <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
+                        <div class="portfolio-news-sub">${escapeHtml(item.symbol || '')} • ${escapeHtml(item.source || 'Internet')} • ${escapeHtml(published)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getPortfolioNewsCache(symbolsKey) {
+            try {
+                const raw = localStorage.getItem(NEWS_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || parsed.symbolsKey !== symbolsKey || !Array.isArray(parsed.news)) return null;
+                const savedAt = Number(parsed.savedAt || 0);
+                const ageMs = Date.now() - savedAt;
+                if (ageMs > NEWS_CACHE_MINUTES * 60 * 1000) return null;
+                return parsed;
+            } catch {
+                return null;
+            }
+        }
+
+        function setPortfolioNewsCache(symbolsKey, news) {
+            try {
+                localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({
+                    symbolsKey,
+                    news: Array.isArray(news) ? news : [],
+                    savedAt: Date.now()
+                }));
+            } catch {
+            }
+        }
+
+        function setNewsLoading(isLoading) {
+            const btn = document.getElementById('portfolioNewsRefreshBtn');
+            const spinner = document.getElementById('portfolioNewsSpinner');
+
+            if (isLoading) newsLoadingCount += 1;
+            else newsLoadingCount = Math.max(0, newsLoadingCount - 1);
+
+            const active = newsLoadingCount > 0;
+            if (btn) btn.disabled = active;
+            if (spinner) spinner.classList.toggle('hidden', !active);
+        }
+
+        async function loadPortfolioNews(portfolio, force = false) {
+            setNewsLoading(true);
+            try {
+                const uniqueSymbols = [...new Set((portfolio || []).map(item => String(item.symbol || '').toUpperCase()).filter(Boolean))];
+                const symbolsKey = uniqueSymbols.join('|');
+                if (!force && symbolsKey && symbolsKey === lastNewsSymbolsKey) return;
+                lastNewsSymbolsKey = symbolsKey;
+
+                if (!uniqueSymbols.length) {
+                    renderPortfolioNews([], 'لا توجد أسهم في المحفظة لجلب الأخبار.');
+                    return;
+                }
+
+                let showedCache = false;
+                if (!force) {
+                    const cached = getPortfolioNewsCache(symbolsKey);
+                    if (cached && cached.news.length) {
+                        const ageMin = Math.max(1, Math.round((Date.now() - Number(cached.savedAt || Date.now())) / 60000));
+                        renderPortfolioNews(cached.news, `عرض سريع من النسخة المحفوظة (${ageMin} دقيقة) ثم تحديث مباشر...`);
+                        showedCache = true;
+                    }
+                }
+
+                if (showedCache) {
+                    const meta = document.getElementById('portfolioNewsMeta');
+                    if (meta) meta.textContent = 'جاري تحديث الأخبار المباشرة (آخر 10 أيام)...';
+                } else {
+                    renderPortfolioNews([], 'جاري جلب أخبار أسهم المحفظة (آخر 10 أيام)...');
+                }
+
+                const allNews = [];
+                const symbolsSubset = portfolio.slice(0, 12);
+                const jobs = [];
+                for (const stock of symbolsSubset) {
+                    const symbol = String(stock.symbol || '').toUpperCase();
+                    if (!symbol) continue;
+                    const queries = buildPortfolioNewsQueries(stock);
+                    queries.forEach(query => {
+                        jobs.push(
+                            fetchInternetNewsByQuery(query)
+                                .then(rows => ({ rows, symbol, stock }))
+                                .catch(() => ({ rows: [], symbol, stock }))
+                        );
+                    });
+                }
+
+                const results = await Promise.all(jobs);
+                results.forEach(result => {
+                    (result.rows || [])
+                        .filter(row => isAllowedNewsSource(row) && isNewsRelevantToStock(row, result.stock))
+                        .forEach(row => allNews.push({ ...row, symbol: result.symbol }));
+                });
+
+                const investingNews = await fetchInvestingNewsForPortfolio(symbolsSubset);
+                investingNews.forEach(item => allNews.push(item));
+
+                const seen = new Set();
+                const unique = [];
+                allNews.forEach(item => {
+                    const key = `${(item.link || '').toLowerCase()}|${(item.title || '').toLowerCase()}`;
+                    if (!key || seen.has(key)) return;
+                    seen.add(key);
+                    unique.push(item);
+                });
+
+                const filteredByDate = unique.filter(item => {
+                    const d = parseNewsDate(item.pubDate);
+                    return isWithinLastDays(d, 10);
+                });
+
+                filteredByDate.sort((a, b) => {
+                    const da = parseNewsDate(a.pubDate)?.getTime() || 0;
+                    const db = parseNewsDate(b.pubDate)?.getTime() || 0;
+                    return db - da;
+                });
+
+                if (!filteredByDate.length) {
+                    const allCount = unique.length;
+                    const fallbackNews = await fetchFallbackMarketNews();
+                    if (fallbackNews.length) {
+                        renderPortfolioNews(fallbackNews, `تم عرض أخبار سوق بديلة (عدد ${fallbackNews.length}) لعدم توفر أخبار مباشرة كافية لأسهم المحفظة.`);
+                        return;
+                    }
+                    const msg = allCount
+                        ? `تم العثور على ${allCount} خبر، لكن لا يوجد خبر بتاريخ ضمن آخر 10 أيام.`
+                        : 'تعذر جلب الأخبار حاليًا من المصادر المتاحة. حاول التحديث بعد قليل.';
+                    renderPortfolioNews([], msg);
+                    return;
+                }
+
+                const finalNews = filteredByDate.slice(0, 20);
+                setPortfolioNewsCache(symbolsKey, finalNews);
+                renderPortfolioNews(finalNews, `تم عرض ${Math.min(20, filteredByDate.length)} خبر من آخر 10 أيام (يشمل Investing).`);
+            } finally {
+                setNewsLoading(false);
+            }
+        }
+
+        function refreshPortfolioNews() {
+            const portfolio = getPortfolio();
+            loadPortfolioNews(portfolio, true);
+        }
+
+        function getStockOpinion(symbol, name, qty, entry, current, ret, analysis, portfolioTotalValue = 0) {
+            if (typeof window.getUnifiedPortfolioAdvice === 'function') {
+                const result = window.getUnifiedPortfolioAdvice({
+                    symbol,
+                    name,
+                    qty,
+                    entry,
+                    current,
+                    ret,
+                    recommendation: analysis?.recommendation,
+                    rsi: analysis?.rsi,
+                    support: analysis?.support?.[0],
+                    resistance: analysis?.resistance?.[0],
+                    score: analysis?.score,
+                    volatility: analysis?.volatility,
+                    volumeRatio: analysis?.volumeRatio
+                }, portfolioTotalValue);
+                // إثراء قائمة الأسباب بمعطيات فنية إضافية
+                const _s1 = Number(analysis?.support?.[0]);
+                const _r1 = Number(analysis?.resistance?.[0]);
+                const _vol = Number(analysis?.volumeRatio);
+                const _pats = Array.isArray(analysis?.patterns) ? analysis.patterns : [];
+                if (Number.isFinite(_vol) && _vol >= 1.3) {
+                    result.reasons.push(`نسبة حجم التداول: ${_vol.toFixed(2)}x — سيولة أعلى من المتوسط`);
+                } else if (Number.isFinite(_vol) && _vol > 0 && _vol <= 0.6) {
+                    result.reasons.push(`حجم التداول ضعيف (${(_vol * 100).toFixed(0)}% من المتوسط) — مراقبة الزخم`);
+                }
+                if (_pats.length) {
+                    result.reasons.push(`أنماط الشموع المرصودة: ${_pats.slice(0, 2).join('، ')}`);
+                }
+                if (Number.isFinite(_s1) && _s1 > 0 && current > 0) {
+                    const _ds = ((current - _s1) / _s1) * 100;
+                    if (_ds >= 0 && _ds <= 4) {
+                        result.reasons.push(`السعر قريب من الدعم الأول (${_ds.toFixed(1)}%) عند ${formatPrice(_s1)} — منطقة دعم فعلية`);
+                    }
+                }
+                if (Number.isFinite(_r1) && _r1 > current) {
+                    result.reasons.push(`المقاومة الأولى على بعد ${((_r1 - current) / current * 100).toFixed(1)}% (${formatPrice(_r1)})`);
+                }
+                return result;
+            }
+
+            const recommendation = String(analysis?.recommendation || '').toLowerCase();
+            const rsi = Number(analysis?.rsi);
+            const support1 = Number(analysis?.support?.[0]);
+            const resistance1 = Number(analysis?.resistance?.[0]);
+            const reasons = [];
+            const plan = {
+                actionQty: null,
+                actionPrice: null,
+                targetPrice: null,
+                whyQty: ''
+            };
+
+            reasons.push(`التوصية الفنية الحالية: ${recommendation || 'غير متاحة'}`);
+            reasons.push(`العائد الحالي في المحفظة: ${ret.toFixed(2)}%`);
+            if (Number.isFinite(rsi)) {
+                reasons.push(`RSI الحالي: ${rsi.toFixed(1)}`);
+                if (rsi <= 30) reasons.push('RSI في منطقة تشبع بيعي ← احتمال ارتداد قريب');
+                else if (rsi <= 45) reasons.push('RSI في منطقة مناسبة للشراء التدريجي');
+                else if (rsi >= 75) reasons.push('RSI في منطقة تشبع شرائي ← خطر جني أرباح وضعف الزخم');
+                else if (rsi >= 62) reasons.push('RSI مرتفع — متابعة بحذر');
+            }
+            const _fbVol = Number(analysis?.volumeRatio);
+            if (Number.isFinite(_fbVol) && _fbVol >= 1.3) {
+                reasons.push(`حجم التداول: ${_fbVol.toFixed(2)}x فوق المتوسط — زخم قوي`);
+            } else if (Number.isFinite(_fbVol) && _fbVol > 0 && _fbVol <= 0.6) {
+                reasons.push(`حجم التداول ضعيف (${(_fbVol * 100).toFixed(0)}% من المتوسط)`);
+            }
+            if (Number.isFinite(support1) && support1 > 0 && current > 0) {
+                const _ds = ((current - support1) / support1) * 100;
+                if (_ds >= 0 && _ds <= 5) reasons.push(`السعر قريب من الدعم الأول (${_ds.toFixed(1)}% عند ${formatPrice(support1)})`);
+            }
+            if (Number.isFinite(resistance1) && resistance1 > current) {
+                reasons.push(`المقاومة الأولى على بعد ${((resistance1 - current) / current * 100).toFixed(1)}% (${formatPrice(resistance1)})`);
+            }
+
+            if (ret <= -10 && recommendation !== 'strong-buy') {
+                reasons.push('الخسارة وصلت لمستوى مرتفع مع غياب إشارة شراء قوية.');
+                reasons.push('الأولوية هنا لحماية رأس المال وتقليل المخاطرة.');
+                return { text: 'خروج', cls: 'opinion-exit', symbol, name, reasons, plan };
+            }
+
+            if ((Number.isFinite(rsi) && rsi >= 72) || (ret >= 15 && recommendation !== 'strong-buy')) {
+                const reducePct = Number.isFinite(rsi) && rsi >= 78 ? 0.45 : 0.30;
+                const sellQty = Math.max(1, Math.round(qty * reducePct));
+                const suggestedSellPrice = Number.isFinite(resistance1)
+                    ? Math.max(current, resistance1 * 0.995)
+                    : current;
+                const nextTarget = Number.isFinite(resistance1) ? resistance1 * 1.03 : current * 1.05;
+
+                reasons.push('هناك تشبع شرائي أو ربح كبير يحتاج إدارة أرباح.');
+                reasons.push('القرار يهدف لتأمين جزء من المكاسب مع ترك جزء مستمر.');
+                reasons.push(`الهدف من التقليل هو الحفاظ على الربح عند منطقة مقاومة/تشبع.`);
+
+                plan.actionQty = sellQty;
+                plan.actionPrice = suggestedSellPrice;
+                plan.targetPrice = nextTarget;
+                plan.whyQty = `تم اختيار ${Math.round(reducePct * 100)}% من الكمية (${sellQty.toLocaleString('ar-EG')} سهم) لتحقيق توازن بين جني الربح والاستمرار في السهم.`;
+
+                return { text: 'تقليل مراكز', cls: 'opinion-reduce', symbol, name, reasons, plan };
+            }
+
+            if (recommendation === 'strong-buy' || (recommendation === 'buy' && (!Number.isFinite(rsi) || rsi <= 60) && ret < 8)) {
+                const addPct = recommendation === 'strong-buy' ? 0.35 : 0.20;
+                const buyQty = Math.max(1, Math.round(qty * addPct));
+                const suggestedBuyPrice = Number.isFinite(support1)
+                    ? Math.min(current, support1 * 1.01)
+                    : current * 0.995;
+                const upsideTarget = Number.isFinite(resistance1) ? resistance1 : current * 1.08;
+
+                reasons.push('الإشارات الفنية تدعم استمرار الصعود مقارنة بالمخاطرة.');
+                reasons.push('يفضل أن تكون الزيادة تدريجية وعلى دفعات.');
+                reasons.push(`الهدف من الزيادة هو رفع متوسط العائد إذا استمر الاتجاه الصاعد.`);
+
+                plan.actionQty = buyQty;
+                plan.actionPrice = suggestedBuyPrice;
+                plan.targetPrice = upsideTarget;
+                plan.whyQty = `تم اختيار ${Math.round(addPct * 100)}% من الكمية الحالية (${buyQty.toLocaleString('ar-EG')} سهم) كزيادة تدريجية بدون مخاطرة مفرطة.`;
+
+                return { text: 'زيادة مراكز', cls: 'opinion-add', symbol, name, reasons, plan };
+            }
+
+            reasons.push('الإشارات الحالية لا تدعم خروجًا أو زيادة كبيرة الآن.');
+            reasons.push('الاحتفاظ مع المتابعة هو الخيار الأنسب حاليًا.');
+            return { text: 'احتفاظ', cls: 'opinion-hold', symbol, name, reasons, plan };
+        }
+
+        function computeOpinionScore(metrics, opinionText) {
+            let score = 50;
+            const rsi = Number(metrics.rsi);
+            const ret = Number(metrics.ret);
+            const current = Number(metrics.current);
+            const support = Number(metrics.support);
+            if (Number.isFinite(rsi) && rsi > 0) {
+                if (rsi <= 25) score += 18;
+                else if (rsi <= 30) score += 12;
+                else if (rsi <= 40) score += 7;
+                else if (rsi >= 80) score -= 20;
+                else if (rsi >= 70) score -= 12;
+                else if (rsi >= 60) score -= 5;
+            }
+            if (ret <= -20) score -= 15;
+            else if (ret <= -10) score -= 8;
+            else if (ret >= 25) score -= 10;
+            else if (ret >= 15) score -= 4;
+            else if (ret >= 3 && ret <= 15) score += 4;
+            if (Number.isFinite(current) && Number.isFinite(support) && support > 0 && current > 0) {
+                const d = ((current - support) / support) * 100;
+                if (d >= 0 && d <= 2) score += 10;
+                else if (d >= 0 && d <= 5) score += 5;
+            }
+            if (opinionText === 'زيادة مراكز') score += 10;
+            else if (opinionText === 'خروج') score = Math.min(score, 25);
+            else if (opinionText === 'تقليل مراكز') score -= 8;
+            return Math.max(5, Math.min(95, Math.round(score)));
+        }
+
+        function openOpinionModal(index) {
+            const row = opinionRows[index];
+            if (!row) return;
+            const metrics = row._metrics || {};
+            const title = document.getElementById('opinionTitle');
+            const body = document.getElementById('opinionBody');
+            const modal = document.getElementById('opinionModal');
+            if (!title || !body || !modal) return;
+
+            title.textContent = `تحليل المحفظة: ${row.symbol}`;
+
+            const score = computeOpinionScore(metrics, row.text);
+            const scoreClass = score >= 65 ? 's-high' : score >= 45 ? 's-medium' : score >= 30 ? 's-low' : 's-exit';
+            const scoreLabel = score >= 65 ? 'إشارة إيجابية' : score >= 45 ? 'محايدة / احترازية' : score >= 30 ? 'تحذير' : 'إشارة سلبية';
+
+            const retVal = Number(metrics.ret);
+            const retCls = retVal >= 0 ? 'up' : 'down';
+            const rsiVal = Number(metrics.rsi);
+            const rsiColor = !Number.isFinite(rsiVal) || rsiVal === 0 ? '#94a3b8'
+                : rsiVal <= 30 ? '#10b981' : rsiVal >= 70 ? '#ef4444' : '#fbbf24';
+            const supportText = Number.isFinite(metrics.support) && metrics.support > 0 ? formatPrice(metrics.support) : 'غ.م';
+            const resistanceText = Number.isFinite(metrics.resistance) && metrics.resistance > 0 ? formatPrice(metrics.resistance) : 'غ.م';
+            const targetText = metrics.target > 0 ? formatPrice(metrics.target) : 'غير محدد';
+            const showPlan = (row.text === 'زيادة مراكز' || row.text === 'تقليل مراكز') && row.plan;
+
+            let stopLossText = 'غير محدد';
+            if (Number.isFinite(metrics.support) && metrics.support > 0 && metrics.current > 0 && metrics.support < metrics.current) {
+                stopLossText = formatPrice(metrics.support * 0.985);
+            } else if (metrics.current > 0) {
+                stopLossText = formatPrice(metrics.current * 0.94);
+            }
+            const upPct = metrics.current > 0 && metrics.target > 0
+                ? (((metrics.target - metrics.current) / metrics.current) * 100).toFixed(1) + '%' : 'غ.م';
+
+            const posKw = /صاعد|شراء|دعم|ارتداد|إيجابي|تحسن|فرصة|منخفض|قوي|صحي|تدريجي|مناسب/;
+            const negKw = /هابط|بيع|خسارة|مخاطر|مرتفع|تشبع|حذر|تصريف|ضعف|وصلت|ضغط/;
+
+            body.innerHTML = `
+                <div class="od-header">
+                    <div>
+                        <div class="od-sym">${escapeHtml(row.symbol)} — ${escapeHtml(row.name || row.symbol)}</div>
+                    </div>
+                    <span class="opinion ${row.cls}">${row.text}</span>
+                </div>
+                <div class="od-score-wrap">
+                    <div class="od-score-label">
+                        <span>درجة الثقة بالتحليل</span>
+                        <strong>${score}% — ${scoreLabel}</strong>
+                    </div>
+                    <div class="od-score-bar"><div class="od-score-fill ${scoreClass}" style="width:${score}%"></div></div>
+                </div>
+                <div class="od-metrics-grid">
+                    <div class="od-metric"><div class="k">العائد %</div><div class="v ${retCls}">${retVal.toFixed(2)}%</div></div>
+                    <div class="od-metric"><div class="k">RSI (14)</div><div class="v" style="color:${rsiColor}">${Number.isFinite(rsiVal) && rsiVal > 0 ? rsiVal.toFixed(1) : 'غ.م'}</div></div>
+                    <div class="od-metric"><div class="k">السعر الحالي</div><div class="v" style="color:#fbbf24">${formatPrice(metrics.current)}</div></div>
+                    <div class="od-metric"><div class="k">الدعم الأول</div><div class="v" style="color:#10b981">${supportText}</div></div>
+                    <div class="od-metric"><div class="k">المقاومة الأولى</div><div class="v" style="color:#ef4444">${resistanceText}</div></div>
+                    <div class="od-metric"><div class="k">هدف السعر</div><div class="v" style="color:#22c55e">${targetText}</div></div>
+                </div>
+                <hr class="od-divider">
+                <div class="od-reasons-title">أسباب التوصية:</div>
+                <div style="margin-bottom:12px;">
+                    ${(row.reasons || []).map(reason => {
+                        const isPos = posKw.test(reason);
+                        const isNeg = negKw.test(reason);
+                        const icon = isPos ? 'fa-check-circle' : isNeg ? 'fa-exclamation-circle' : 'fa-info-circle';
+                        const color = isPos ? '#10b981' : isNeg ? '#ef4444' : '#94a3b8';
+                        return `<div class="od-reason"><i class="fas ${icon}" style="color:${color}"></i><span>${escapeHtml(reason)}</span></div>`;
+                    }).join('')}
+                </div>
+                <hr class="od-divider">
+                ${showPlan ? `
+                <div class="od-plan-box">
+                    <div class="od-plan-title">📋 خطة التنفيذ المقترحة</div>
+                    <div class="od-plan-row"><span class="od-plan-key">الكمية المقترحة</span><span class="od-plan-val">${Number(row.plan.actionQty || 0).toLocaleString('ar-EG')} سهم</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">سعر التنفيذ</span><span class="od-plan-val">${formatPrice(row.plan.actionPrice || 0)}</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">السعر المستهدف</span><span class="od-plan-val" style="color:#22c55e">${formatPrice(row.plan.targetPrice || 0)}</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">وقف الخسارة المقترح</span><span class="od-plan-val" style="color:#ef4444">${stopLossText}</span></div>
+                    ${row.plan.whyQty ? `<div class="muted" style="margin-top:8px;font-size:.84em;">${escapeHtml(row.plan.whyQty)}</div>` : ''}
+                </div>
+                ` : `
+                <div class="od-plan-box">
+                    <div class="od-plan-title">📊 مستويات مرجعية</div>
+                    <div class="od-plan-row"><span class="od-plan-key">السعر الحالي</span><span class="od-plan-val" style="color:#fbbf24">${formatPrice(metrics.current)}</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">هدف السعر المقدّر</span><span class="od-plan-val" style="color:#22c55e">${targetText}</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">وقف الخسارة المقترح</span><span class="od-plan-val" style="color:#ef4444">${stopLossText}</span></div>
+                    <div class="od-plan-row"><span class="od-plan-key">العائد المستهدف</span><span class="od-plan-val">${upPct}</span></div>
+                </div>
+                `}
+            `;
+            modal.classList.add('active');
+        }
+
+        function closeOpinionModal() {
+            const modal = document.getElementById('opinionModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function loadPortfolio() {
+            const noData = document.getElementById('noData');
+            const table = document.getElementById('portfolioTable');
+            const body = document.getElementById('tableBody');
+            opinionRows = [];
+            renderPortfolioTableHead();
+            renderSortIndicators();
+
+            const portfolio = getPortfolio();
+            updatePortfolioLastUpdateBadge(portfolio);
+
+            if (!portfolio.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                setSummary(0, 0, 0, 0);
+                updatePortfolioTips([]);
+                renderPortfolioAnalysisCards([]);
+                lastNewsSymbolsKey = '';
+                renderPortfolioNews([], 'لا توجد أسهم في المحفظة لجلب الأخبار.');
+                return;
+            }
+
+            let totalCost = 0;
+            let totalValue = 0;
+            const processedMap = getProcessedMap();
+            const analysisRows = [];
+            const cardRows = [];
+
+            // حساب القيمة الكلية للمحفظة مسبقاً لحساب الوزن النسبي بدقة
+            let totalValueForWeights = 0;
+            portfolio.forEach(item => {
+                const qty = number(item.quantity || 1);
+                const entry = number(item.entryPrice);
+                const priceInfo = getCurrentPriceInfo(item, entry);
+                const current = number(priceInfo.price);
+                totalValueForWeights += qty * current;
+            });
+
+            const rowsData = portfolio.map((item, idx) => {
+                const qty = number(item.quantity || 1);
+                const entry = number(item.entryPrice);
+                const priceInfo = getCurrentPriceInfo(item, entry);
+                const current = number(priceInfo.price);
+                const cost = qty * entry;
+                const value = qty * current;
+                const pl = value - cost;
+                const ret = cost ? (pl / cost) * 100 : 0;
+                const analysis = processedMap.get((item.symbol || '').toUpperCase());
+                const opinion = getStockOpinion(
+                    item.symbol || '-',
+                    item.name || item.symbol || '-',
+                    qty,
+                    entry,
+                    current,
+                    ret,
+                    analysis,
+                    totalValueForWeights
+                );
+
+                totalCost += cost;
+                totalValue += value;
+                analysisRows.push({ symbol: item.symbol, ret, rsi: analysis?.rsi, recommendation: analysis?.recommendation });
+                cardRows.push({
+                    symbol: item.symbol,
+                    name: item.name || item.symbol,
+                    entry,
+                    current,
+                    ret,
+                    rsi: Number(analysis?.rsi),
+                    recommendation: analysis?.recommendation,
+                    support: Number(analysis?.support?.[0]),
+                    resistance: Number(analysis?.resistance?.[0])
+                });
+
+                const dayChangeInfo = getDayChangeInfo(item.symbol, current, qty);
+                const _r1Val = Number(analysis?.resistance?.[0]);
+                const target = (() => {
+                    if (opinion?.plan?.targetPrice > 0 && Number.isFinite(Number(opinion?.plan?.targetPrice))) return Number(opinion.plan.targetPrice);
+                    if (Number.isFinite(_r1Val) && _r1Val > current * 1.005) return _r1Val;
+                    return Number.isFinite(current) && current > 0 ? current * 1.06 : 0;
+                })();
+                return {
+                    originalIndex: idx,
+                    symbol: item.symbol,
+                    name: item.name || item.symbol,
+                    qty,
+                    entry,
+                    current,
+                    dayChangePct: dayChangeInfo.changePct,
+                    dayChangeAmount: dayChangeInfo.dayChangeAmount,
+                    cost,
+                    value,
+                    pl,
+                    ret,
+                    target,
+                    recommendation: analysis?.recommendation,
+                    rsi: Number(analysis?.rsi),
+                    support: Number(analysis?.support?.[0]),
+                    resistance: Number(analysis?.resistance?.[0]),
+                    opinion,
+                    currentSuffix: priceInfo.source === 'manual' ? ' <small style="color:#93c5fd;">(يدوي)</small>' : ''
+                };
+            });
+
+            lastPortfolioRows = rowsData;
+
+            const sortedRows = sortPortfolioRows(rowsData);
+
+            body.innerHTML = sortedRows.map((row, idx) => {
+                opinionRows.push({
+                    ...row.opinion,
+                    _metrics: { rsi: row.rsi, support: row.support, resistance: row.resistance, current: row.current, entry: row.entry, ret: row.ret, qty: row.qty, target: row.target }
+                });
+
+                const cls = row.pl >= 0 ? 'up' : 'down';
+                const dayCls = row.dayChangePct >= 0 ? 'up' : 'down';
+                const daySign = row.dayChangePct > 0 ? '+' : '';
+                const dayAmtSign = row.dayChangeAmount > 0 ? '+' : '';
+
+                return `
+                    <tr onclick="openStockAnalysis('${row.symbol}')" style="cursor:pointer;">
+                        <td style="color:var(--brand1);font-weight:700;">${escapeHtml(row.symbol)}</td>
+                        <td>${escapeHtml(row.name)}</td>
+                        <td>${escapeHtml(row.qty)}</td>
+                        <td>${formatPrice(row.entry)}</td>
+                        <td>${formatPrice(row.current)}${row.currentSuffix}</td>
+                        <td class="${dayCls}">${daySign}${row.dayChangePct.toFixed(2)}%</td>
+                        <td class="${dayCls}">${dayAmtSign}${formatPrice(row.dayChangeAmount)}</td>
+                        <td>${formatPrice(row.cost)}</td>
+                        <td>${formatPrice(row.value)}</td>
+                        <td class="${cls}">${formatPrice(row.pl)}</td>
+                        <td class="${cls}">${row.ret.toFixed(2)}%</td>
+                        <td><span class="opinion opinion-btn ${row.opinion.cls}" onclick="event.stopPropagation(); openOpinionModal(${idx})">${escapeHtml(row.opinion.text)}</span></td>
+                        <td class="${row.target > row.current ? 'up' : 'muted'}">${formatPrice(row.target)}</td>
+                        <td>
+                            <button class="btn btn-info" style="padding:6px 10px" onclick="event.stopPropagation(); startEditStock(${row.originalIndex})">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn btn-danger" style="padding:6px 10px" onclick="event.stopPropagation(); removeStock(${row.originalIndex})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const totalPL = totalValue - totalCost;
+            setSummary(portfolio.length, totalCost, totalValue, totalPL);
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            updatePortfolioTips(analysisRows);
+            renderPortfolioAnalysisCards(cardRows);
+            renderLiquidityAllocation(rowsData);
+            renderSmartPortfolioRebalancing(rowsData);
+            loadPortfolioNews(portfolio);
+        }
+
+        async function renderSmartPortfolioRebalancing(portfolioRows) {
+            const host = document.getElementById('smartRebalancingContent');
+            if (!host) return;
+
+            const portfolio = getPortfolio();
+            if (!portfolio.length) {
+                host.innerHTML = '<div style="color:#94a3b8;">لا توجد أسهم في المحفظة لحساب خطة إعادة التوازن.</div>';
+                return;
+            }
+
+            const stocksData = await loadLatestStocksDataForHistoryExport();
+            const companies = stocksData ? getStockDataCompanies(stocksData) : [];
+
+            if (typeof window.generateSmartRebalancingPlan === 'function') {
+                const plan = window.generateSmartRebalancingPlan(portfolio, companies);
+                if (!plan || !plan.hasRecommendation) {
+                    host.innerHTML = `<div style="color:#94a3b8;">${escapeHtml(plan?.message || 'محفظتك حالياً في حالة توازن ممتاز وتوزيع آمن.')}</div>`;
+                    return;
+                }
+
+                const sourcesHtml = (plan.sources || []).map(s => `
+                    <div style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:8px; padding:8px 12px; margin-bottom:6px;">
+                        <strong style="color:#f87171;">مصدر السيولة (${s.symbol}):</strong> جني أرباح / تخفيف <strong>${s.trimQty.toLocaleString('ar-EG')} سهم</strong> بسعر <strong>${s.currentPrice.toFixed(2)} ج.م</strong> لإنتاج سيولة قدرها <strong style="color:#fbbf24;">${s.cashValue.toLocaleString('ar-EG')} ج.م</strong>.
+                    </div>
+                `).join('');
+
+                const target = plan.target;
+                const targetTag = target.inPortfolio 
+                    ? `<span style="background:#2563eb; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-right:6px;">تعزيز سهم بمحفظتك 🏠</span>` 
+                    : `<span style="background:#059669; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.8em; margin-right:6px;">دخول سهم جديد من السوق 🌟</span>`;
+
+                const targetHtml = `
+                    <div style="background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <strong style="color:#34d399; font-size:1.05em;">السهم المستهدف الرئيسي (${target.symbol} - ${escapeHtml(target.name)}) ${targetTag}</strong>
+                            <span style="color:#fbbf24; font-weight:bold;">الدرجة الفنية: ${target.score}</span>
+                        </div>
+                        شراء <strong>${target.suggestedBuyQty.toLocaleString('ar-EG')} سهم</strong> بسعر <strong>${target.currentPrice.toFixed(2)} ج.م</strong> (استثمار سيولة قدرها <strong>${target.allocatedCash.toLocaleString('ar-EG')} ج.م</strong>).<br>
+                        <small style="color:#94a3b8;">RSI: ${target.rsi.toFixed(1)} | VWAP: ${target.vwap.toFixed(2)} ج.م | مضاعف السيولة: ${target.volMult}x — تتفوق مؤشرات السهم الفنية على كافة الخيارات المتاحة.</small>
+                    </div>
+                `;
+
+                const altTargets = (plan.allTargets || []).slice(1);
+                const altsHtml = altTargets.length ? `
+                    <div style="margin-top:8px; font-size:0.88em; color:#94a3b8;">
+                        <strong>خيارات بديلة ممتازة حسب الدرجة الفنية:</strong>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+                            ${altTargets.map(t => `
+                                <span onclick="openStockAnalysis('${t.symbol}')" style="cursor:pointer; background:#1e293b; border:1px solid #334155; border-radius:6px; padding:4px 8px; color:#e2e8f0;">
+                                    <strong style="color:#fbbf24;">${t.symbol}</strong> (${t.inPortfolio ? 'بمحفظتك' : 'خارجي'}) - RSI: ${t.rsi} | درجة: ${t.score}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '';
+
+                host.innerHTML = `
+                    <div style="margin-bottom:10px; color:#fbbf24; font-weight:bold;">
+                        إجمالي السيولة الناتجة من إعادة التدوير: ${plan.totalCashGenerated.toLocaleString('ar-EG')} جنيه مصري
+                    </div>
+                    ${sourcesHtml}
+                    ${targetHtml}
+                    ${altsHtml}
+                `;
+            }
+        }
+
+        function setSummary(count, cost, value, pl) {
+            document.getElementById('sumCount').textContent = count;
+            document.getElementById('sumCost').textContent = cost.toFixed(2);
+            document.getElementById('sumValue').textContent = value.toFixed(2);
+            const el = document.getElementById('sumPL');
+            el.textContent = pl.toFixed(2);
+            el.className = 'n ' + (pl >= 0 ? 'up' : 'down');
+        }
+
+        function updatePortfolioTips(rows) {
+            const tipsGrid = document.getElementById('tipsGrid');
+            if (!rows || rows.length === 0) {
+                tipsGrid.innerHTML = '<div style="color:#94a3b8;">لا توجد أسهم في المحفظة</div>';
+                return;
+            }
+
+            const sortedByRet = [...rows].sort((a, b) => b.ret - a.ret);
+            const best = sortedByRet[0];
+            const worst = sortedByRet[sortedByRet.length - 1];
+            const overbought = rows.find(r => Number(r.rsi) >= 70);
+            const oversold = rows.find(r => Number(r.rsi) <= 35);
+            const strongestBuy = rows.find(r => {
+                const rec = typeof window.normalizeUnifiedRecommendation === 'function'
+                    ? window.normalizeUnifiedRecommendation(r.recommendation)
+                    : String(r.recommendation || '').toLowerCase();
+                return rec === 'strong-buy' || rec === 'buy';
+            });
+            const strongestRisk = rows.find(r => {
+                const rec = typeof window.normalizeUnifiedRecommendation === 'function'
+                    ? window.normalizeUnifiedRecommendation(r.recommendation)
+                    : String(r.recommendation || '').toLowerCase();
+                return rec === 'strong-sell' || rec === 'sell' || rec === 'reduce';
+            });
+
+            const tips = [];
+            if (best) tips.push({ cls: 'good', symbol: best.symbol, text: `أفضل أداء حاليًا: ${best.symbol} بعائد ${best.ret.toFixed(2)}%` });
+            if (worst) tips.push({ cls: 'bad', symbol: worst.symbol, text: `أضعف أداء: ${worst.symbol} بعائد ${worst.ret.toFixed(2)}%` });
+            if (strongestBuy) tips.push({ cls: 'good', symbol: strongestBuy.symbol, text: `إشارة فنية إيجابية: ${strongestBuy.symbol} (مرشح احتفاظ/تعزيز تدريجي)` });
+            if (strongestRisk) tips.push({ cls: 'warn', symbol: strongestRisk.symbol, text: `إشارة حذر: ${strongestRisk.symbol} (يفضل ضبط المخاطر أو جني جزء)` });
+            if (overbought) tips.push({ cls: 'warn', symbol: overbought.symbol, text: `${overbought.symbol} RSI مرتفع (${overbought.rsi}) - راقب جني الأرباح` });
+            if (oversold) tips.push({ cls: 'good', symbol: oversold.symbol, text: `${oversold.symbol} RSI منخفض (${oversold.rsi}) - احتمال ارتداد` });
+
+            if (tips.length === 0) {
+                tipsGrid.innerHTML = '<div style="color:#94a3b8;">المحفظة متوازنة حاليًا بدون إشارات قوية</div>';
+                return;
+            }
+
+            tipsGrid.innerHTML = tips.slice(0, 4).map(t => `
+                <div class="tip ${t.cls}" onclick="openStockAnalysis('${t.symbol}')">${t.text}</div>
+            `).join('');
+        }
+
+        function removeStock(index) {
+            const portfolio = getPortfolio();
+            const item = portfolio[index];
+            if (!item) return;
+
+            const symbol = item.symbol || '-';
+            const name = item.name || symbol;
+            const ok = confirm(`⚠️ سيتم حذف السهم ${symbol} - ${name} من المحفظة نهائيًا. هل تريد المتابعة؟`);
+            if (!ok) return;
+
+            portfolio.splice(index, 1);
+            setPortfolio(portfolio);
+            if (editIndex === index) {
+                resetForm();
+            }
+            loadPortfolio();
+        }
+
+        function startEditStock(index) {
+            openStockModalForEdit(index);
+        }
+
+        function resetForm() {
+            editIndex = -1;
+            modalEditIndex = -1;
+            clearStockModalForm();
+        }
+
+        function upsertStock() {
+            saveStockFromModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            const fileInput = document.getElementById('importPortfolioFile');
+            if (fileInput) {
+                fileInput.addEventListener('change', async (event) => {
+                    const file = event.target.files && event.target.files[0];
+                    await importPortfolioFromFile(file);
+                });
+            }
+
+            const modalSymbolInput = document.getElementById('modalSymbolInput');
+            const modalNameInput = document.getElementById('modalNameInput');
+            if (modalSymbolInput) {
+                modalSymbolInput.addEventListener('input', syncNameFromSymbolInput);
+                modalSymbolInput.addEventListener('change', syncNameFromSymbolInput);
+            }
+            if (modalNameInput) {
+                modalNameInput.addEventListener('input', syncSymbolFromNameInput);
+                modalNameInput.addEventListener('change', syncSymbolFromNameInput);
+                modalNameInput.addEventListener('focus', () => updateStockNameSuggestions(modalNameInput.value));
+            }
+
+            const cashInput = document.getElementById('availableCashInput');
+            const maxStocksInput = document.getElementById('maxAddStocksInput');
+            if (cashInput) {
+                const savedCash = Number(localStorage.getItem(AVAILABLE_CASH_KEY) || 0);
+                if (Number.isFinite(savedCash) && savedCash > 0) cashInput.value = String(savedCash);
+                cashInput.addEventListener('input', () => renderLiquidityAllocation());
+                cashInput.addEventListener('change', () => renderLiquidityAllocation());
+            }
+            if (maxStocksInput) {
+                maxStocksInput.addEventListener('input', () => renderLiquidityAllocation());
+                maxStocksInput.addEventListener('change', () => renderLiquidityAllocation());
+            }
+
+            await syncPortfolioFromServer();
+            loadPortfolio();
+        });
+    </script>
+</body>
+</html>

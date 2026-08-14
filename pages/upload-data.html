@@ -1,0 +1,3583 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 نظام تحليل الأسهم - الإصدار النهائي</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            padding: 20px; 
+            direction: rtl; 
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+        }
+        h1 { 
+            color: #333; 
+            border-bottom: 3px solid #0f3460; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+            text-align: center; 
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .stat-card { 
+            background: linear-gradient(135deg, #0f3460 0%, #1a4b8c 100%); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 { 
+            font-size: 2em; 
+            margin-bottom: 5px;
+        }
+        .stat-card p { 
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .upload-section { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .upload-card { 
+            background: #f8f9fa; 
+            padding: 25px; 
+            border-radius: 10px; 
+            border: 2px solid; 
+            text-align: right; 
+        }
+        .upload-card.daily { 
+            border-color: #28a745; 
+        }
+        .upload-card.historical { 
+            border-color: #fd7e14; 
+        }
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #555; 
+        }
+        .form-group input[type=file], 
+        .form-group input[type=date] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-family: inherit;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button { 
+            background: linear-gradient(135deg, #0f3460 0%, #1a4b8c 100%); 
+            color: white; 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .action-btn-link {
+            background: linear-gradient(135deg, #0f3460 0%, #1a4b8c 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-btn-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-warning { background: #fd7e14; }
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+        .btn-info { background: #17a2b8; }
+        .btn-purple { background: #6f42c1; }
+        .btn-orange { background: #fd7e14; }
+        
+        .log-container { 
+            background: #1e1e1e; 
+            color: #00ff00; 
+            padding: 15px; 
+            border-radius: 5px; 
+            height: 250px; 
+            overflow-y: auto; 
+            font-family: 'Courier New', monospace; 
+            text-align: left; 
+            direction: ltr; 
+            margin: 20px 0; 
+            font-size: 12px; 
+            line-height: 1.5;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white; 
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th { 
+            background: linear-gradient(135deg, #0f3460 0%, #1a4b8c 100%); 
+            color: white; 
+            padding: 15px; 
+            position: sticky; 
+            top: 0; 
+            font-weight: 600;
+        }
+        td { 
+            padding: 12px; 
+            border: 1px solid #dee2e6; 
+            text-align: center;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .needs-update { 
+            background-color: #f8d7da; 
+        }
+        .complete-data { 
+            background-color: #d4edda; 
+        }
+        .partial-data { 
+            background-color: #fff3cd; 
+        }
+        .excess-data { 
+            background-color: #f8d7da; 
+            border-right: 5px solid #dc3545;
+        }
+        .missing-data { 
+            color: #dc3545; 
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .max-days-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        
+        .file-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 14px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .local-file-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-right: 4px solid #2196f3;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-purple { background: #6f42c1; color: white; }
+        .badge-excess { background: #dc3545; color: white; }
+        
+        td small {
+            color: #666;
+            font-size: 0.8em;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        .stock-symbol {
+            font-weight: bold;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .section-row td {
+            font-weight: bold;
+            text-align: right;
+            background: #eef3ff;
+            color: #0f3460;
+            border-top: 2px solid #c7d4f7;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-toggle-indicator {
+            display: inline-block;
+            min-width: 20px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        .excluded-data {
+            background-color: #ece9f9;
+        }
+        
+        /* نافذة النتائج المنبثقة */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0f3460;
+        }
+        .modal-header h2 {
+            color: #333;
+            font-size: 1.5em;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 2em;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: #dc3545;
+        }
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .modal-table th {
+            background: linear-gradient(135deg, #0f3460 0%, #1a4b8c 100%);
+            color: white;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+        .modal-table td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            font-size: 0.9em;
+        }
+        .modal-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .delete-all-btn {
+            background: #fd7e14;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+        .day-row {
+            background-color: #fff3cd;
+        }
+        .weekend-day {
+            background-color: #f8d7da;
+        }
+        .duplicate-day {
+            background-color: #d4edda;
+        }
+        .excess-row {
+            background-color: #f8d7da;
+        }
+        .delete-date-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #dc3545;
+        }
+        
+        .custom-stock-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .custom-stock-form input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .custom-stock-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-right: 4px solid #28a745;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-right: 4px solid #ffc107;
+        }
+        
+        /* زر حذف السهم */
+        .delete-stock-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin: 2px;
+            transition: all 0.3s ease;
+        }
+        .delete-stock-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-chart-line"></i> نظام تحليل الأسهم - الإصدار النهائي</h1>
+
+        <!-- معلومات الملف الحالي -->
+        <div class="file-info" id="fileInfo">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <span>
+                    <i class="fas fa-file"></i> 
+                    الملف الحالي: <strong id="currentFileName">لا يوجد</strong>
+                </span>
+                <span>
+                    <i class="fas fa-link"></i>
+                    مصدر البيانات: <strong id="currentFilePathLabel">../Data/stock_data.json</strong>
+                </span>
+                <span>
+                    <i class="fas fa-database"></i>
+                    الشركات: <span id="fileCompanies">0</span>
+                </span>
+                <span>
+                    <i class="fas fa-calendar"></i>
+                    أيام المعيار: <span id="standardDays">0</span>
+                </span>
+                <span>
+                    <i class="fas fa-chart-bar"></i>
+                    أسهم زائدة: <span id="excessCount">0</span>
+                </span>
+                <span>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    أسهم ناقصة: <span id="missingCount">0</span>
+                </span>
+                <span>
+                    <i class="fas fa-ban"></i>
+                    أسهم مستثناة: <span id="excludedCount">0</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- قسم فتح الملفات المحلية -->
+        <div class="local-file-section">
+            <h3 style="margin-bottom: 15px;"><i class="fas fa-folder-open"></i> فتح ملف من نفس مسار الصفحة</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="localFilePath" placeholder="المسار الافتراضي: ../Data/stock_data.json" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;">
+                <button onclick="loadLocalFile()" class="btn-info"><i class="fas fa-file-import"></i> تحميل</button>
+                <button onclick="browseLocalFile()" class="btn-info"><i class="fas fa-search"></i> تصفح</button>
+                <input type="file" id="localFileBrowser" accept=".json" style="display: none;" onchange="handleLocalFileBrowse(this)">
+            </div>
+            <small style="color: #495057; display: block; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> الملف الافتراضي المعتمد: ../Data/stock_data.json
+            </small>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="totalCompanies">0</h3>
+                <p>إجمالي الشركات</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalHistorical">0</h3>
+                <p>إجمالي أيام البيانات</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="avgDays">0</h3>
+                <p>متوسط الأيام للشركة</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="modeDays">0</h3>
+                <p>العدد الأكثر تكراراً</p>
+            </div>
+        </div>
+
+        <!-- أزرار الإجراءات الرئيسية -->
+        <div class="action-buttons">
+            <a href="../index.html" class="btn-info action-btn-link" id="goHomeBtn">
+                <i class="fas fa-home"></i> الرجوع للرئيسية
+            </a>
+            <button type="button" onclick="createNewFile()" class="btn-info">
+                <i class="fas fa-file"></i> ملف جديد
+            </button>
+            <button type="button" onclick="openFile()" class="btn-info" id="openFileBtn">
+                <i class="fas fa-folder-open"></i> فتح ملف JSON
+            </button>
+            <input type="file" id="openFileInput" accept=".json" style="display: none;" onchange="handleOpenFile(this)">
+            <button type="button" onclick="saveFile()" class="btn-success" id="saveBtn" disabled>
+                <i class="fas fa-save"></i> حفظ الآن
+            </button>
+            <button type="button" onclick="calculateStandardDays()" class="btn-warning">
+                <i class="fas fa-calculator"></i> حساب الأيام المعيارية
+            </button>
+            <button type="button" onclick="detectExcessDays()" class="btn-purple">
+                <i class="fas fa-search"></i> اكتشاف الأيام الزائدة
+            </button>
+            <button type="button" onclick="showDeleteDateModal()" class="btn-danger">
+                <i class="fas fa-calendar-times"></i> حذف يوم من الكل
+            </button>
+            <button type="button" onclick="cleanInvalidStocks()" class="btn-warning">
+                <i class="fas fa-broom"></i> تنظيف الشركات بدون رمز
+            </button>
+            <button type="button" onclick="showDeleteStockModal()" class="btn-danger">
+                <i class="fas fa-trash-alt"></i> حذف سهم بالكامل
+            </button>
+            <button type="button" onclick="showAddCustomStockModal()" class="btn-success">
+                <i class="fas fa-plus-circle"></i> إضافة سهم خاص
+            </button>
+            <button type="button" onclick="toggleIncompleteFilter()" class="btn-info" id="incompleteFilterBtn">
+                <i class="fas fa-filter"></i> عرض غير المكتمل فقط: OFF
+            </button>
+            <button type="button" onclick="clearDatabase()" class="btn-danger">
+                <i class="fas fa-trash"></i> مسح الكل
+            </button>
+        </div>
+
+        <!-- رسالة توضيحية -->
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i>
+            <strong>ملاحظة مهمة:</strong> البيانات التاريخية هي المصدر الرئيسي للأسعار. الملف اليومي يستخدم فقط لإضافة يوم جديد.
+        </div>
+
+        <!-- قسم رفع الملفات -->
+        <div class="upload-section">
+            <!-- الملف التاريخي (المصدر الأساسي) -->
+            <div class="upload-card historical">
+                <h3><i class="fas fa-history"></i> المصدر الأساسي: بيانات تاريخية</h3>
+                <div class="form-group">
+                    <label>ملف CSV/Excel تاريخي:</label>
+                    <input type="file" id="histFile" accept=".csv, .xlsx, .xls" multiple>
+                </div>
+                <div style="background: #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    <span id="extractedSymbol">الرمز المستخرج: -</span>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button onclick="uploadHistorical()" class="btn-warning"><i class="fas fa-upload"></i> رفع ملف واحد</button>
+                    <button onclick="uploadHistoricalBatch()" class="btn-purple"><i class="fas fa-layer-group"></i> رفع جماعي</button>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #666; background: #e9ecef; padding: 8px; border-radius: 5px;">
+                    <i class="fas fa-info-circle"></i> يدعم ملف واحد أو عدة ملفات، مع استخراج الرمز من اسم الملف لكل ملف
+                </div>
+            </div>
+
+            <!-- الملف اليومي (لإضافة يوم جديد فقط) -->
+            <div class="upload-card daily">
+                <h3><i class="fas fa-calendar-alt"></i> إضافة يوم جديد (تحديث)</h3>
+                <div class="form-group">
+                    <label>تاريخ اليوم الجديد:</label>
+                    <input type="date" id="reportDate">
+                </div>
+                <div class="form-group">
+                    <label>ملف Excel اليومي:</label>
+                    <input type="file" id="dailyFile" accept=".xlsx, .xls, .csv">
+                </div>
+                <button onclick="addNewDayFromDaily()" class="btn-success"><i class="fas fa-plus-circle"></i> إضافة يوم جديد</button>
+                <div style="margin-top: 10px; font-size: 12px; color: #666; background: #e9ecef; padding: 8px; border-radius: 5px;">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>الأعمدة:</strong> G (آخر سعر), F (الفتح), J (عالي), K (منخفض), M (الحجم), H (التغير%)
+                </div>
+            </div>
+        </div>
+
+        <!-- سجل الأحداث -->
+        <div class="log-container" id="logArea">
+            [النظام جاهز]...
+        </div>
+
+        <!-- الجدول -->
+        <table>
+            <thead>
+                <tr>
+                    <th>الرمز</th>
+                    <th>الاسم</th>
+                    <th>عدد الأيام</th>
+                    <th>الفرق</th>
+                    <th>نسبة اكتمال</th>
+                    <th>اكتمال الأعمدة</th>
+                    <th>أقدم تاريخ</th>
+                    <th>آخر تاريخ</th>
+                    <th>آخر سعر</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <tr><td colspan="11">أنشئ ملف جديد أو افتح ملفاً موجوداً</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- نافذة حذف يوم محدد من كل الأسهم -->
+    <div class="modal-overlay" id="deleteDateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-times"></i> حذف يوم محدد من كل الأسهم</h2>
+                <button class="modal-close" onclick="closeDeleteDateModal()">&times;</button>
+            </div>
+            
+            <div class="delete-date-section">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">اختر التاريخ المراد حذفه:</label>
+                    <input type="date" id="deleteTargetDate" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="deleteDateFromAllStocks()" class="btn-danger" style="flex: 1;">
+                        <i class="fas fa-trash"></i> حذف من كل الأسهم
+                    </button>
+                    <button onclick="previewDeleteDate()" class="btn-info" style="flex: 1;">
+                        <i class="fas fa-eye"></i> معاينة التأثير
+                    </button>
+                </div>
+            </div>
+
+            <div id="deletePreview" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- نافذة حذف سهم بالكامل -->
+    <div class="modal-overlay" id="deleteStockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-trash-alt"></i> حذف سهم بالكامل</h2>
+                <button class="modal-close" onclick="closeDeleteStockModal()">&times;</button>
+            </div>
+            
+            <div class="delete-date-section">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold;">اختر السهم المراد حذفه:</label>
+                    <select id="deleteStockSelect" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+                        <option value="">-- اختر السهم --</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8d7da; border-radius: 5px; display: none;" id="stockInfo">
+                    <h4>معلومات السهم:</h4>
+                    <p id="stockInfoText"></p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="deleteSelectedStock()" class="btn-danger" style="flex: 1;">
+                        <i class="fas fa-trash"></i> حذف السهم نهائياً
+                    </button>
+                    <button onclick="previewDeleteStock()" class="btn-info" style="flex: 1;">
+                        <i class="fas fa-eye"></i> عرض التفاصيل
+                    </button>
+                </div>
+            </div>
+
+            <div id="stockPreview" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addCustomStockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> إضافة سهم خاص</h2>
+                <button class="modal-close" onclick="closeAddCustomStockModal()">&times;</button>
+            </div>
+
+            <div class="delete-date-section" style="border-color: #28a745;">
+                <p style="margin-bottom: 15px; color: #495057;">
+                    أضف سهمًا جديدًا يدويًا ليظهر في قاعدة البيانات، ثم يمكنك رفع ملفه التاريخي أو تحديثه لاحقًا.
+                </p>
+
+                <div class="custom-stock-form">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">رمز السهم</label>
+                        <input type="text" id="customStockSymbol" placeholder="مثال: ZMID">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">الاسم المختصر</label>
+                        <input type="text" id="customStockShortName" placeholder="مثال: زهراء المعادي">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">الاسم الكامل</label>
+                        <input type="text" id="customStockLongName" placeholder="مثال: زهراء المعادي للاستثمار والتعمير">
+                    </div>
+                </div>
+
+                <div class="custom-stock-actions">
+                    <button type="button" onclick="submitCustomStock()" class="btn-success">
+                        <i class="fas fa-check"></i> إضافة السهم
+                    </button>
+                    <button type="button" onclick="closeAddCustomStockModal()" class="btn-info">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة النتائج المنبثقة -->
+    <div class="modal-overlay" id="resultsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> نتائج اكتشاف الأيام الزائدة</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        // ==================== قاعدة البيانات في الذاكرة ====================
+        let database = { companies: {} };
+        let currentFileHandle = null;
+        let currentFileName = null;
+        let standardDays = 0;
+        let excessStocks = [];
+        let missingStocks = [];
+        let showIncompleteOnly = false;
+        let groupCollapsed = { above: true, below: true, excluded: true };
+        const DEFAULT_DATA_FILE_PATH = '../Data/stock_data.json';
+        const HANDLE_DB_NAME = 'stocks-file-handle-db';
+        const HANDLE_STORE_NAME = 'handles';
+        const HANDLE_KEY = 'primary';
+
+        function isJsonFileName(fileName) {
+            return /\.json$/i.test(String(fileName || '').trim());
+        }
+
+        function openHandleDb() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(HANDLE_DB_NAME, 1);
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(HANDLE_STORE_NAME)) {
+                        db.createObjectStore(HANDLE_STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error || new Error('IndexedDB error'));
+            });
+        }
+
+        async function savePersistentHandle(handle) {
+            if (!handle || typeof indexedDB === 'undefined') return;
+            const db = await openHandleDb();
+
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(HANDLE_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(HANDLE_STORE_NAME);
+                store.put(handle, HANDLE_KEY);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('Failed to persist file handle'));
+            });
+
+            db.close();
+        }
+
+        async function getPersistentHandle() {
+            if (typeof indexedDB === 'undefined') return null;
+            const db = await openHandleDb();
+
+            const handle = await new Promise((resolve, reject) => {
+                const tx = db.transaction(HANDLE_STORE_NAME, 'readonly');
+                const store = tx.objectStore(HANDLE_STORE_NAME);
+                const request = store.get(HANDLE_KEY);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error || new Error('Failed to load file handle'));
+            });
+
+            db.close();
+            return handle;
+        }
+
+        async function restorePersistentHandle(loadData = true) {
+            try {
+                const handle = await getPersistentHandle();
+                if (!handle) return false;
+
+                let perm = 'prompt';
+                if (typeof handle.queryPermission === 'function') {
+                    perm = await handle.queryPermission({ mode: 'readwrite' });
+                }
+                if (perm !== 'granted' && typeof handle.requestPermission === 'function') {
+                    perm = await handle.requestPermission({ mode: 'readwrite' });
+                }
+                if (perm !== 'granted') {
+                    addLog('⚠️ يوجد ربط محفوظ لكن صلاحية الكتابة غير ممنوحة حالياً. افتح الملف يدوياً مرة واحدة.', 'warning');
+                    return false;
+                }
+                currentFileHandle = handle;
+
+                if (loadData) {
+                    const file = await handle.getFile();
+                    await readFileContent(file, file.name || DEFAULT_DATA_FILE_PATH);
+                    addLog(`♻️ تم استرجاع الربط تلقائياً مع الملف: ${file.name || DEFAULT_DATA_FILE_PATH}`, 'success');
+                } else {
+                    currentFileName = handle.name || currentFileName || DEFAULT_DATA_FILE_PATH;
+                    updateFileInfo();
+                }
+
+                return true;
+            } catch (error) {
+                addLog(`⚠️ تعذر استرجاع ربط الملف المحفوظ: ${error.message}`, 'warning');
+                return false;
+            }
+        }
+
+        function restoreDatabaseFromStorage() {
+            try {
+                const raw = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+                if (!raw) return false;
+
+                const parsed = parseJsonSafe(raw);
+                const companies = normalizeImportedCompanies(parsed);
+                const count = Object.keys(companies).length;
+                if (!count) return false;
+
+                database.companies = companies;
+                currentFileName = localStorage.getItem('lastUploadedFileName') || DEFAULT_DATA_FILE_PATH;
+                updateFileInfo();
+                updateDisplay();
+                calculateStandardDays();
+                addLog(`♻️ تم استرجاع قاعدة البيانات تلقائيًا من التخزين (${count} شركة)`, 'success');
+                return true;
+            } catch (error) {
+                addLog(`⚠️ تعذر استرجاع البيانات المحفوظة: ${error.message}`, 'warning');
+                return false;
+            }
+        }
+
+        // ==================== دوال تحويل التاريخ ====================
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function formatDate(date) {
+            if (!date || date.getTime() === 0) return '—';
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatDateForInput(date) {
+            if (!date || date.getTime() === 0) return '';
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function isValidSymbol(symbol) {
+            return symbol && symbol.trim() !== '' && /^[A-Z0-9_]{2,15}$/i.test(symbol.trim());
+        }
+
+        function extractSymbolFromCell(value) {
+            if (value === null || value === undefined) return '';
+            const text = value.toString().trim().toUpperCase();
+            if (!text) return '';
+
+            if (isValidSymbol(text)) return text;
+
+            const compact = text.replace(/\s+/g, '');
+            if (isValidSymbol(compact)) return compact;
+
+            const match = text.match(/[A-Z0-9_]{2,15}/);
+            return match ? match[0].toUpperCase() : '';
+        }
+
+        function normalizeCompanyName(name) {
+            if (!name) return '';
+            return name.toString().trim().replace(/\s+/g, ' ');
+        }
+
+        function resetCustomStockForm() {
+            const symbolInput = document.getElementById('customStockSymbol');
+            const shortNameInput = document.getElementById('customStockShortName');
+            const longNameInput = document.getElementById('customStockLongName');
+            if (symbolInput) symbolInput.value = '';
+            if (shortNameInput) shortNameInput.value = '';
+            if (longNameInput) longNameInput.value = '';
+        }
+
+        function showAddCustomStockModal() {
+            resetCustomStockForm();
+            document.getElementById('addCustomStockModal').classList.add('active');
+            const symbolInput = document.getElementById('customStockSymbol');
+            if (symbolInput) symbolInput.focus();
+        }
+
+        function closeAddCustomStockModal() {
+            document.getElementById('addCustomStockModal').classList.remove('active');
+        }
+
+        async function submitCustomStock() {
+            const symbolInput = document.getElementById('customStockSymbol');
+            const shortNameInput = document.getElementById('customStockShortName');
+            const longNameInput = document.getElementById('customStockLongName');
+
+            const symbol = extractSymbolFromCell(symbolInput?.value || '');
+            const shortName = normalizeCompanyName(shortNameInput?.value || '');
+            const longName = normalizeCompanyName(longNameInput?.value || '');
+
+            if (!isValidSymbol(symbol)) {
+                addLog('❌ أدخل رمز سهم صحيح مثل ZMID', 'error');
+                symbolInput?.focus();
+                return;
+            }
+
+            if (!shortName && !longName) {
+                addLog('❌ أدخل الاسم المختصر أو الاسم الكامل على الأقل', 'error');
+                shortNameInput?.focus();
+                return;
+            }
+
+            if (!database.companies || typeof database.companies !== 'object') {
+                database.companies = {};
+            }
+
+            if (database.companies[symbol]) {
+                addLog(`⚠️ السهم ${symbol} موجود بالفعل`, 'warning');
+                symbolInput?.focus();
+                return;
+            }
+
+            database.companies[symbol] = {
+                symbol,
+                shortName: shortName || longName || symbol,
+                longName: longName || shortName || symbol,
+                historical: []
+            };
+
+            closeAddCustomStockModal();
+            addLog(`✅ تمت إضافة السهم الخاص ${symbol}`, 'success');
+            calculateStandardDays();
+            await autoPersistChanges(`إضافة سهم خاص ${symbol}`);
+        }
+
+        function extractCompanyNameFromDailyRow(row, symbol) {
+            if (!row || !Array.isArray(row)) return '';
+
+            const candidateIndexes = [1, 2, 3, 4];
+            for (const index of candidateIndexes) {
+                const value = row[index];
+                if (value === null || value === undefined) continue;
+
+                const text = normalizeCompanyName(value);
+                if (!text) continue;
+                if (isValidSymbol(text) && text.toUpperCase() === symbol) continue;
+                if (!isNaN(parseFloat(text))) continue;
+
+                return text;
+            }
+
+            return '';
+        }
+
+        function normalizeHeaderText(value) {
+            if (value === null || value === undefined) return '';
+            return value.toString().trim().toLowerCase();
+        }
+
+        function toNumberOrNull(value) {
+            if (value === null || value === undefined || value === '') return null;
+
+            const raw = value.toString().trim();
+            if (!raw) return null;
+
+            const normalized = raw.replace(/,/g, '').replace(/٪/g, '%');
+            let multiplier = 1;
+            if (/[mM]$/.test(normalized)) multiplier = 1_000_000;
+            else if (/[kK]$/.test(normalized)) multiplier = 1_000;
+            else if (/[bB]$/.test(normalized)) multiplier = 1_000_000_000;
+
+            const numericText = normalized.replace(/[mMkKbB%]/g, '');
+            const num = parseFloat(numericText);
+            return Number.isFinite(num) ? num : null;
+        }
+
+        function detectHistoricalReportColumns(headerRow) {
+            const safeHeader = Array.isArray(headerRow) ? headerRow : [];
+            const normalized = safeHeader.map(h => normalizeHeaderText(h));
+
+            const dateCol = findDailyColumnIndex(
+                safeHeader,
+                ['تاريخ', 'date', 'التاريخ'],
+                0
+            );
+
+            const closeCol = findDailyColumnIndex(
+                safeHeader,
+                ['آخر سعر', 'اخر سعر', 'close', 'closing', 'price', 'الإغلاق', 'الاغلاق', 'last price'],
+                1
+            );
+
+            const openCol = findDailyColumnIndex(
+                safeHeader,
+                ['سعر الفتح', 'فتح', 'open', 'opening'],
+                2
+            );
+
+            const highCol = findDailyColumnIndex(
+                safeHeader,
+                ['عالي', 'أعلى', 'اعلى', 'high', 'highest'],
+                3
+            );
+
+            const lowCol = findDailyColumnIndex(
+                safeHeader,
+                ['منخفض', 'أدنى', 'ادنى', 'low', 'lowest'],
+                4
+            );
+
+            const volumeCol = findDailyColumnIndex(
+                safeHeader,
+                ['الحجم', 'volume', 'vol'],
+                5
+            );
+
+            const changeCol = findDailyColumnIndex(
+                safeHeader,
+                ['التغير', 'change', '%'],
+                6
+            );
+
+            return { dateCol, closeCol, openCol, highCol, lowCol, volumeCol, changeCol };
+        }
+
+        function findDailyColumnIndex(headerRow, keywords, defaultIndex) {
+            if (!headerRow || !Array.isArray(headerRow)) return defaultIndex;
+
+            for (let col = 0; col < headerRow.length; col++) {
+                const headerText = normalizeHeaderText(headerRow[col]);
+                if (!headerText) continue;
+                if (keywords.some(keyword => headerText.includes(keyword))) {
+                    return col;
+                }
+            }
+
+            return defaultIndex;
+        }
+
+        function detectDailyReportColumns(headerRow) {
+            const safeHeader = Array.isArray(headerRow) ? headerRow : [];
+            const normalized = safeHeader.map(h => normalizeHeaderText(h));
+
+            const symbolCol = findDailyColumnIndex(
+                safeHeader,
+                ['الرمز', 'رمز', 'symbol', 'ticker', 'code', 'كود'],
+                0
+            );
+
+            const shortNameCol = findDailyColumnIndex(
+                safeHeader,
+                ['اسم الشركة (قصير)', 'اسم الشركة', 'name', 'company', 'issuer'],
+                1
+            );
+
+            const longNameCol = findDailyColumnIndex(
+                safeHeader,
+                ['اسم الشركة (طويل)', 'long name', 'longname'],
+                2
+            );
+
+            const isPriceHeader = (text) => {
+                if (!text) return false;
+
+                const hasLastPriceWord =
+                    text.includes('آخر سعر') ||
+                    text.includes('اخر سعر') ||
+                    (text.includes('last') && text.includes('price')) ||
+                    text === 'last price' ||
+                    text === 'last';
+
+                const forbidden =
+                    text.includes('الإقفال السابق') ||
+                    text.includes('الاقفال السابق') ||
+                    text.includes('previous close') ||
+                    text.includes('open') ||
+                    text.includes('سعر الفتح') ||
+                    text.includes('high') ||
+                    text.includes('عالي') ||
+                    text.includes('low') ||
+                    text.includes('منخفض') ||
+                    text.includes('change') ||
+                    text.includes('التغير');
+
+                return hasLastPriceWord && !forbidden;
+            };
+
+            let priceCol = normalized.findIndex(isPriceHeader);
+            if (priceCol === -1) {
+                priceCol = findDailyColumnIndex(
+                    safeHeader,
+                    ['آخر سعر', 'اخر سعر', 'last price'],
+                    6
+                );
+            }
+
+            const openCol = findDailyColumnIndex(
+                safeHeader,
+                ['open', 'سعر الفتح', 'افتتاح', 'opening'],
+                5
+            );
+
+            const highCol = findDailyColumnIndex(
+                safeHeader,
+                ['high', 'عالي', 'أعلى', 'اعلى', 'highest'],
+                9
+            );
+
+            const lowCol = findDailyColumnIndex(
+                safeHeader,
+                ['low', 'منخفض', 'أدنى', 'ادنى', 'lowest'],
+                10
+            );
+
+            const volumeCol = findDailyColumnIndex(
+                safeHeader,
+                ['volume', 'حجم', 'vol'],
+                12
+            );
+
+            const changeCol = findDailyColumnIndex(
+                safeHeader,
+                ['change', 'التغير', '%'],
+                7
+            );
+
+            return {
+                symbolCol,
+                shortNameCol,
+                longNameCol,
+                priceCol,
+                openCol,
+                highCol,
+                lowCol,
+                volumeCol,
+                changeCol
+            };
+        }
+
+        // ==================== حساب العدد الأكثر تكراراً ====================
+        function getMissingDaysForMode(company, mode) {
+            const totalDays = company?.historical?.length || 0;
+            if (!mode || mode <= 0) return 0;
+            return Math.max(0, mode - totalDays);
+        }
+
+        function getCompanyExclusionMeta(company) {
+            if (!company || typeof company !== 'object') {
+                return { hasExclusion: false, allowedMissingDays: 0, active: false };
+            }
+
+            let exclusion = company.exclusion;
+            if ((!exclusion || typeof exclusion !== 'object') && company.excluded === true) {
+                const legacyAllowed = Number.isFinite(parseInt(company.excludedMissingDays, 10))
+                    ? Math.max(0, parseInt(company.excludedMissingDays, 10))
+                    : 0;
+                exclusion = {
+                    allowedMissingDays: legacyAllowed,
+                    createdAt: company.excludedAt || new Date().toISOString()
+                };
+                company.exclusion = exclusion;
+            }
+
+            if (!exclusion || typeof exclusion !== 'object') {
+                return { hasExclusion: false, allowedMissingDays: 0, active: false };
+            }
+
+            const allowedMissingDays = Number.isFinite(parseInt(exclusion.allowedMissingDays, 10))
+                ? Math.max(0, parseInt(exclusion.allowedMissingDays, 10))
+                : 0;
+            return { hasExclusion: true, allowedMissingDays, active: false };
+        }
+
+        function isCompanyExcluded(company, mode = standardDays) {
+            const meta = getCompanyExclusionMeta(company);
+            if (!meta.hasExclusion) return false;
+            if (!mode || mode <= 0) return true;
+
+            const currentMissingDays = getMissingDaysForMode(company, mode);
+            return currentMissingDays <= meta.allowedMissingDays;
+        }
+
+        function getComparableCompanies(mode = standardDays) {
+            return Object.values(database.companies).filter(c => c.symbol && c.historical && Array.isArray(c.historical) && !isCompanyExcluded(c, mode));
+        }
+
+        function calculateModeDaysFromCompanies(companies) {
+            if (companies.length === 0) return 0;
+            
+            const frequency = {};
+            companies.forEach(company => {
+                const days = company.historical.length;
+                frequency[days] = (frequency[days] || 0) + 1;
+            });
+            
+            let mode = 0;
+            let maxFreq = 0;
+            
+            Object.entries(frequency).forEach(([days, count]) => {
+                if (count > maxFreq) {
+                    maxFreq = count;
+                    mode = parseInt(days);
+                }
+            });
+            
+            if (maxFreq > 0) {
+                const candidates = Object.entries(frequency)
+                    .filter(([_, count]) => count === maxFreq)
+                    .map(([days]) => parseInt(days));
+                
+                mode = Math.max(...candidates);
+            }
+            
+            return mode;
+        }
+
+        function calculateModeDays() {
+            const comparableCompanies = getComparableCompanies(standardDays);
+            const comparableMode = calculateModeDaysFromCompanies(comparableCompanies);
+            if (comparableMode > 0) return comparableMode;
+
+            // Fallback أمان: إذا تعذر حساب المعيار بالمستثنيات، احسبه من كل الأسهم الصالحة.
+            const allCompanies = Object.values(database.companies).filter(c => c.symbol && c.historical && Array.isArray(c.historical));
+            return calculateModeDaysFromCompanies(allCompanies);
+        }
+
+        // ==================== حساب الأيام المعيارية ====================
+        function calculateStandardDays() {
+            standardDays = calculateModeDays();
+            const excluded = Object.values(database.companies).filter(company => isCompanyExcluded(company, standardDays)).length;
+            document.getElementById('excludedCount').textContent = excluded;
+            
+            if (standardDays === 0) {
+                document.getElementById('standardDays').textContent = '0';
+                document.getElementById('excessCount').textContent = '0';
+                document.getElementById('missingCount').textContent = '0';
+                document.getElementById('excludedCount').textContent = excluded;
+                document.getElementById('modeDays').textContent = '0';
+                addLog('⚠️ لا يمكن حساب الأيام المعيارية', 'warning');
+                updateDisplay();
+                return;
+            }
+            
+            const companies = getComparableCompanies(standardDays);
+            let excess = 0;
+            let missing = 0;
+            
+            companies.forEach(company => {
+                const days = company.historical.length;
+                if (days > standardDays) excess++;
+                else if (days < standardDays && days > 0) missing++;
+            });
+            
+            document.getElementById('standardDays').textContent = standardDays;
+            document.getElementById('excessCount').textContent = excess;
+            document.getElementById('missingCount').textContent = missing;
+            document.getElementById('modeDays').textContent = standardDays;
+            
+            addLog(`📊 الأيام المعيارية: ${standardDays} يوم (الأكثر تكراراً)`, 'success');
+            addLog(`   ⬆️ أسهم زائدة: ${excess}`, 'warning');
+            addLog(`   ⬇️ أسهم ناقصة: ${missing}`, 'info');
+            addLog(`   🚫 أسهم مستثناة: ${excluded}`, 'info');
+            
+            updateDisplay();
+        }
+
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('logArea');
+            const time = new Date().toLocaleTimeString('ar-EG', { hour12: false });
+            const colors = { 
+                info: '#00ff00', 
+                error: '#ff4444', 
+                success: '#00C851', 
+                warning: '#ffbb33' 
+            };
+            log.innerHTML += `<div>[${time}] <span style="color: ${colors[type]}">${message}</span></div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function calculateRSIForSync(prices, period = 14) {
+            if (!Array.isArray(prices) || prices.length < period + 1) return 50;
+
+            let gains = 0;
+            let losses = 0;
+            for (let i = prices.length - period; i < prices.length; i++) {
+                const diff = prices[i] - prices[i - 1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+
+            if (avgLoss === 0) return 70;
+            if (avgGain === 0) return 30;
+
+            const rs = avgGain / avgLoss;
+            return Math.round((100 - (100 / (1 + rs))) * 10) / 10;
+        }
+
+        function calculateSupportResistanceForSync(prices) {
+            if (!Array.isArray(prices) || prices.length === 0) {
+                return { support: [0, 0, 0], resistance: [0, 0, 0] };
+            }
+
+            if (prices.length < 10) {
+                const lastPrice = prices[prices.length - 1] || 0;
+                return {
+                    support: [lastPrice * 0.95, lastPrice * 0.9, lastPrice * 0.85],
+                    resistance: [lastPrice * 1.05, lastPrice * 1.1, lastPrice * 1.15]
+                };
+            }
+
+            const last10 = prices.slice(-10);
+            const min = Math.min(...last10);
+            const max = Math.max(...last10);
+            const current = prices[prices.length - 1];
+            const range = max - min;
+
+            return {
+                support: [current - range * 0.382, current - range * 0.5, current - range * 0.618],
+                resistance: [current + range * 0.382, current + range * 0.5, current + range * 0.618]
+            };
+        }
+
+        function detectCandlePatternsForSync(pricePoints) {
+            const patterns = [];
+            if (!Array.isArray(pricePoints) || pricePoints.length < 2) return patterns;
+
+            const last = pricePoints[pricePoints.length - 1];
+            const prev = pricePoints[pricePoints.length - 2];
+
+            if (last.price > prev.price * 1.03) patterns.push('صاعدة قوية');
+            if (last.price < prev.price * 0.97) patterns.push('هابطة قوية');
+
+            return patterns;
+        }
+
+        function getRecommendationForSync(rsi, patterns, price, support, resistance, volumeRatio = 1, dayChange = 0) {
+            let score = 0;
+
+            const safeSupport = Number(support?.[0]);
+            const safeResistance = Number(resistance?.[0]);
+            const safePrice = Number(price);
+            const safeRsi = Number(rsi);
+            const safeVolumeRatio = Number(volumeRatio);
+            const safeDayChange = Number(dayChange);
+            const nearSupport = Number.isFinite(safeSupport) && safeSupport > 0 && Number.isFinite(safePrice)
+                ? ((safePrice - safeSupport) / safeSupport) * 100 <= 2.5
+                : false;
+            const nearResistance = Number.isFinite(safeResistance) && safeResistance > 0 && Number.isFinite(safePrice) && safePrice > 0
+                ? ((safeResistance - safePrice) / safePrice) * 100 <= 2
+                : false;
+
+            if (safeRsi >= 38 && safeRsi <= 58) score += 1.2;
+            else if (safeRsi >= 30 && safeRsi < 38) score += 0.8;
+            else if (safeRsi < 26) score += 0.2;
+            else if (safeRsi > 70) score -= 1.3;
+            else if (safeRsi > 64) score -= 0.7;
+
+            if (patterns.includes('صاعدة قوية')) score += 1.1;
+            if (patterns.includes('هابطة قوية')) score -= 1.1;
+
+            if (nearSupport) score += 0.9;
+            if (Number.isFinite(safeSupport) && safeSupport > 0 && Number.isFinite(safePrice) && safePrice < safeSupport * 0.97) score -= 1;
+
+            if (safeVolumeRatio >= 1.2 && safeDayChange > 0) score += 1.2;
+            else if (safeVolumeRatio >= 1 && safeDayChange > 0) score += 0.4;
+            else if (safeVolumeRatio >= 1.3 && safeDayChange < 0) score -= 1.2;
+            else if (safeVolumeRatio <= 0.65) score -= 0.6;
+
+            if (safeDayChange > 4.5 && safeVolumeRatio < 1) score -= 0.7;
+            if (nearResistance) score -= 0.8;
+
+            const strongBuyGate = (
+                safeRsi >= 32 && safeRsi <= 62 &&
+                safeDayChange >= 0 &&
+                safeVolumeRatio >= 1.05 &&
+                nearSupport &&
+                !nearResistance
+            );
+
+            if (score >= 3.2 && strongBuyGate) return 'strong-buy';
+            if (score >= 1.9) return 'buy';
+            return 'neutral';
+        }
+
+        function buildProcessedDataFromDatabase() {
+            const companies = Object.values(database.companies || {});
+            const result = [];
+
+            companies.forEach(company => {
+                if (!company || !company.symbol) return;
+
+                const history = Array.isArray(company.historical) ? company.historical : [];
+                const pricePoints = history
+                    .map(item => ({
+                        date: item?.date,
+                        price: parseFloat(item?.close),
+                        volume: Number(item?.volume ?? item?.vol ?? 0)
+                    }))
+                    .filter(item => item.date && Number.isFinite(item.price));
+
+                if (pricePoints.length === 0) return;
+
+                pricePoints.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                const prices = pricePoints.map(item => item.price);
+
+                const currentPrice = prices[prices.length - 1];
+                const previousPrice = prices.length > 1 ? prices[prices.length - 2] : currentPrice;
+                const changeNumber = previousPrice ? ((currentPrice - previousPrice) / previousPrice * 100) : 0;
+                const change = changeNumber.toFixed(1);
+                const changeValue = parseFloat(change);
+                const volumes = pricePoints.map(item => Number(item.volume || 0)).filter(Number.isFinite);
+                const recentVolumes = volumes.slice(-20).filter(v => Number.isFinite(v) && v > 0);
+                const latestVolume = volumes.length ? Number(volumes[volumes.length - 1] || 0) : 0;
+                const avgVolume20 = recentVolumes.length
+                    ? recentVolumes.reduce((sum, value) => sum + value, 0) / recentVolumes.length
+                    : 0;
+                const volumeRatio = avgVolume20 > 0 ? latestVolume / avgVolume20 : 1;
+
+                const rsi = calculateRSIForSync(prices);
+                const sr = calculateSupportResistanceForSync(prices);
+                const patterns = detectCandlePatternsForSync(pricePoints);
+                const recommendation = getRecommendationForSync(rsi, patterns, currentPrice, sr.support, sr.resistance, volumeRatio, changeValue);
+
+                const symbol = company.symbol.toString().trim().toUpperCase();
+                const name = normalizeCompanyName(company.longName || company.shortName || symbol) || symbol;
+
+                result.push({
+                    symbol,
+                    name,
+                    currentPrice,
+                    change,
+                    changeValue,
+                    rsi,
+                    support: sr.support,
+                    resistance: sr.resistance,
+                    patterns,
+                    latestVolume,
+                    avgVolume20,
+                    volumeRatio,
+                    recommendation
+                });
+            });
+
+            return result;
+        }
+
+        function buildCompactDatabaseForStorage(maxHistoryDays = 260) {
+            const sourceCompanies = database.companies || {};
+            const compactCompanies = {};
+
+            Object.entries(sourceCompanies).forEach(([symbol, company]) => {
+                if (!company || typeof company !== 'object') return;
+
+                const historical = Array.isArray(company.historical) ? company.historical : [];
+                const trimmedHistorical = historical.slice(-maxHistoryDays);
+
+                compactCompanies[symbol] = {
+                    symbol: company.symbol || symbol,
+                    shortName: company.shortName || company.longName || symbol,
+                    longName: company.longName || company.shortName || symbol,
+                    exclusion: company.exclusion && typeof company.exclusion === 'object'
+                        ? {
+                            allowedMissingDays: Number.isFinite(parseInt(company.exclusion.allowedMissingDays, 10))
+                                ? Math.max(0, parseInt(company.exclusion.allowedMissingDays, 10))
+                                : 0,
+                            createdAt: company.exclusion.createdAt || null
+                        }
+                        : null,
+                    historical: trimmedHistorical.map(item => ({
+                        date: item?.date || null,
+                        close: item?.close ?? item?.price ?? null,
+                        open: item?.open ?? null,
+                        high: item?.high ?? null,
+                        low: item?.low ?? null,
+                        volume: item?.volume ?? null,
+                        change: item?.change ?? null
+                    }))
+                };
+            });
+
+            return { companies: compactCompanies };
+        }
+
+        function setStorageSafely(key, value) {
+            let sessionOk = false;
+            let localOk = false;
+
+            try {
+                sessionStorage.setItem(key, value);
+                sessionOk = true;
+            } catch (error) {
+                console.warn(`sessionStorage setItem failed for ${key}:`, error);
+            }
+
+            try {
+                localStorage.setItem(key, value);
+                localOk = true;
+            } catch (error) {
+                console.warn(`localStorage setItem failed for ${key}:`, error);
+            }
+
+            return { sessionOk, localOk, ok: sessionOk || localOk };
+        }
+
+        function setLocalStorageSafely(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (error) {
+                console.warn(`localStorage setItem failed for ${key}:`, error);
+                return false;
+            }
+        }
+
+        function buildCompactProcessedDataForStorage(rows, maxRows = 1200) {
+            const list = Array.isArray(rows) ? rows : [];
+            return list.slice(0, maxRows).map(row => ({
+                symbol: row?.symbol || '',
+                name: row?.name || row?.symbol || '',
+                currentPrice: Number(row?.currentPrice || 0),
+                change: row?.change ?? '0.0',
+                changeValue: Number(row?.changeValue || 0),
+                rsi: Number(row?.rsi || 0),
+                support: Array.isArray(row?.support) ? row.support : [],
+                resistance: Array.isArray(row?.resistance) ? row.resistance : [],
+                volumeRatio: Number(row?.volumeRatio || 1),
+                recommendation: row?.recommendation || 'neutral'
+            }));
+        }
+
+        function trySetLocalStocksDataWithAdaptiveCompaction() {
+            const attempts = [220, 160, 120, 90, 70, 50, 40];
+            for (const days of attempts) {
+                const compactPayload = JSON.stringify(buildCompactDatabaseForStorage(days));
+                if (setLocalStorageSafely('stocksData', compactPayload)) {
+                    return { ok: true, days };
+                }
+            }
+            return { ok: false, days: 0 };
+        }
+
+        function trySetLocalProcessedDataWithAdaptiveCompaction(processedRows) {
+            const attempts = [1600, 1200, 900, 700, 500, 300, 180];
+            for (const maxRows of attempts) {
+                const compactPayload = JSON.stringify(buildCompactProcessedDataForStorage(processedRows, maxRows));
+                if (setLocalStorageSafely('processedData', compactPayload)) {
+                    return { ok: true, maxRows };
+                }
+            }
+            return { ok: false, maxRows: 0 };
+        }
+
+        function syncDataToMainApp() {
+            const companyCount = Object.keys(database.companies || {}).length;
+
+            if (companyCount > 0) {
+                const payload = JSON.stringify(database);
+                const stocksSetResult = setStorageSafely('stocksData', payload);
+                let localStocksReady = stocksSetResult.localOk;
+
+                if (!localStocksReady) {
+                    const compactResult = trySetLocalStocksDataWithAdaptiveCompaction();
+                    localStocksReady = compactResult.ok;
+
+                    if (compactResult.ok) {
+                        addLog(`⚠️ حجم البيانات كبير. تم حفظ نسخة مضغوطة بآخر ${compactResult.days} يوم لضمان عمل باقي الصفحات.`, 'warning');
+                    } else if (!stocksSetResult.sessionOk) {
+                        addLog('❌ تعذر مزامنة بيانات الأسهم مع باقي الصفحات بسبب قيود التخزين.', 'error');
+                    }
+                }
+
+                try {
+                    localStorage.setItem('lastUploadedFileName', currentFileName || 'upload datat');
+                } catch (error) {
+                    console.warn('localStorage setItem failed for lastUploadedFileName:', error);
+                }
+
+                const processed = buildProcessedDataFromDatabase();
+                const processedPayload = JSON.stringify(processed);
+                const processedSetResult = setStorageSafely('processedData', processedPayload);
+                let localProcessedReady = processedSetResult.localOk;
+
+                if (!localProcessedReady) {
+                    const compactProcessedResult = trySetLocalProcessedDataWithAdaptiveCompaction(processed);
+                    localProcessedReady = compactProcessedResult.ok;
+
+                    if (compactProcessedResult.ok) {
+                        addLog(`⚠️ تم حفظ processedData مضغوطًا (حتى ${compactProcessedResult.maxRows} صف) للتوافق مع الصفحات الأخرى.`, 'warning');
+                    } else if (!processedSetResult.sessionOk) {
+                        addLog('❌ تعذر مزامنة processedData مع باقي الصفحات بسبب قيود التخزين.', 'error');
+                    }
+                }
+
+                if (window.StockDataBridge && typeof window.StockDataBridge.saveFullDatasets === 'function') {
+                    window.StockDataBridge.saveFullDatasets({
+                        stocksData: database,
+                        processedData: processed,
+                        fileName: currentFileName || DEFAULT_DATA_FILE_PATH
+                    }).catch(() => {
+                        addLog('⚠️ تعذر حفظ نسخة IndexedDB الكاملة (سيستمر العمل بالنسخة المحلية).', 'warning');
+                    });
+                }
+            } else {
+                sessionStorage.removeItem('stocksData');
+                localStorage.removeItem('stocksData');
+                localStorage.removeItem('lastUploadedFileName');
+                sessionStorage.removeItem('processedData');
+                localStorage.removeItem('processedData');
+            }
+        }
+
+        async function autoPersistChanges(contextLabel = 'تحديث البيانات') {
+            // مزامنة فورية مع التطبيق الرئيسي دائماً
+            syncDataToMainApp();
+
+            // إذا الملف مفتوح بصلاحية كتابة، احفظ تلقائياً على القرص
+            if (currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
+                try {
+                    if (currentFileHandle.requestPermission) {
+                        const perm = await currentFileHandle.requestPermission({ mode: 'readwrite' });
+                        if (perm !== 'granted') {
+                            throw new Error('صلاحية الكتابة غير متاحة');
+                        }
+                    }
+
+                    const writable = await currentFileHandle.createWritable();
+                    const dataStr = JSON.stringify(database, null, 2);
+                    await writable.write(dataStr);
+                    await writable.close();
+                    addLog(`💾 حفظ تلقائي ناجح على الملف (${contextLabel})`, 'success');
+                    return true;
+                } catch (error) {
+                    addLog(`⚠️ تعذر الحفظ المباشر على الملف: ${error.message}`, 'warning');
+                }
+            }
+
+            // fallback: حفظ تلقائي في التخزين المحلي
+            addLog(`⚠️ لم يتم الحفظ في ملف JSON لعدم وجود ربط كتابة. تم الحفظ مؤقتًا في التخزين المحلي فقط (${contextLabel})`, 'warning');
+            return false;
+        }
+
+        async function linkWritableHandleWithoutWriting(actionLabel = 'التعديلات') {
+            if (!('showOpenFilePicker' in window)) {
+                addLog('❌ هذا المتصفح لا يدعم ربط ملف بصلاحية كتابة مباشرة.', 'error');
+                return false;
+            }
+
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'JSON Files',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+
+                if (!handle) return false;
+
+                if (handle.requestPermission) {
+                    const perm = await handle.requestPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted') {
+                        addLog('⛔ تم رفض صلاحية الكتابة. لن يتم الربط.', 'error');
+                        return false;
+                    }
+                }
+
+                currentFileHandle = handle;
+                currentFileName = handle.name || currentFileName || DEFAULT_DATA_FILE_PATH;
+                await savePersistentHandle(handle);
+                updateFileInfo();
+                addLog(`🔗 تم ربط الملف بنجاح (${currentFileName}) للحفظ التلقائي بعد ${actionLabel}`, 'success');
+                return true;
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    addLog(`⚠️ تعذر ربط الملف للحفظ التلقائي: ${error.message}`, 'warning');
+                }
+                return false;
+            }
+        }
+
+        async function ensureWritableHandleForAutoSave(actionLabel = 'التعديلات') {
+            if (currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
+                return true;
+            }
+
+            const restored = await restorePersistentHandle(false);
+            if (restored && currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
+                return true;
+            }
+
+            if (!('showOpenFilePicker' in window)) {
+                addLog(`⚠️ المتصفح لا يدعم ربط ملف للحفظ التلقائي بعد ${actionLabel}. سيتم الحفظ في التخزين المحلي فقط.`, 'warning');
+                return false;
+            }
+
+            addLog(`📌 لتمكين الحفظ التلقائي الفعلي بعد ${actionLabel} اختر ملف Data/stock_data.json مرة واحدة`, 'info');
+            const linked = await linkWritableHandleWithoutWriting(actionLabel);
+            if (!linked) {
+                addLog(`⚠️ لم يتم ربط ملف للحفظ التلقائي بعد ${actionLabel}. التغييرات محفوظة محلياً فقط.`, 'warning');
+                return false;
+            }
+
+            addLog('✅ تم ربط ملف للحفظ التلقائي المباشر', 'success');
+            return true;
+        }
+
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+
+        function showWarning(message) {
+            addLog('⚠️ ' + message, 'warning');
+        }
+
+        function updateFileInfo() {
+            const activeFile = currentFileName || DEFAULT_DATA_FILE_PATH;
+            document.getElementById('currentFileName').textContent = activeFile;
+            document.getElementById('currentFilePathLabel').textContent = activeFile;
+            document.getElementById('fileCompanies').textContent = Object.keys(database.companies).length;
+
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) {
+                saveBtn.disabled = !(currentFileHandle && typeof currentFileHandle.createWritable === 'function');
+            }
+        }
+
+        function parseJsonSafe(rawText) {
+            if (typeof rawText !== 'string') return {};
+            const clean = rawText.replace(/^\uFEFF/, '').trim();
+            return JSON.parse(clean);
+        }
+
+        function normalizeImportedCompanies(importedData) {
+            const source = importedData?.companies || importedData || {};
+            const normalized = {};
+
+            const entries = Array.isArray(source)
+                ? source.map((item, index) => [String(index), item])
+                : Object.entries(source || {});
+
+            entries.forEach(([key, item]) => {
+                if (!item || typeof item !== 'object') return;
+
+                const symbolRaw = item.symbol ?? item.Symbol ?? item.code ?? item.Code ?? '';
+                const fallbackKeySymbol = String(key || '').trim().toUpperCase();
+                const symbol = String(symbolRaw || fallbackKeySymbol).trim().toUpperCase();
+                if (!symbol) return;
+
+                const shortName = item.shortName || item.short_name || item.name || symbol;
+                const longName = item.longName || item.long_name || shortName || symbol;
+                const historical = Array.isArray(item.historical)
+                    ? item.historical
+                    : (Array.isArray(item.daily) ? item.daily : []);
+                const normalizedExclusion = (item.exclusion && typeof item.exclusion === 'object')
+                    ? {
+                        allowedMissingDays: Number.isFinite(parseInt(item.exclusion.allowedMissingDays, 10))
+                            ? Math.max(0, parseInt(item.exclusion.allowedMissingDays, 10))
+                            : 0,
+                        createdAt: item.exclusion.createdAt || null
+                    }
+                    : (item.excluded === true
+                        ? {
+                            allowedMissingDays: Number.isFinite(parseInt(item.excludedMissingDays, 10))
+                                ? Math.max(0, parseInt(item.excludedMissingDays, 10))
+                                : 0,
+                            createdAt: item.excludedAt || null
+                        }
+                        : null);
+
+                normalized[symbol] = {
+                    ...item,
+                    symbol,
+                    shortName: String(shortName || symbol),
+                    longName: String(longName || shortName || symbol),
+                    historical,
+                    exclusion: normalizedExclusion
+                };
+
+                delete normalized[symbol].excluded;
+                delete normalized[symbol].excludedMissingDays;
+                delete normalized[symbol].excludedAt;
+            });
+
+            return normalized;
+        }
+
+        function applyImportedData(importedData, fileNameLabel) {
+            const companiesMap = normalizeImportedCompanies(importedData);
+            const count = Object.keys(companiesMap).length;
+
+            if (!count) {
+                throw new Error('الملف لا يحتوي شركات بصيغة مدعومة (symbol + historical)');
+            }
+
+            database.companies = companiesMap;
+            cleanInvalidStocks();
+            currentFileName = fileNameLabel || currentFileName;
+
+            updateFileInfo();
+            updateDisplay();
+            calculateStandardDays();
+
+            addLog(`✅ تم فتح الملف: ${currentFileName} (${Object.keys(database.companies).length} شركة)`, 'success');
+            updateFileInfo();
+        }
+
+        function cleanInvalidStocks() {
+            const companies = database.companies;
+            const ids = Object.keys(companies);
+            let removed = 0;
+            
+            ids.forEach(id => {
+                const company = companies[id];
+                const symbol = String(company?.symbol || '').trim();
+                if (!symbol) {
+                    delete companies[id];
+                    removed++;
+                    return;
+                }
+
+                company.symbol = symbol.toUpperCase();
+                if (!company.shortName || String(company.shortName).trim() === '') {
+                    company.shortName = company.symbol;
+                }
+                if (!company.longName || String(company.longName).trim() === '') {
+                    company.longName = company.shortName;
+                }
+                if (!Array.isArray(company.historical)) {
+                    company.historical = Array.isArray(company.daily) ? company.daily : [];
+                }
+
+                if (company.exclusion && typeof company.exclusion === 'object') {
+                    const allowed = Number.isFinite(parseInt(company.exclusion.allowedMissingDays, 10))
+                        ? Math.max(0, parseInt(company.exclusion.allowedMissingDays, 10))
+                        : 0;
+                    company.exclusion = {
+                        allowedMissingDays: allowed,
+                        createdAt: company.exclusion.createdAt || null
+                    };
+                } else {
+                    delete company.exclusion;
+                }
+
+                delete company.excluded;
+                delete company.excludedMissingDays;
+                delete company.excludedAt;
+            });
+            
+            if (removed > 0) {
+                addLog(`🧹 تم حذف ${removed} شركة بدون رمز`, 'warning');
+                updateDisplay();
+            } else {
+                addLog('✅ لا توجد شركات بدون رمز', 'success');
+            }
+        }
+
+        function createNewFile() {
+            database = { companies: {} };
+            currentFileHandle = null;
+            currentFileName = null;
+            standardDays = 0;
+            excessStocks = [];
+            missingStocks = [];
+            updateFileInfo();
+            updateDisplay();
+            addLog('📄 تم إنشاء ملف جديد', 'success');
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('standardDays').textContent = '0';
+            document.getElementById('excessCount').textContent = '0';
+            document.getElementById('missingCount').textContent = '0';
+            document.getElementById('excludedCount').textContent = '0';
+            document.getElementById('modeDays').textContent = '0';
+        }
+
+        // ==================== دوال فتح الملفات ====================
+        async function loadLocalFile(preferredPath = '') {
+            addLog('⛔ تم تعطيل التحميل للقراءة فقط. استخدم زر "فتح ملف JSON" مع صلاحية كتابة.', 'error');
+            return false;
+        }
+
+        function browseLocalFile() {
+            addLog('⛔ تم تعطيل التصفح للقراءة فقط. استخدم زر "فتح ملف JSON".', 'error');
+        }
+
+        function handleLocalFileBrowse(input) {
+            input.value = '';
+            addLog('⛔ تم تعطيل فتح ملفات القراءة فقط.', 'error');
+        }
+
+        async function openFile() {
+            if (!('showOpenFilePicker' in window)) {
+                addLog('❌ هذا المتصفح لا يدعم فتح ملف بصلاحية كتابة مباشرة. لا يمكن فتح البيانات بدون صلاحية.', 'error');
+                return;
+            }
+
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'JSON Files',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+
+                if (!handle) return;
+
+                if (handle.requestPermission) {
+                    const perm = await handle.requestPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted') {
+                        currentFileHandle = null;
+                        addLog('⛔ تم رفض صلاحية الكتابة. لن يتم فتح الملف.', 'error');
+                        return;
+                    }
+                }
+
+                const file = await handle.getFile();
+                currentFileHandle = handle;
+                await savePersistentHandle(handle);
+                await readFileContent(file, handle.name);
+                addLog('🔐 تم فتح الملف بصلاحية كتابة مباشرة', 'success');
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    addLog(`⚠️ تعذر الفتح بصلاحية كتابة: ${error.message}`, 'warning');
+                }
+            }
+        }
+
+        function fallbackOpenFile() {
+            addLog('⛔ تم تعطيل الفتح بدون صلاحية كتابة.', 'error');
+        }
+
+        async function readFileContent(file, fileName) {
+            if (!isJsonFileName(fileName || file?.name)) {
+                addLog('❌ امتداد الملف غير مدعوم. الرجاء اختيار ملف JSON فقط (.json)', 'error');
+                return false;
+            }
+
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = parseJsonSafe(e.target.result);
+                        applyImportedData(imported, fileName);
+                        resolve(true);
+                    } catch (error) {
+                        addLog('❌ فشل في قراءة الملف: ' + error.message, 'error');
+                        resolve(false);
+                    }
+                };
+                reader.onerror = () => {
+                    addLog('❌ فشل في قراءة الملف', 'error');
+                    resolve(false);
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function handleOpenFile(input) {
+            input.value = '';
+            addLog('⛔ تم تعطيل الفتح بدون صلاحية كتابة.', 'error');
+        }
+
+        // ==================== حفظ الملف ====================
+        async function saveFile() {
+            if (!currentFileHandle) {
+                addLog('❌ لا يوجد ربط كتابة مع ملف البيانات. افتح الملف من زر "فتح ملف JSON" أولاً.', 'error');
+                return false;
+            }
+
+            try {
+                if (currentFileHandle.requestPermission) {
+                    const perm = await currentFileHandle.requestPermission({ mode: 'readwrite' });
+                    if (perm !== 'granted') {
+                        throw new Error('لم يتم منح صلاحية الكتابة على الملف');
+                    }
+                }
+
+                const writable = await currentFileHandle.createWritable();
+                const dataStr = JSON.stringify(database, null, 2);
+                await writable.write(dataStr);
+                await writable.close();
+                
+                addLog(`✅ تم حفظ التغييرات على ${currentFileName}`, 'success');
+                updateFileInfo();
+                return true;
+                
+            } catch (error) {
+                addLog('❌ فشل في الحفظ: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function saveAsFile(options = {}) {
+            const { fromAuto = false, allowFallback = true } = options;
+
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: currentFileName || 'stock_data.json',
+                        types: [{
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] }
+                        }]
+                    });
+                    
+                    const writable = await handle.createWritable();
+                    const dataStr = JSON.stringify(database, null, 2);
+                    await writable.write(dataStr);
+                    await writable.close();
+                    
+                    currentFileHandle = handle;
+                    currentFileName = handle.name;
+                    await savePersistentHandle(handle);
+                    
+                    addLog(`✅ تم حفظ الملف: ${currentFileName}`, 'success');
+                    updateFileInfo();
+                    return true;
+                    
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        addLog('❌ فشل في الحفظ: ' + error.message, 'error');
+                        if (!fromAuto && allowFallback) {
+                            fallbackSaveAs();
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            } else {
+                if (allowFallback) {
+                    fallbackSaveAs();
+                    return true;
+                }
+                return false;
+            }
+
+            return false;
+        }
+
+        function fallbackSaveAs() {
+            const dataStr = JSON.stringify(database, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName || 'stock_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addLog(`✅ تم حفظ الملف: ${a.download}`, 'success');
+        }
+
+        // ==================== تحليل جودة البيانات ====================
+        function analyzeDataQuality() {
+            const companies = getComparableCompanies(standardDays);
+            const excluded = Object.values(database.companies).filter(company => isCompanyExcluded(company, standardDays)).length;
+            if (companies.length === 0) {
+                addLog('❌ لا توجد بيانات للتحليل', 'error');
+                return;
+            }
+
+            if (standardDays === 0) {
+                calculateStandardDays();
+            }
+            
+            let totalDays = 0;
+            let excess = 0;
+            let missing = 0;
+            let complete = 0;
+            
+            companies.forEach(company => {
+                const days = company.historical.length;
+                totalDays += days;
+                
+                if (days === standardDays) {
+                    complete++;
+                } else if (days > standardDays) {
+                    excess++;
+                } else if (days > 0) {
+                    missing++;
+                }
+            });
+            
+            const avgDays = companies.length > 0 ? Math.round(totalDays / companies.length) : 0;
+            
+            document.getElementById('totalHistorical').textContent = totalDays;
+            document.getElementById('avgDays').textContent = avgDays;
+            
+            addLog(`📊 تحليل البيانات (بالمقارنة مع ${standardDays} يوم):`, 'info');
+            addLog(`   ✅ مطابقة للمعيار: ${complete} شركة`, 'success');
+            addLog(`   ⬆️ زائدة: ${excess} شركة`, 'warning');
+            addLog(`   ⬇️ ناقصة: ${missing} شركة`, 'info');
+            addLog(`   🚫 مستثناة: ${excluded} شركة`, 'info');
+        }
+
+        // ==================== رفع الملف التاريخي ====================
+        function importHistoricalFile(file, { updateUi = true } = {}) {
+            return new Promise((resolve) => {
+                const symbol = extractSymbolFromFilename(file.name);
+
+                if (!isValidSymbol(symbol)) {
+                    if (updateUi) showWarning('لا يمكن استخراج رمز صحيح من اسم الملف');
+                    addLog(`❌ فشل استخراج رمز صحيح من اسم الملف: ${file.name}`, 'error');
+                    resolve({ ok: false, symbol: '', added: 0, updated: 0, skipped: 0 });
+                    return;
+                }
+
+                if (updateUi) {
+                    document.getElementById('extractedSymbol').innerHTML = `الرمز المستخرج: <strong>${symbol}</strong>`;
+                }
+
+                addLog(`📂 معالجة الملف التاريخي: ${file.name} (الرمز: ${symbol})`);
+
+                readFile(file, (err, rows) => {
+                    if (err) {
+                        addLog(`❌ خطأ في قراءة الملف: ${err.message}`, 'error');
+                        resolve({ ok: false, symbol, added: 0, updated: 0, skipped: 0 });
+                        return;
+                    }
+                    if (rows.length < 2) {
+                        addLog('❌ الملف فارغ', 'error');
+                        resolve({ ok: false, symbol, added: 0, updated: 0, skipped: 0 });
+                        return;
+                    }
+
+                    if (!database.companies[symbol]) {
+                        database.companies[symbol] = {
+                            symbol: symbol,
+                            shortName: '',
+                            longName: '',
+                            historical: []
+                        };
+                    }
+
+                    const headerRow = rows[0] || [];
+                    const { dateCol, closeCol: priceCol, openCol, highCol, lowCol, volumeCol, changeCol } = detectHistoricalReportColumns(headerRow);
+                    addLog(`🔎 أعمدة التاريخ المكتشفة: تاريخ=${dateCol + 1}, إغلاق=${priceCol + 1}, فتح=${openCol + 1}, عالي=${highCol + 1}, منخفض=${lowCol + 1}, حجم=${volumeCol + 1}, تغير=${changeCol + 1}`, 'info');
+
+                    let added = 0;
+                    let updated = 0;
+                    let skipped = 0;
+
+                    const existingDates = new Set();
+                    database.companies[symbol].historical.forEach(item => {
+                        const dateObj = parseDate(item.date);
+                        existingDates.add(dateObj.getTime().toString());
+                    });
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length <= Math.max(dateCol, priceCol)) {
+                            skipped++;
+                            continue;
+                        }
+
+                        let date = row[dateCol] ? row[dateCol].toString().trim() : '';
+                        const close = toNumberOrNull(row[priceCol]);
+                        const open = openCol >= 0 ? toNumberOrNull(row[openCol]) : null;
+                        const high = highCol >= 0 ? toNumberOrNull(row[highCol]) : null;
+                        const low = lowCol >= 0 ? toNumberOrNull(row[lowCol]) : null;
+                        const volume = volumeCol >= 0 ? toNumberOrNull(row[volumeCol]) : null;
+                        const change = changeCol >= 0 ? (row[changeCol] ? row[changeCol].toString().trim() : null) : null;
+
+                        date = date.replace(/[^\d\/\-]/g, '');
+
+                        if (!date || close === null) {
+                            skipped++;
+                            continue;
+                        }
+
+                        const newDateObj = parseDate(date);
+
+                        if (newDateObj.getTime() === 0) {
+                            skipped++;
+                            continue;
+                        }
+
+                        const formattedDate = formatDate(newDateObj);
+
+                        if (!existingDates.has(newDateObj.getTime().toString())) {
+                            const rowObj = { date: formattedDate, close };
+                            if (open !== null) rowObj.open = open;
+                            if (high !== null) rowObj.high = high;
+                            if (low !== null) rowObj.low = low;
+                            if (volume !== null) rowObj.volume = volume;
+                            if (change) rowObj.change = change;
+                            database.companies[symbol].historical.push(rowObj);
+                            existingDates.add(newDateObj.getTime().toString());
+                            added++;
+                        } else {
+                            for (let j = 0; j < database.companies[symbol].historical.length; j++) {
+                                const item = database.companies[symbol].historical[j];
+                                const itemDate = parseDate(item.date);
+                                if (itemDate.getTime() === newDateObj.getTime()) {
+                                    let changed = false;
+                                    if (item.close !== close) { item.close = close; changed = true; }
+                                    if (open !== null && item.open !== open) { item.open = open; changed = true; }
+                                    if (high !== null && item.high !== high) { item.high = high; changed = true; }
+                                    if (low !== null && item.low !== low) { item.low = low; changed = true; }
+                                    if (volume !== null && item.volume !== volume) { item.volume = volume; changed = true; }
+                                    if (change && item.change !== change) { item.change = change; changed = true; }
+                                    if (changed) updated++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    addLog(`✅ تمت إضافة ${added} يوم تاريخي وتحديث ${updated} يوم. تخطي ${skipped}`, 'success');
+
+                    if (database.companies[symbol].historical) {
+                        database.companies[symbol].historical.sort((a, b) => {
+                            const dateA = parseDate(a.date);
+                            const dateB = parseDate(b.date);
+                            return dateA - dateB;
+                        });
+                    }
+
+                    resolve({ ok: true, symbol, added, updated, skipped });
+                });
+            });
+        }
+
+        async function uploadHistorical() {
+            const fileInput = document.getElementById('histFile');
+            if (!fileInput.files[0]) return addLog('❌ اختر ملف', 'error');
+
+            const hasWritableHandle = await ensureWritableHandleForAutoSave('الرفع التاريخي');
+            if (!hasWritableHandle) {
+                addLog('❌ تم إيقاف العملية: لا يوجد ربط كتابة فعلي مع ملف البيانات.', 'error');
+                return;
+            }
+
+            const result = await importHistoricalFile(fileInput.files[0], { updateUi: true });
+            if (!result.ok) return;
+
+            updateDisplay();
+            calculateStandardDays();
+            await autoPersistChanges(`رفع تاريخي ${result.symbol}`);
+        }
+
+        async function uploadHistoricalBatch() {
+            const fileInput = document.getElementById('histFile');
+            const files = Array.from(fileInput.files || []);
+            if (!files.length) return addLog('❌ اختر ملف واحد على الأقل', 'error');
+
+            const hasWritableHandle = await ensureWritableHandleForAutoSave('الرفع التاريخي الجماعي');
+            if (!hasWritableHandle) {
+                addLog('❌ تم إيقاف العملية: لا يوجد ربط كتابة فعلي مع ملف البيانات.', 'error');
+                return;
+            }
+
+            addLog(`🚀 بدء الرفع الجماعي (${files.length} ملف)...`, 'info');
+
+            let success = 0;
+            let failed = 0;
+            let totalAdded = 0;
+            let totalUpdated = 0;
+
+            for (const file of files) {
+                const result = await importHistoricalFile(file, { updateUi: false });
+                if (result.ok) {
+                    success++;
+                    totalAdded += result.added;
+                    totalUpdated += result.updated;
+                } else {
+                    failed++;
+                }
+            }
+
+            updateDisplay();
+            calculateStandardDays();
+            await autoPersistChanges('رفع تاريخي جماعي');
+
+            addLog(`🏁 انتهى الرفع الجماعي: ناجح ${success} | فشل ${failed} | إضافة ${totalAdded} | تحديث ${totalUpdated}`, failed ? 'warning' : 'success');
+        }
+
+        // ==================== إضافة يوم جديد من الملف اليومي ====================
+        async function addNewDayFromDaily() {
+            const fileInput = document.getElementById('dailyFile');
+            const reportDate = document.getElementById('reportDate').value;
+            
+            if (!fileInput.files[0]) return addLog('❌ اختر ملف', 'error');
+            if (!reportDate) return addLog('❌ اختر تاريخ', 'error');
+
+            if (!database.companies || Object.keys(database.companies).length === 0) {
+                addLog('❌ لا توجد قاعدة بيانات مفتوحة. افتح ../Data/stock_data.json بصلاحية كتابة أولاً.', 'error');
+                return;
+            }
+
+            const hasWritableHandle = await ensureWritableHandleForAutoSave('إضافة يوم جديد');
+            if (!hasWritableHandle) {
+                addLog('❌ تم إيقاف العملية: لا يوجد ربط كتابة فعلي مع ملف البيانات.', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            addLog(`📂 معالجة الملف اليومي لإضافة يوم: ${reportDate}`);
+            
+            readFile(file, async (err, rows) => {
+                if (err) {
+                    addLog(`❌ خطأ في قراءة الملف: ${err.message}`, 'error');
+                    return;
+                }
+                if (rows.length < 2) {
+                    addLog('❌ الملف فارغ', 'error');
+                    return;
+                }
+                
+                let added = 0;
+                let updated = 0;
+                let updatedNames = 0;
+                let skipped = 0;
+                let totalStocks = 0;
+                
+                // إظهار بنية الملف للمساعدة
+                addLog(`📋 بنية الملف: ${rows[0].length} عمود`, 'info');
+
+                const headerRow = rows[0] || [];
+                const { symbolCol, shortNameCol, longNameCol, priceCol, openCol, highCol, lowCol, volumeCol, changeCol } = detectDailyReportColumns(headerRow);
+
+                const priceHeaderLabel = headerRow[priceCol] ? String(headerRow[priceCol]).trim() : 'غير معروف';
+                addLog(`🔎 الأعمدة المكتشفة: الرمز=${symbolCol + 1}, الاسم القصير=${shortNameCol + 1}, الاسم الطويل=${longNameCol + 1}, السعر=${priceCol + 1}, الفتح=${openCol + 1}, العالي=${highCol + 1}, المنخفض=${lowCol + 1}`, 'info');
+                addLog(`💰 عمود السعر المستخدم: ${priceHeaderLabel}`, 'info');
+                
+                const reportDateObj = parseDate(reportDate);
+                const formattedNewDate = formatDate(reportDateObj);
+                const namesBySymbol = new Map();
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    // استخراج الرمز (أولاً من العمود المكتشف ثم fallback)
+                    let symbol = '';
+                    const symbolCandidate = extractSymbolFromCell(row[symbolCol]);
+                    if (symbolCandidate) {
+                        symbol = symbolCandidate;
+                    } else {
+                        for (let col = 0; col < Math.min(5, row.length); col++) {
+                            const cell = extractSymbolFromCell(row[col]);
+                            if (cell) {
+                                symbol = cell;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!symbol) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    // استخراج السعر من العمود المكتشف
+                    let price = null;
+                    if (row[priceCol] && !isNaN(parseFloat(row[priceCol])) && parseFloat(row[priceCol]) > 0) {
+                        price = parseFloat(row[priceCol]);
+                    }
+
+                    if (price === null && row[6] && !isNaN(parseFloat(row[6])) && parseFloat(row[6]) > 0) {
+                        price = parseFloat(row[6]);
+                    }
+                    
+                    // استخراج معلومات إضافية (اختياري)
+                    const openPrice = toNumberOrNull(row[openCol]);
+                    const highPrice = toNumberOrNull(row[highCol]);
+                    const lowPrice = toNumberOrNull(row[lowCol]);
+                    const volume = toNumberOrNull(row[volumeCol]);
+                    const changePercent = row[changeCol] ? row[changeCol].toString() : null;
+                    
+                    // اسم الشركة (اختياري)
+                    const shortNameFromRow = normalizeCompanyName(row[shortNameCol] ? row[shortNameCol].toString().trim() : '');
+                    const longNameFromRow = normalizeCompanyName(row[longNameCol] ? row[longNameCol].toString().trim() : '');
+                    const companyName = longNameFromRow || shortNameFromRow || extractCompanyNameFromDailyRow(row, symbol);
+
+                    if (companyName) {
+                        namesBySymbol.set(symbol, companyName);
+                    }
+                    
+                    const id = symbol;
+                    
+                    if (!database.companies[id]) {
+                        database.companies[id] = {
+                            symbol: symbol,
+                            shortName: companyName || symbol,
+                            longName: companyName || symbol,
+                            historical: []
+                        };
+                    }
+                    
+                    const company = database.companies[id];
+
+                    if (companyName) {
+                        const currentShort = normalizeCompanyName(company.shortName || '');
+                        const currentLong = normalizeCompanyName(company.longName || '');
+                        const cleanNewName = normalizeCompanyName(companyName);
+
+                        if (cleanNewName && (currentShort !== cleanNewName || currentLong !== cleanNewName)) {
+                            company.shortName = cleanNewName;
+                            company.longName = cleanNewName;
+                            updatedNames++;
+                        }
+                    }
+
+                    if (price === null) {
+                        skipped++;
+                        continue;
+                    }
+
+                    totalStocks++;
+                    
+                    if (!company.historical || !Array.isArray(company.historical)) {
+                        company.historical = [];
+                    }
+                    
+                    // التحقق من وجود هذا التاريخ بالفعل
+                    let existingIndex = -1;
+                    for (let j = 0; j < company.historical.length; j++) {
+                        const hDate = parseDate(company.historical[j].date);
+                        if (hDate.getTime() === reportDateObj.getTime()) {
+                            existingIndex = j;
+                            break;
+                        }
+                    }
+                    
+                    if (existingIndex === -1) {
+                        // إضافة يوم جديد
+                        const newItem = { date: formattedNewDate, close: price };
+                        if (openPrice !== null) newItem.open = openPrice;
+                        if (highPrice !== null) newItem.high = highPrice;
+                        if (lowPrice !== null) newItem.low = lowPrice;
+                        if (volume !== null) newItem.volume = volume;
+                        if (changePercent !== null && changePercent !== '') newItem.change = changePercent;
+                        company.historical.push(newItem);
+                        added++;
+                        
+                        // تسجيل أول 5 أسهم كمثال
+                        if (added <= 5) {
+                            addLog(`   مثال: ${symbol} = ${price}`, 'info');
+                        }
+                    } else {
+                        // تحديث السعر إذا كان موجوداً
+                        const target = company.historical[existingIndex];
+                        let changed = false;
+                        if (target.close !== price) { target.close = price; changed = true; }
+                        if (openPrice !== null && target.open !== openPrice) { target.open = openPrice; changed = true; }
+                        if (highPrice !== null && target.high !== highPrice) { target.high = highPrice; changed = true; }
+                        if (lowPrice !== null && target.low !== lowPrice) { target.low = lowPrice; changed = true; }
+                        if (volume !== null && target.volume !== volume) { target.volume = volume; changed = true; }
+                        if (changePercent !== null && changePercent !== '' && target.change !== changePercent) { target.change = changePercent; changed = true; }
+                        if (changed) updated++;
+                    }
+                }
+
+                namesBySymbol.forEach((newName, symbol) => {
+                    const company = database.companies[symbol];
+                    if (!company) return;
+
+                    const currentShort = normalizeCompanyName(company.shortName || '');
+                    const currentLong = normalizeCompanyName(company.longName || '');
+                    const cleanNewName = normalizeCompanyName(newName);
+
+                    if (cleanNewName && (currentShort !== cleanNewName || currentLong !== cleanNewName)) {
+                        company.shortName = cleanNewName;
+                        company.longName = cleanNewName;
+                        updatedNames++;
+                    }
+                });
+                
+                addLog(`✅ نتائج إضافة اليوم ${formattedNewDate}:`, 'success');
+                addLog(`   📈 إجمالي الشركات المعالجة: ${totalStocks}`, 'success');
+                addLog(`   ➕ إضافة جديدة: ${added}`, 'success');
+                addLog(`   🔄 تحديث: ${updated}`, 'info');
+                addLog(`   🏷️ تحديث أسماء الشركات: ${updatedNames}`, 'info');
+                addLog(`   ⏭️ تخطي: ${skipped}`, 'warning');
+
+                const totalCompanies = Object.keys(database.companies || {}).length;
+                addLog(`   🧩 إجمالي الشركات في القاعدة بعد التحديث: ${totalCompanies}`, 'info');
+                
+                // ترتيب التواريخ
+                Object.keys(database.companies).forEach(id => {
+                    if (database.companies[id].historical && Array.isArray(database.companies[id].historical)) {
+                        database.companies[id].historical.sort((a, b) => {
+                            const dateA = parseDate(a.date);
+                            const dateB = parseDate(b.date);
+                            return dateA - dateB;
+                        });
+                    }
+                });
+                
+                updateDisplay();
+                calculateStandardDays();
+                await autoPersistChanges(`إضافة يوم ${formattedNewDate}`);
+            });
+        }
+
+        // ==================== دوال حذف سهم بالكامل ====================
+        function showDeleteStockModal() {
+            // تعبئة قائمة الأسهم
+            const select = document.getElementById('deleteStockSelect');
+            select.innerHTML = '<option value="">-- اختر السهم --</option>';
+            
+            const companies = Object.values(database.companies)
+                .filter(c => c.symbol && c.symbol.trim() !== '')
+                .sort((a, b) => a.symbol.localeCompare(b.symbol));
+            
+            companies.forEach(company => {
+                const option = document.createElement('option');
+                option.value = company.symbol;
+                option.textContent = `${company.symbol} - ${company.shortName || company.longName || ''} (${company.historical?.length || 0} يوم)`;
+                select.appendChild(option);
+            });
+            
+            document.getElementById('stockInfo').style.display = 'none';
+            document.getElementById('stockPreview').innerHTML = '';
+            document.getElementById('deleteStockModal').classList.add('active');
+        }
+
+        function closeDeleteStockModal() {
+            document.getElementById('deleteStockModal').classList.remove('active');
+        }
+
+        function previewDeleteStock() {
+            const symbol = document.getElementById('deleteStockSelect').value;
+            if (!symbol) {
+                alert('الرجاء اختيار سهم');
+                return;
+            }
+
+            const company = database.companies[symbol];
+            if (!company) return;
+
+            // عرض معلومات السهم
+            document.getElementById('stockInfo').style.display = 'block';
+            document.getElementById('stockInfoText').innerHTML = `
+                <strong>الرمز:</strong> ${company.symbol}<br>
+                <strong>الاسم:</strong> ${company.shortName || company.longName || '—'}<br>
+                <strong>عدد الأيام:</strong> ${company.historical?.length || 0} يوم<br>
+                <strong>أقدم تاريخ:</strong> ${company.historical && company.historical.length > 0 ? company.historical.sort((a, b) => parseDate(a.date) - parseDate(b.date))[0].date : '—'}<br>
+                <strong>آخر تاريخ:</strong> ${company.historical && company.historical.length > 0 ? company.historical.sort((a, b) => parseDate(a.date) - parseDate(b.date))[company.historical.length - 1].date : '—'}<br>
+                <strong>آخر سعر:</strong> ${company.historical && company.historical.length > 0 ? company.historical[company.historical.length - 1].close.toFixed(2) : '—'}
+            `;
+
+            // معاينة الأيام (آخر 10 أيام)
+            if (company.historical && company.historical.length > 0) {
+                const sorted = [...company.historical].sort((a, b) => parseDate(b.date) - parseDate(a.date)).slice(0, 10);
+                
+                let previewHtml = `
+                    <h4 style="margin: 20px 0 10px;">آخر 10 أيام:</h4>
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>السعر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                sorted.forEach(item => {
+                    previewHtml += `
+                        <tr>
+                            <td>${item.date}</td>
+                            <td>${item.close.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                previewHtml += `</tbody></table>`;
+                document.getElementById('stockPreview').innerHTML = previewHtml;
+            }
+        }
+
+        function deleteSelectedStock() {
+            const symbol = document.getElementById('deleteStockSelect').value;
+            if (!symbol) {
+                alert('الرجاء اختيار سهم');
+                return;
+            }
+
+            const company = database.companies[symbol];
+            if (!company) return;
+
+            if (confirm(`⚠️ هل أنت متأكد من حذف السهم ${symbol} بالكامل؟\n\nالاسم: ${company.shortName || company.longName || '—'}\nعدد الأيام: ${company.historical?.length || 0}`)) {
+                delete database.companies[symbol];
+                addLog(`🗑️ تم حذف السهم ${symbol} بالكامل`, 'warning');
+                closeDeleteStockModal();
+                updateDisplay();
+                calculateStandardDays();
+            }
+        }
+
+        // ==================== نافذة حذف يوم محدد ====================
+        function showDeleteDateModal() {
+            document.getElementById('deleteTargetDate').value = '';
+            document.getElementById('deletePreview').innerHTML = '';
+            document.getElementById('deleteDateModal').classList.add('active');
+        }
+
+        function closeDeleteDateModal() {
+            document.getElementById('deleteDateModal').classList.remove('active');
+        }
+
+        // ==================== معاينة تأثير حذف التاريخ ====================
+        function previewDeleteDate() {
+            const targetDateStr = document.getElementById('deleteTargetDate').value;
+            if (!targetDateStr) {
+                alert('الرجاء اختيار تاريخ');
+                return;
+            }
+
+            const targetDateObj = parseDate(targetDateStr);
+            const targetDateFormatted = formatDate(targetDateObj);
+            
+            const companies = Object.values(database.companies).filter(c => c.symbol && c.historical && Array.isArray(c.historical));
+            let affectedStocks = [];
+            
+            companies.forEach(company => {
+                const foundIndex = company.historical.findIndex(item => {
+                    const itemDate = parseDate(item.date);
+                    return itemDate.getTime() === targetDateObj.getTime();
+                });
+                
+                if (foundIndex !== -1) {
+                    affectedStocks.push({
+                        symbol: company.symbol,
+                        name: company.shortName || company.longName || '—',
+                        price: company.historical[foundIndex].close
+                    });
+                }
+            });
+            
+            let previewHtml = `
+                <h3 style="margin: 20px 0 10px;">📋 معاينة الحذف</h3>
+                <p>التاريخ: <strong>${targetDateFormatted}</strong></p>
+                <p>عدد الأسهم المتأثرة: <strong>${affectedStocks.length}</strong></p>
+            `;
+            
+            if (affectedStocks.length > 0) {
+                previewHtml += `
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>الرمز</th>
+                                <th>الشركة</th>
+                                <th>السعر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                affectedStocks.forEach(stock => {
+                    previewHtml += `
+                        <tr>
+                            <td>${stock.symbol}</td>
+                            <td>${stock.name}</td>
+                            <td>${stock.price.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                previewHtml += `</tbody></table>`;
+            } else {
+                previewHtml += `<p style="color: #28a745;">✅ لا يوجد أي سهم بهذا التاريخ</p>`;
+            }
+            
+            document.getElementById('deletePreview').innerHTML = previewHtml;
+        }
+
+        // ==================== حذف يوم محدد من كل الأسهم ====================
+        function deleteDateFromAllStocks() {
+            const targetDateStr = document.getElementById('deleteTargetDate').value;
+            if (!targetDateStr) {
+                alert('الرجاء اختيار تاريخ');
+                return;
+            }
+
+            const targetDateObj = parseDate(targetDateStr);
+            const targetDateFormatted = formatDate(targetDateObj);
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف يوم ${targetDateFormatted} من كل الأسهم؟`)) {
+                return;
+            }
+
+            const companies = Object.values(database.companies).filter(c => c.symbol && c.historical && Array.isArray(c.historical));
+            let deletedCount = 0;
+            
+            companies.forEach(company => {
+                const originalLength = company.historical.length;
+                company.historical = company.historical.filter(item => {
+                    const itemDate = parseDate(item.date);
+                    return itemDate.getTime() !== targetDateObj.getTime();
+                });
+                
+                if (company.historical.length < originalLength) {
+                    deletedCount++;
+                }
+            });
+            
+            addLog(`🗑️ تم حذف يوم ${targetDateFormatted} من ${deletedCount} سهم`, 'warning');
+            closeDeleteDateModal();
+            updateDisplay();
+            calculateStandardDays();
+        }
+
+        // ==================== اكتشاف الأيام الزائدة ====================
+        function detectExcessDays() {
+            if (standardDays === 0) {
+                calculateStandardDays();
+                if (standardDays === 0) {
+                    alert('لا يمكن حساب الأيام المعيارية');
+                    return;
+                }
+            }
+
+            const companies = getComparableCompanies(standardDays);
+            excessStocks = [];
+            missingStocks = [];
+
+            companies.forEach(company => {
+                const days = company.historical.length;
+                if (days > standardDays) {
+                    excessStocks.push({
+                        symbol: company.symbol,
+                        name: company.shortName || company.longName || '—',
+                        days: days,
+                        excess: days - standardDays
+                    });
+                } else if (days < standardDays && days > 0) {
+                    missingStocks.push({
+                        symbol: company.symbol,
+                        name: company.shortName || company.longName || '—',
+                        days: days,
+                        missing: standardDays - days
+                    });
+                }
+            });
+
+            excessStocks.sort((a, b) => b.days - a.days);
+            missingStocks.sort((a, b) => b.days - a.days);
+
+            showExcessResults();
+        }
+
+        function showExcessResults() {
+            let modalContent = '';
+
+            if (excessStocks.length > 0) {
+                modalContent += `
+                    <h3 style="color: #dc3545; margin: 20px 0 10px;">
+                        <i class="fas fa-arrow-up"></i> الأسهم الزائدة (${excessStocks.length})
+                    </h3>
+                `;
+                
+                excessStocks.forEach(stock => {
+                    modalContent += `
+                        <div style="margin: 10px 0; padding: 15px; background: #f8d7da; border-radius: 5px; border-right: 5px solid #dc3545;">
+                            <h4 style="color: #dc3545; margin-bottom: 10px;">
+                                ${stock.symbol} - ${stock.name} 
+                                (${stock.days} يوم | +${stock.excess} يوم)
+                            </h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="delete-btn" onclick="showStockDays('${stock.symbol}')">
+                                    <i class="fas fa-list"></i> عرض الأيام
+                                </button>
+                                <button class="delete-btn" onclick="fixStockDates('${stock.symbol}')">
+                                    <i class="fas fa-magic"></i> إصلاح تلقائي
+                                </button>
+                                <button class="delete-btn" onclick="deleteExcessDays('${stock.symbol}', ${standardDays})">
+                                    <i class="fas fa-cut"></i> حذف الأيام الزائدة
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (missingStocks.length > 0) {
+                modalContent += `
+                    <h3 style="color: #fd7e14; margin: 30px 0 10px;">
+                        <i class="fas fa-arrow-down"></i> الأسهم الناقصة (${missingStocks.length})
+                    </h3>
+                `;
+                
+                missingStocks.forEach(stock => {
+                    modalContent += `
+                        <div style="margin: 10px 0; padding: 15px; background: #fff3cd; border-radius: 5px; border-right: 5px solid #fd7e14;">
+                            <h4 style="color: #fd7e14; margin-bottom: 10px;">
+                                ${stock.symbol} - ${stock.name} 
+                                (${stock.days} يوم | -${stock.missing} يوم)
+                            </h4>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="delete-btn" onclick="showStockDays('${stock.symbol}')">
+                                    <i class="fas fa-list"></i> عرض الأيام
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (excessStocks.length === 0 && missingStocks.length === 0) {
+                modalContent = '<p style="color: #28a745; text-align: center;">✅ جميع الأسهم مطابقة للمعيار</p>';
+            }
+
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('resultsModal').classList.add('active');
+        }
+
+        // ==================== حذف الأيام الزائدة فقط ====================
+        function deleteExcessDays(symbol, targetDays) {
+            if (confirm(`هل أنت متأكد من حذف الأيام الزائدة لـ ${symbol} للوصول إلى ${targetDays} يوم؟`)) {
+                const company = database.companies[symbol];
+                if (!company || !company.historical) return;
+
+                const sorted = [...company.historical].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                company.historical = sorted.slice(-targetDays);
+                
+                addLog(`✂️ تم حذف الأيام الزائدة من ${symbol} (الآن ${targetDays} يوم)`, 'warning');
+                updateDisplay();
+                detectExcessDays();
+            }
+        }
+
+        // ==================== عرض أيام سهم معين ====================
+        function showStockDays(symbol) {
+            const company = database.companies[symbol];
+            if (!company || !company.historical) return;
+
+            const sorted = [...company.historical].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            
+            let tableHtml = `
+                <h3 style="margin: 20px 0 10px;">${symbol} - ${company.shortName || ''}</h3>
+                <p>إجمالي الأيام: ${sorted.length} يوم</p>
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>التاريخ</th>
+                            <th>السعر</th>
+                            <th>اليوم</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sorted.forEach((item, index) => {
+                const dateObj = parseDate(item.date);
+                const dayOfWeek = dateObj.getDay();
+                const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+                const rowClass = isWeekend ? 'weekend-day' : '';
+
+                tableHtml += `
+                    <tr class="${rowClass}">
+                        <td>${index + 1}</td>
+                        <td>${item.date}</td>
+                        <td>${item.close.toFixed(2)}</td>
+                        <td>${dayNames[dayOfWeek]}</td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteSpecificDay('${symbol}', ${index})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="delete-all-btn" onclick="deleteWeekendDays('${symbol}')">
+                        <i class="fas fa-calendar-times"></i> حذف أيام الجمعة والسبت
+                    </button>
+                    <button class="delete-all-btn" onclick="deleteOldestDays('${symbol}', 10)">
+                        <i class="fas fa-arrow-right"></i> حذف أقدم 10 أيام
+                    </button>
+                    <button class="delete-all-btn" onclick="deleteNewestDays('${symbol}', 10)">
+                        <i class="fas fa-arrow-left"></i> حذف أحدث 10 أيام
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('modalContent').innerHTML = tableHtml;
+        }
+
+        // ==================== حذف يوم محدد من سهم معين ====================
+        function deleteSpecificDay(symbol, index) {
+            if (confirm(`هل أنت متأكد من حذف هذا اليوم من ${symbol}؟`)) {
+                database.companies[symbol].historical.splice(index, 1);
+                addLog(`🗑️ تم حذف يوم من ${symbol}`, 'warning');
+                showStockDays(symbol);
+                updateDisplay();
+            }
+        }
+
+        // ==================== حذف أقدم الأيام ====================
+        function deleteOldestDays(symbol, count) {
+            if (confirm(`هل أنت متأكد من حذف أقدم ${count} يوم من ${symbol}؟`)) {
+                const company = database.companies[symbol];
+                if (!company || !company.historical) return;
+
+                const sorted = [...company.historical].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                company.historical = sorted.slice(count);
+                
+                addLog(`🗑️ تم حذف أقدم ${count} يوم من ${symbol}`, 'warning');
+                showStockDays(symbol);
+                updateDisplay();
+            }
+        }
+
+        // ==================== حذف أحدث الأيام ====================
+        function deleteNewestDays(symbol, count) {
+            if (confirm(`هل أنت متأكد من حذف أحدث ${count} يوم من ${symbol}؟`)) {
+                const company = database.companies[symbol];
+                if (!company || !company.historical) return;
+
+                const sorted = [...company.historical].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                company.historical = sorted.slice(0, -count);
+                
+                addLog(`🗑️ تم حذف أحدث ${count} يوم من ${symbol}`, 'warning');
+                showStockDays(symbol);
+                updateDisplay();
+            }
+        }
+
+        // ==================== حذف أيام نهاية الأسبوع ====================
+        function deleteWeekendDays(symbol) {
+            const company = database.companies[symbol];
+            if (!company || !company.historical) return;
+
+            const beforeCount = company.historical.length;
+            company.historical = company.historical.filter(item => {
+                const dateObj = parseDate(item.date);
+                const dayOfWeek = dateObj.getDay();
+                return dayOfWeek !== 5 && dayOfWeek !== 6;
+            });
+            const afterCount = company.historical.length;
+            const deleted = beforeCount - afterCount;
+
+            if (deleted > 0) {
+                addLog(`🗑️ تم حذف ${deleted} يوم عطلة نهاية أسبوع من ${symbol}`, 'warning');
+                showStockDays(symbol);
+                updateDisplay();
+            }
+        }
+
+        // ==================== إصلاح تلقائي للتواريخ ====================
+        function fixStockDates(symbol) {
+            const company = database.companies[symbol];
+            if (!company || !company.historical) return;
+
+            const uniqueMap = new Map();
+            company.historical.forEach(item => {
+                const dateObj = parseDate(item.date);
+                const dateKey = dateObj.getTime().toString();
+                if (!uniqueMap.has(dateKey) || parseFloat(item.close) > 0) {
+                    uniqueMap.set(dateKey, item);
+                }
+            });
+
+            company.historical = Array.from(uniqueMap.values());
+            
+            company.historical = company.historical.filter(item => {
+                const dateObj = parseDate(item.date);
+                const dayOfWeek = dateObj.getDay();
+                return dayOfWeek !== 5 && dayOfWeek !== 6;
+            });
+
+            company.historical.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+
+            addLog(`🔧 تم إصلاح بيانات ${symbol} تلقائياً`, 'success');
+            showStockDays(symbol);
+            updateDisplay();
+        }
+
+        // ==================== تحديث الجدول ====================
+        function updateIncompleteFilterButton() {
+            const filterBtn = document.getElementById('incompleteFilterBtn');
+            if (!filterBtn) return;
+
+            filterBtn.innerHTML = `<i class="fas fa-filter"></i> عرض غير المكتمل فقط: ${showIncompleteOnly ? 'ON' : 'OFF'}`;
+            filterBtn.className = showIncompleteOnly ? 'btn-warning' : 'btn-info';
+        }
+
+        function updateDisplay() {
+            function hasNumber(value) {
+                return value !== null && value !== undefined && value !== '' && Number.isFinite(parseFloat(value));
+            }
+
+            function hasText(value) {
+                return value !== null && value !== undefined && value.toString().trim() !== '';
+            }
+
+            function getHistoricalColumnsCoverage(historical) {
+                const rows = Array.isArray(historical) ? historical : [];
+                const total = rows.length;
+                if (total === 0) {
+                    return {
+                        total,
+                        fullRows: 0,
+                        fullPercent: 0,
+                        closeCount: 0,
+                        openCount: 0,
+                        highCount: 0,
+                        lowCount: 0,
+                        volumeCount: 0,
+                        changeCount: 0,
+                        allColumnsComplete: false
+                    };
+                }
+
+                let closeCount = 0;
+                let openCount = 0;
+                let highCount = 0;
+                let lowCount = 0;
+                let volumeCount = 0;
+                let changeCount = 0;
+                let fullRows = 0;
+
+                rows.forEach(item => {
+                    const hasClose = hasNumber(item?.close ?? item?.price);
+                    const hasOpen = hasNumber(item?.open);
+                    const hasHigh = hasNumber(item?.high);
+                    const hasLow = hasNumber(item?.low);
+                    const hasVolume = hasNumber(item?.volume);
+                    const hasChange = hasText(item?.change);
+
+                    if (hasClose) closeCount++;
+                    if (hasOpen) openCount++;
+                    if (hasHigh) highCount++;
+                    if (hasLow) lowCount++;
+                    if (hasVolume) volumeCount++;
+                    if (hasChange) changeCount++;
+
+                    if (hasClose && hasOpen && hasHigh && hasLow && hasVolume && hasChange) {
+                        fullRows++;
+                    }
+                });
+
+                const fullPercent = Math.round((fullRows / total) * 100);
+                const allColumnsComplete = fullRows === total;
+
+                return {
+                    total,
+                    fullRows,
+                    fullPercent,
+                    closeCount,
+                    openCount,
+                    highCount,
+                    lowCount,
+                    volumeCount,
+                    changeCount,
+                    allColumnsComplete
+                };
+            }
+
+            const companies = Object.values(database.companies)
+                .filter(c => c.symbol && c.symbol.trim() !== '');
+
+            const mode = standardDays || calculateModeDays();
+
+            document.getElementById('totalCompanies').textContent = companies.length;
+            document.getElementById('excludedCount').textContent = companies.filter(company => isCompanyExcluded(company, mode)).length;
+
+            let totalHistorical = 0;
+            companies.forEach(company => {
+                if (company.historical && Array.isArray(company.historical)) {
+                    totalHistorical += company.historical.length;
+                }
+            });
+
+            document.getElementById('totalHistorical').textContent = totalHistorical;
+
+            companies.sort((a, b) => {
+                const daysA = a.historical?.length || 0;
+                const daysB = b.historical?.length || 0;
+                return daysB - daysA;
+            });
+
+            updateIncompleteFilterButton();
+
+            const tbody = document.getElementById('stockTableBody');
+            if (companies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11">لا توجد شركات برموز صحيحة</td></tr>';
+                syncDataToMainApp();
+                return;
+            }
+
+            let html = '';
+            const visibleCompanies = showIncompleteOnly
+                ? companies.filter(company => {
+                    const coverage = getHistoricalColumnsCoverage(company.historical);
+                    return !coverage.allColumnsComplete;
+                })
+                : companies;
+
+            if (visibleCompanies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11">لا توجد أسهم غير مكتملة وفق الفلتر الحالي</td></tr>';
+                updateFileInfo();
+                syncDataToMainApp();
+                if (mode > 0) {
+                    analyzeDataQuality();
+                }
+                return;
+            }
+
+            const aboveOrEqualGroup = [];
+            const belowGroup = [];
+            const excludedGroup = [];
+
+            visibleCompanies.forEach(company => {
+                if (isCompanyExcluded(company, mode)) {
+                    excludedGroup.push(company);
+                    return;
+                }
+
+                const totalDays = company.historical?.length || 0;
+                if (mode > 0 && totalDays < mode) {
+                    belowGroup.push(company);
+                } else {
+                    aboveOrEqualGroup.push(company);
+                }
+            });
+
+            const renderCompanyRow = (company) => {
+                const totalDays = company.historical?.length || 0;
+                const difference = mode > 0 ? totalDays - mode : 0;
+                const completionPercent = mode > 0 ? Math.round((totalDays / mode) * 100) : 0;
+
+                let oldestDate = '—';
+                let latestDate = '—';
+                let lastPrice = '—';
+
+                if (company.historical && company.historical.length > 0) {
+                    const sorted = [...company.historical].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+                    oldestDate = sorted[0].date;
+                    const latest = sorted[sorted.length - 1];
+                    latestDate = latest.date;
+                    const latestPrice = parseFloat(latest.close ?? latest.price);
+                    lastPrice = Number.isFinite(latestPrice) ? latestPrice.toFixed(2) : '—';
+                }
+
+                const coverage = getHistoricalColumnsCoverage(company.historical);
+                let coverageBadgeClass = 'badge-warning';
+                let coverageText = `جزئي ${coverage.fullPercent}%`;
+
+                if (coverage.total === 0) {
+                    coverageBadgeClass = 'badge-danger';
+                    coverageText = 'لا يوجد تاريخي';
+                } else if (coverage.allColumnsComplete) {
+                    coverageBadgeClass = 'badge-success';
+                    coverageText = 'مكتمل 100%';
+                } else if (coverage.closeCount === coverage.total && coverage.openCount === 0 && coverage.highCount === 0 && coverage.lowCount === 0) {
+                    coverageBadgeClass = 'badge-info';
+                    coverageText = 'إغلاق فقط';
+                }
+
+                let statusClass = '';
+                let statusText = '';
+                let statusIcon = '';
+                let badgeClass = '';
+                const exclusionMeta = getCompanyExclusionMeta(company);
+                const currentMissing = getMissingDaysForMode(company, mode);
+                const exclusionActive = isCompanyExcluded(company, mode);
+
+                if (exclusionActive) {
+                    statusClass = 'excluded-data';
+                    statusText = `مستثنى حتى نقص ${exclusionMeta.allowedMissingDays} يوم`;
+                    statusIcon = '🚫';
+                    badgeClass = 'badge-purple';
+                } else if (totalDays === 0) {
+                    statusClass = 'missing-data';
+                    statusText = 'لا توجد بيانات';
+                    statusIcon = '❌';
+                    badgeClass = 'badge-danger';
+                } else if (mode > 0 && totalDays > mode) {
+                    statusClass = 'excess-data';
+                    statusText = `زائد ${difference} يوم`;
+                    statusIcon = '⬆️';
+                    badgeClass = 'badge-excess';
+                } else if (mode > 0 && totalDays === mode) {
+                    statusClass = 'complete-data';
+                    statusText = 'مطابق';
+                    statusIcon = '✅';
+                    badgeClass = 'badge-success';
+                } else if (mode > 0 && totalDays < mode) {
+                    statusClass = 'partial-data';
+                    statusText = `ناقص ${mode - totalDays} يوم`;
+                    statusIcon = '⬇️';
+                    badgeClass = 'badge-warning';
+                } else {
+                    statusClass = 'partial-data';
+                    statusText = `${totalDays} يوم`;
+                    statusIcon = '📊';
+                    badgeClass = 'badge-info';
+                }
+
+                html += `<tr class="${statusClass}">
+                    <td><strong>${company.symbol}</strong></td>
+                    <td>${company.shortName || company.longName || '—'}</td>
+                    <td><strong>${totalDays}</strong> يوم</td>
+                    <td>${difference > 0 ? '+' + difference : difference}</td>
+                    <td>
+                        <div class="progress-bar" title="${totalDays} من أصل ${mode} يوم">
+                            <div class="progress-fill" style="width: ${completionPercent}%"></div>
+                        </div>
+                        <span style="font-size: 0.9em;">${completionPercent}%</span>
+                    </td>
+                    <td>
+                        <span class="badge ${coverageBadgeClass}" title="close:${coverage.closeCount}/${coverage.total} | open:${coverage.openCount}/${coverage.total} | high:${coverage.highCount}/${coverage.total} | low:${coverage.lowCount}/${coverage.total} | volume:${coverage.volumeCount}/${coverage.total} | change:${coverage.changeCount}/${coverage.total}">
+                            ${coverageText}
+                        </span>
+                    </td>
+                    <td>${oldestDate}</td>
+                    <td>${latestDate}</td>
+                    <td><strong>${lastPrice}</strong></td>
+                    <td>
+                        <span class="badge ${badgeClass}">
+                            ${statusIcon} ${statusText}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="delete-stock-btn" onclick="deleteSingleStock('${company.symbol}')">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                        <button class="delete-stock-btn" onclick="toggleStockExclusion('${company.symbol}')" style="background:${exclusionMeta.hasExclusion ? '#6f42c1' : '#17a2b8'}; margin-right:6px;" title="${exclusionMeta.hasExclusion ? `حد الاستثناء: ${exclusionMeta.allowedMissingDays} | النقص الحالي: ${currentMissing}` : 'تسجيل حد استثناء حسب النقص الحالي'}">
+                            <i class="fas fa-ban"></i> ${exclusionMeta.hasExclusion ? 'إلغاء الاستثناء' : 'استثناء'}
+                        </button>
+                    </td>
+                </tr>`;
+            };
+
+            const renderSection = (title, list, key, bgColor = '#eef3ff') => {
+                const collapsed = Boolean(groupCollapsed[key]);
+                const indicator = collapsed ? '＋' : '－';
+                html += `<tr class="section-row" onclick="toggleGroupSection('${key}')"><td colspan="11" style="background:${bgColor};"><span class="section-toggle-indicator">${indicator}</span>${title} (${list.length})</td></tr>`;
+                if (list.length === 0) {
+                    html += `<tr data-group="${key}" style="${collapsed ? 'display:none;' : ''}"><td colspan="11" style="text-align:center; color:#666;">لا توجد أسهم في هذه المجموعة</td></tr>`;
+                    return;
+                }
+                list.forEach(company => {
+                    const beforeLength = html.length;
+                    renderCompanyRow(company);
+                    if (collapsed) {
+                        const rowHtml = html.slice(beforeLength);
+                        html = html.slice(0, beforeLength) + rowHtml.replace('<tr ', `<tr data-group="${key}" style="display:none;" `);
+                    } else {
+                        const rowHtml = html.slice(beforeLength);
+                        html = html.slice(0, beforeLength) + rowHtml.replace('<tr ', `<tr data-group="${key}" `);
+                    }
+                });
+            };
+
+            renderSection('القسم 1: أعلى من المعيار + مساوي للمعيار', aboveOrEqualGroup, 'above', '#e8f7ee');
+            renderSection('القسم 2: أقل من المعيار', belowGroup, 'below', '#fff3cd');
+            renderSection('القسم 3: أسهم مستثناة', excludedGroup, 'excluded', '#ece9f9');
+
+            tbody.innerHTML = html;
+            updateFileInfo();
+            syncDataToMainApp();
+
+            if (mode > 0) {
+                analyzeDataQuality();
+            }
+        }
+
+        function toggleIncompleteFilter() {
+            showIncompleteOnly = !showIncompleteOnly;
+            updateDisplay();
+            addLog(`🎯 فلتر غير المكتمل فقط: ${showIncompleteOnly ? 'مفعل' : 'متوقف'}`, 'info');
+        }
+
+        function toggleGroupSection(groupKey) {
+            if (!(groupKey in groupCollapsed)) return;
+            groupCollapsed[groupKey] = !groupCollapsed[groupKey];
+            updateDisplay();
+        }
+
+        async function toggleStockExclusion(symbol) {
+            const company = database.companies[symbol];
+            if (!company) return;
+
+            const hasWritableHandle = await ensureWritableHandleForAutoSave('تعديل الاستثناء');
+            if (!hasWritableHandle) {
+                addLog('❌ تم إيقاف العملية: لا يوجد ربط كتابة فعلي مع ملف البيانات.', 'error');
+                return;
+            }
+
+            const mode = standardDays || calculateModeDays();
+            const meta = getCompanyExclusionMeta(company);
+
+            if (meta.hasExclusion) {
+                delete company.exclusion;
+                addLog(`✅ تم إلغاء الاستثناء للسهم ${symbol}`, 'success');
+            } else {
+                const missingAtExclusion = getMissingDaysForMode(company, mode);
+                company.exclusion = {
+                    allowedMissingDays: missingAtExclusion,
+                    createdAt: new Date().toISOString()
+                };
+                addLog(`🚫 تم استثناء السهم ${symbol} بحد نقص ${missingAtExclusion} يوم`, 'warning');
+            }
+
+            calculateStandardDays();
+            await autoPersistChanges('تعديل حالة الاستثناء');
+        }
+
+        // ==================== حذف سهم مباشرة من الجدول ====================
+        function deleteSingleStock(symbol) {
+            const company = database.companies[symbol];
+            if (!company) return;
+
+            if (confirm(`⚠️ هل أنت متأكد من حذف السهم ${symbol} بالكامل؟\n\nالاسم: ${company.shortName || company.longName || '—'}\nعدد الأيام: ${company.historical?.length || 0}`)) {
+                delete database.companies[symbol];
+                addLog(`🗑️ تم حذف السهم ${symbol} بالكامل`, 'warning');
+                updateDisplay();
+                calculateStandardDays();
+            }
+        }
+
+        // ==================== استخراج الرمز من اسم الملف ====================
+        function extractSymbolFromFilename(filename) {
+            const name = filename.replace(/\.[^/.]+$/, "");
+            const match = name.match(/[A-Z0-9]{2,10}(?:_[A-Z0-9]{1,10})+/i) || name.match(/[A-Z]{2,5}/i);
+            return match ? match[0].toUpperCase() : '';
+        }
+
+        // ==================== قراءة ملف CSV ====================
+        function readCSV(file, callback) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    let text = e.target.result;
+                    if (text.charCodeAt(0) === 0xFEFF) text = text.substring(1);
+                    
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    const data = lines.map(line => {
+                        return line.split(',').map(cell => 
+                            cell.trim().replace(/^["']|["']$/g, '')
+                        );
+                    });
+                    
+                    addLog(`✅ تم قراءة ${data.length} سطر من CSV`);
+                    callback(null, data);
+                } catch (error) {
+                    addLog(`❌ خطأ في قراءة CSV: ${error.message}`, 'error');
+                    callback(error, null);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function readExcel(file, callback) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    
+                    addLog(`✅ تم قراءة ${rows.length} سطر من Excel`);
+                    callback(null, rows);
+                } catch (error) {
+                    addLog(`❌ خطأ في قراءة Excel: ${error.message}`, 'error');
+                    callback(error, null);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function readFile(file, callback) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') {
+                readCSV(file, callback);
+            } else {
+                readExcel(file, callback);
+            }
+        }
+
+        function clearDatabase() {
+            if (confirm('هل أنت متأكد من مسح جميع البيانات؟')) {
+                database.companies = {};
+                currentFileHandle = null;
+                currentFileName = null;
+                standardDays = 0;
+                excessStocks = [];
+                missingStocks = [];
+                updateFileInfo();
+                updateDisplay();
+                document.getElementById('standardDays').textContent = '0';
+                document.getElementById('excessCount').textContent = '0';
+                document.getElementById('missingCount').textContent = '0';
+                document.getElementById('excludedCount').textContent = '0';
+                document.getElementById('modeDays').textContent = '0';
+                addLog('🗑️ تم مسح جميع البيانات', 'warning');
+                localStorage.removeItem('lastUploadedFileSize');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('resultsModal').classList.remove('active');
+        }
+
+        // ==================== تهيئة الصفحة ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('reportDate').value = `${year}-${month}-${day}`;
+            
+            addLog('🚀 النظام جاهز - الإصدار النهائي');
+            addLog('ℹ️ البيانات التاريخية هي المصدر الرئيسي للأسعار');
+            addLog('ℹ️ الملف اليومي يستخدم فقط لإضافة يوم جديد');
+            addLog('ℹ️ الأعمدة: G (آخر سعر), F (الفتح), J (عالي), K (منخفض), M (الحجم), H (التغير%)');
+            addLog(`ℹ️ ملف البيانات المعتمد افتراضياً: ${DEFAULT_DATA_FILE_PATH}`);
+
+            const localFileInput = document.getElementById('localFilePath');
+            if (localFileInput) {
+                localFileInput.value = DEFAULT_DATA_FILE_PATH;
+            }
+
+            addLog('🔐 افتح ملف ../Data/stock_data.json عبر زر "فتح ملف JSON" ومنح صلاحية كتابة قبل أي تعديل.', 'warning');
+
+            const localLoadBtn = document.querySelector('button[onclick="loadLocalFile()"]');
+            const localBrowseBtn = document.querySelector('button[onclick="browseLocalFile()"]');
+            if (localLoadBtn) localLoadBtn.disabled = true;
+            if (localBrowseBtn) localBrowseBtn.disabled = true;
+
+            const restored = await restorePersistentHandle(true);
+            if (!restored) {
+                addLog('ℹ️ لم يتم العثور على ربط صالح تلقائياً. استخدم "فتح ملف JSON" مرة واحدة.', 'info');
+            }
+            
+            document.getElementById('saveBtn').disabled = !currentFileHandle;
+
+            ['customStockSymbol', 'customStockShortName', 'customStockLongName'].forEach(id => {
+                const input = document.getElementById(id);
+                if (!input) return;
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        submitCustomStock();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

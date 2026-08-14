@@ -1,0 +1,100 @@
+[
+  {
+    "symbol": "ZMID",
+    "name": "زهراء المعادي",
+    "quantity": 180000,
+    "entryPrice": 5.79,
+    "addedDate": "١٨‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "ACTF",
+    "name": "اكت فاينانشال",
+    "quantity": 50000,
+    "entryPrice": 2.77,
+    "addedDate": "٢٣‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "CERA",
+    "name": "سيرا",
+    "quantity": 100000,
+    "entryPrice": 1.202,
+    "addedDate": "١٨‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "KRDI",
+    "name": "نهر الخير للتنمية والأستثمار الزراعى والخدمات البيئية",
+    "quantity": 100000,
+    "entryPrice": 0.67,
+    "addedDate": "١٨‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "UBEE",
+    "name": "المصرف المتحد",
+    "quantity": 15596,
+    "entryPrice": 14.26,
+    "addedDate": "٢٤‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "IBCT",
+    "name": "IBCT",
+    "quantity": 8874,
+    "entryPrice": 10.93,
+    "addedDate": "٢٤‏/٢‏/٢٠٢٦"
+  },
+  {
+    "symbol": "BTFH",
+    "name": "بلتون القابضة",
+    "quantity": 166597,
+    "entryPrice": 2.91,
+    "addedDate": "١١‏/٣‏/٢٠٢٦"
+  },
+  {
+    "symbol": "HRHO",
+    "name": "مجموعة اي اف جي القابضة",
+    "quantity": 13305,
+    "entryPrice": 26.38,
+    "addedDate": "٩‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "LUTS",
+    "name": "لوتس للتنمية والاستثمار الزراعى",
+    "quantity": 99251,
+    "entryPrice": 0.534,
+    "addedDate": "١٩‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "MCRO",
+    "name": "ماكرو جروب للمستحضرات الطبية-ماكرو كابيتال",
+    "quantity": 29640,
+    "entryPrice": 1.22,
+    "addedDate": "٢٠‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "HBCO",
+    "name": "هيبكو للاستثمارات التجارية والتنمية العقارية",
+    "quantity": 17247,
+    "entryPrice": 7.03,
+    "addedDate": "٢٠‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "KRDI-R1",
+    "name": "حق نهر الخير",
+    "quantity": 330000,
+    "entryPrice": 0.211,
+    "addedDate": "٢٢‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "EFID",
+    "name": "ايديتا للصناعات الغذائية",
+    "quantity": 1500,
+    "entryPrice": 28.71,
+    "addedDate": "٢٢‏/٤‏/٢٠٢٦"
+  },
+  {
+    "symbol": "KZPC",
+    "name": "كفر الزيات للمبيدات والكيماويات",
+    "quantity": 5000,
+    "entryPrice": 10.07,
+    "addedDate": "٢٢‏/٤‏/٢٠٢٦"
+  }
+]

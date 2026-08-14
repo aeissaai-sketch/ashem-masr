@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اخبار الاسهم المصرية - EGX</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 14px; color: #e2e8f0; }
+        
+        /* القائمة الجانبية */
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-left: 1px solid #334155;
+            z-index: 100;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            color: #fbbf24;
+            font-size: 1.2em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-toggle:hover {
+            color: #fbbf24;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 15px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-right: 3px solid transparent;
+            margin: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-right-color: #3b82f6;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #3b82f6;
+            border-right-color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .sidebar-item span {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: #334155;
+            margin: 15px 20px;
+        }
+
+        .sidebar-toggle-btn {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 99;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                right: -250px;
+            }
+            .sidebar.open {
+                right: 0;
+            }
+            .sidebar-toggle-btn {
+                display: flex;
+            }
+        }
+        
+        .container { max-width: 1450px; margin-left: 0; margin-right: 280px; background: #1e293b; border: 1px solid #334155; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+        @media (max-width: 992px) {
+            .container {
+                margin-right: 0;
+            }
+        }
+        .header { background: linear-gradient(135deg, #0b1220 0%, #1e293b 100%); border-bottom: 1px solid #334155; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display: flex; gap: 10px; align-items: center; }
+        .btn { border: none; border-radius: 999px; padding: 10px 14px; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .btn-main { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0f172a; }
+        .btn-alt { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+        .toolbar { padding: 16px 20px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; flex-direction: column; gap: 14px; }
+        .load-buttons-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .single-stock-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: rgba(59,130,246,0.07); border: 1px solid #3b82f633; border-radius: 12px; padding: 12px 14px; }
+        .single-stock-row label { color: #94a3b8; font-size: .9em; white-space: nowrap; }
+        .single-stock-row input { flex: 1; min-width: 120px; max-width: 200px; border: 1px solid #475569; border-radius: 10px; background: #111827; color: #fbbf24; padding: 10px 12px; font-weight: 700; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; }
+        .single-stock-row input::placeholder { color: #475569; font-size: .9em; text-transform: none; letter-spacing: 0; }
+        .btn-portfolio { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-single { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+        .btn-all { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; }
+        .btn-general { background: linear-gradient(135deg, #fb923c, #ea580c); color: #fff; }
+        .status { padding: 10px 20px; color: #93c5fd; border-bottom: 1px solid #334155; background: #111827; }
+        .results { padding: 14px 20px 22px; }
+        .empty { margin-top: 8px; border: 1px dashed #fbbf24; border-radius: 12px; padding: 20px; text-align: center; color: #fbbf24; background: rgba(251, 191, 36, .08); }
+        .news-grid { display: grid; gap: 10px; }
+        .news-item { border: 1px solid #334155; border-radius: 12px; background: #0f172a; overflow: hidden; }
+        .news-head { padding: 12px 14px; border-bottom: 1px solid #fbbf24; background: #1e293b; }
+        .news-symbol { color: #fbbf24; font-weight: 800; font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .news-isin { color: #60a5fa; font-size: .85em; font-weight: 600; }
+        .news-body { padding: 12px 14px; display: grid; gap: 12px; }
+        .news-link-container { display: flex; gap: 8px; flex-wrap: wrap; }
+        .news-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #111827; border: 1px solid #3b82f6; border-radius: 8px; color: #60a5fa; text-decoration: none; font-weight: 600; font-size: .9em; transition: all 0.3s ease; }
+        .news-link:hover { background: #3b82f6; color: #fff; border-color: #2563eb; }
+        .empty-state { text-align: center; padding: 30px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 2em; color: #fbbf24; margin-bottom: 10px; display: block; }
+        .news-entry { padding: 10px 0; border-bottom: 1px solid #334155; }
+        .news-entry:last-child { border-bottom: none; }
+        .news-title { color: #60a5fa; font-weight: 700; text-decoration: none; font-size: 1em; display: block; margin-bottom: 6px; }
+        .news-title:hover { color: #93c5fd; text-decoration: underline; }
+        .news-time { color: #94a3b8; font-size: 0.85em; }
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge { padding: 4px 10px; border-radius: 999px; font-size: 0.75em; font-weight: 700; }
+        .impact-positive { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
+        .impact-negative { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+        .impact-neutral { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid #94a3b8; }
+        .rec-enter { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid #fbbf24; }
+        .rec-wait { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid #60a5fa; }
+        .cta-row { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 20px; background: #0f172a; border-bottom: 1px solid #334155; }
+        .stat { text-align: center; padding: 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; }
+        .stat .k { color: #94a3b8; font-size: 0.8em; }
+        .stat .v { color: #fbbf24; font-size: 1.3em; font-weight: 800; }
+        @media (max-width: 720px) {
+            .toolbar { grid-template-columns: 1fr; }
+            .load-buttons-row { flex-direction: column; }
+            .load-buttons-row .btn { width: 100%; justify-content: center; }
+            .single-stock-row { flex-direction: column; }
+            .single-stock-row input { width: 100%; }
+            .single-stock-row .btn { width: 100%; justify-content: center; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- القائمة الجانبية -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-bars"></i> القائمة الرئيسية</h3>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="../index.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="main-table.html" class="sidebar-item">
+                <i class="fas fa-table"></i>
+                <span>الجدول الرئيسي</span>
+            </a>
+            <a href="upload-data.html" class="sidebar-item">
+                <i class="fas fa-upload"></i>
+                <span>رفع البيانات</span>
+            </a>
+            <a href="top20-egyptian.html" class="sidebar-item">
+                <i class="fas fa-trophy"></i>
+                <span>أهم 20 سهم مصري</span>
+            </a>
+            <a href="accumulation-stocks.html" class="sidebar-item">
+                <i class="fas fa-layer-group"></i>
+                <span>أسهم التجميع (نطاق ضيق)</span>
+            </a>
+            <a href="portfolio.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>محفظتي الاستثمارية</span>
+            </a>
+            <a href="hammer-stocks.html" class="sidebar-item">
+                <i class="fas fa-hammer"></i>
+                <span>شمعة الهامر</span>
+            </a>
+            <a href="rebound-reversal.html" class="sidebar-item">
+                <i class="fas fa-undo"></i>
+                <span>بداية ارتداد من الهبوط</span>
+            </a>
+            <a href="ai-analysis.html" class="sidebar-item">
+                <i class="fas fa-robot"></i>
+                <span>تحليل بالذكاء الاصطناعي</span>
+            </a>
+            <a href="gpt-decision.html" class="sidebar-item">
+                <i class="fas fa-scale-balanced"></i>
+                <span>مساعد القرار (GPT)</span>
+            </a>
+            <a href="special-analysis.html" class="sidebar-item">
+                <i class="fas fa-bullseye"></i>
+                <span>تحليل خاص</span>
+            </a>
+            <a href="copilot-lab.html" class="sidebar-item">
+                <i class="fas fa-vial"></i>
+                <span>مختبر Copilot الذكي</span>
+            </a>
+            <a href="egypt-stocks-news.html" class="sidebar-item active">
+                <i class="fas fa-newspaper"></i>
+                <span>أخبار الأسهم</span>
+            </a>
+        </div>
+    </div>
+
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-newspaper"></i> اخبار الاسهم من EGX</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-alt" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <!-- أزرار التحميل -->
+            <div class="load-buttons-row">
+                <button class="btn btn-portfolio" onclick="loadPortfolioNews()" title="تحميل أخبار أسهم المحفظة المحفوظة">
+                    <i class="fas fa-briefcase"></i> تحميل اخبار المحفظة
+                </button>
+                <button class="btn btn-single" onclick="loadSingleStockNews()" title="تحميل أخبار سهم معين">
+                    <i class="fas fa-download"></i> تحميل سهم معين
+                </button>
+                <button class="btn btn-all" onclick="loadAllNews()" title="تحميل أخبار كل الأسهم">
+                    <i class="fas fa-globe"></i> تحميل كل الاسهم
+                </button>
+                <button class="btn btn-general" onclick="loadEgxGeneralNews()" title="تحميل أخبار وتعاملات البورصة المصرية لآخر 3 أيام">
+                    <i class="fas fa-bullhorn"></i> أخبار وتعاملات البورصة (3 أيام)
+                </button>
+            </div>
+
+            <!-- سهم معين -->
+            <div class="single-stock-row">
+                <label><i class="fas fa-search"></i> اكتب رمز السهم:</label>
+                <input type="text" id="singleStockInput" placeholder="مثال: COMI أو ETEL" maxlength="10" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter') loadSingleStockNews()" />
+            </div>
+        </div>
+
+        <div id="status" class="status">اضغط على أحد أزرار التحميل لجلب الأخبار.</div>
+
+        <div id="statsArea" class="stats-bar"></div>
+
+        <div class="results">
+            <div id="resultsArea" class="empty"><i class="fas fa-info-circle"></i> اضغط على أحد أزرار التحميل لبدء جلب الأخبار.</div>
+        </div>
+    </div>
+
+    <script>
+        // قاموس ISIN لأسهم البورصة المصرية
+
+        const NEWS_CACHE_KEY = 'EGX_NEWS_CACHE';
+        const NEWS_CACHE_MINUTES = 30;
+        const MAX_NEWS_PER_STOCK = 15;
+
+        const ALLOWED_NEWS_DOMAINS = [
+            'egx.com.eg',
+            'mubasher.info',
+            'news.google.com',
+            'almasryalyoum.com',
+            'youm7.com',
+            'akhbarak.net',
+            'cnbcarabia.com',
+            'forbesarabia.com',
+            'arabnet.com',
+            'mena.fn',
+            'bloomberg.com',
+            'reuters.com',
+            'bbc.com',
+            'aljazeera.com'
+        ];
+
+        const POSITIVE_KEYWORDS = [
+            'ارباح', 'نمو', 'توسع', 'اتفاق', 'استحواذ', 'توزيعات', 'توزيع', 'زيادة راس المال',
+            'عقد', 'موافقة', 'نتائج قوية', 'تحسن', 'صعود', 'رفع', 'اعلان ايجابي',
+            'buy', 'upgrade', 'profit', 'growth', 'dividend', 'acquisition', 'contract', 'record'
+        ];
+
+        const NEGATIVE_KEYWORDS = [
+            'خسائر', 'هبوط', 'تراجع', 'انخفاض', 'تحقيق', 'غرامة', 'ايقاف', 'تعليق', 'نزاع', 'مخاطر',
+            'تحذير', 'خروج مساهم', 'تخفيض', 'بيع مكثف', 'sell', 'downgrade', 'loss', 'decline'
+        ];
+
+        const HIGH_IMPACT_KEYWORDS = [
+            'نتائج الاعمال', 'القوائم المالية', 'زيادة راس المال', 'استحواذ', 'اندماج', 'توزيعات نقدية',
+            'تجزئة', 'عقد كبير', 'طرح', 'buyback', 'capital', 'earnings', 'merger', 'acquisition'
+        ];
+
+        let fullResults = [];
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function toUpperArabicSafe(value) {
+            return String(value || '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ى/g, 'ي')
+                .replace(/ة/g, 'ه')
+                .toUpperCase();
+        }
+
+        function normalizeToken(value) {
+            return toUpperArabicSafe(value)
+                .replace(/[^A-Z0-9\u0600-\u06FF\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year, month, day;
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) { day = p1; month = p2 - 1; } 
+                        else { month = p1 - 1; day = p2; }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) { day = p0; month = p1 - 1; }
+                        else if (p1 > 12) { month = p0 - 1; day = p1; }
+                        else { day = p0; month = p1 - 1; }
+                    } else {
+                        day = p0; month = p1 - 1; year = p2 + 2000;
+                    }
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) return new Date(year, month, day);
+                }
+            }
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function extractHostname(link) {
+            try { return new URL(String(link || '')).hostname.toLowerCase(); } catch { return ''; }
+        }
+
+        function isAllowedNewsSource(item) {
+            const host = extractHostname(item?.link);
+            if (!host) return false;
+            const byHost = ALLOWED_NEWS_DOMAINS.some(domain => host === domain || host.endsWith(`.${domain}`));
+            if (byHost) return true;
+            const text = `${item?.link} ${item?.title} ${item?.description}`.toLowerCase();
+            const egyptStockKeywords = ['egx', 'بورصة', 'سهم مصر', 'أسهم مصر', 'بورصة مصر', 'مصري'];
+            return egyptStockKeywords.some(keyword => text.includes(keyword));
+        }
+
+        function parseNewsRss(xmlText) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xmlText, 'text/xml');
+            const items = Array.from(xml.querySelectorAll('item'));
+            return items.map(item => ({
+                title: (item.querySelector('title')?.textContent || '').trim(),
+                link: (item.querySelector('link')?.textContent || '').trim(),
+                pubDate: (item.querySelector('pubDate')?.textContent || '').trim(),
+                source: (item.querySelector('source')?.textContent || 'Internet').trim(),
+                description: (item.querySelector('description')?.textContent || '').trim()
+            })).filter(x => x.title && x.link);
+        }
+
+        async function fetchTextWithFallback(url) {
+            const endpoints = [
+                `/api/proxy?url=${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 8000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const text = await response.text();
+                    if (endpoint.includes('/get?url=')) {
+                        try {
+                            const payload = JSON.parse(text);
+                            if (typeof payload?.contents === 'string' && payload.contents.length > 10) return payload.contents;
+                        } catch {}
+                    } else if (text && text.length > 10) return text;
+                } catch {}
+            }
+            return '';
+        }
+
+        async function fetchRssViaJsonFallback(rssUrl) {
+            const endpoints = [
+                `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 8000);
+                    const response = await fetch(endpoint, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    const items = Array.isArray(data?.items) ? data.items : [];
+                    if (!items.length) continue;
+                    return items.map(item => ({
+                        title: String(item?.title || '').trim(),
+                        link: String(item?.link || '').trim(),
+                        pubDate: String(item?.pubDate || '').trim(),
+                        source: String(item?.author || item?.source || '').trim() || 'Google News',
+                        description: String(item?.description || item?.content || '').trim()
+                    })).filter(x => x.title && x.link);
+                } catch {
+                }
+            }
+            return [];
+        }
+
+        function normalizeMubasherUrl(value) {
+            const href = String(value || '').trim();
+            if (!href) return '';
+            if (/^https?:\/\//i.test(href)) return href;
+            if (href.startsWith('/')) return `https://www.mubasher.info${href}`;
+            return '';
+        }
+
+        function parseMubasherAnnouncementsPage(htmlText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(String(htmlText || ''), 'text/html');
+            const anchors = Array.from(doc.querySelectorAll('a[href*="/news/"]'));
+            
+            // محاولة البحث عن حاويات الأخبار أولاً للحصول على التاريخ المكتوب بجانب العنوان
+            const newsItems = Array.from(doc.querySelectorAll('div[class*="news-item"], li[class*="news-item"], article, .mi-news-list-item'));
+            const out = [];
+            const seen = new Set();
+
+            newsItems.forEach(el => {
+                const anchor = el.querySelector('a[href*="/news/"]');
+                if (!anchor) return;
+                
+                const link = normalizeMubasherUrl(anchor.getAttribute('href') || anchor.href || '');
+                const title = String(anchor.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!link || !title) return;
+                
+                // محاولة استخراج التاريخ من العناصر المعروفة في مباشر
+                const dateEl = el.querySelector('span[class*="date"], div[class*="date"], span[class*="time"], .mi-news-list-item__date');
+                const pubDate = dateEl ? dateEl.textContent.trim() : '';
+
+                const key = link.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                out.push({
+                    title,
+                    link,
+                    pubDate: pubDate,
+                    source: 'Mubasher',
+                    description: ''
+                });
+            });
+
+            // في حال فشل البحث عن حاويات، نلجأ للبحث عن الروابط مباشرة (بدون تواريخ)
+            if (out.length === 0) {
+                const anchors = Array.from(doc.querySelectorAll('a[href*="/news/"]'));
+                anchors.forEach(a => {
+                    const link = normalizeMubasherUrl(a.getAttribute('href') || a.href || '');
+                    const title = String(a.textContent || '').replace(/\s+/g, ' ').trim();
+                    if (!link || !title) return;
+                    const key = link.toLowerCase();
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    out.push({ title, link, pubDate: '', source: 'Mubasher', description: '' });
+                });
+            }
+
+            return out;
+        }
+
+        async function fetchMubasherAnnouncementsByUrl(url) {
+            const target = String(url || '').trim();
+            if (!target) return [];
+
+            const merged = [];
+            const seen = new Set();
+            const pages = [
+                target,
+                target.endsWith('/') ? `${target}2` : `${target}/2`
+            ];
+
+            for (const pageUrl of pages) {
+                const htmlText = await fetchTextWithFallback(pageUrl);
+                if (!htmlText) continue;
+                const rows = parseMubasherAnnouncementsPage(htmlText);
+                rows.forEach(item => {
+                    const key = String(item.link || '').toLowerCase();
+                    if (!key || seen.has(key)) return;
+                    seen.add(key);
+                    merged.push(item);
+                });
+                if (merged.length >= 25) break;
+            }
+
+            return merged;
+        }
+
+        async function fetchInternetNewsByQuery(query) {
+            const target = String(query || '').trim();
+            
+            // تحقق من رابط EGX الرسمي
+            if (target.includes('egx.com.eg')) {
+                const htmlText = await fetchTextWithFallback(target);
+                if (htmlText) {
+                    const parsed = parseEGXNewsPage(htmlText);
+                    if (parsed.length) return parsed;
+                }
+            }
+            
+            // تحقق من روابط مباشر
+            if (target.includes('mubasher.info/markets/EGX/stocks/') && target.includes('/announcements')) {
+                return fetchMubasherAnnouncementsByUrl(target);
+            }
+
+            // إذا كان الـ query هو رابط RSS بالفعل، استخدمه مباشرة
+            let rssUrl = target;
+            if (!target.startsWith('http')) {
+                rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(target)}&hl=ar&gl=EG&ceid=EG:ar`;
+            }
+
+            const jsonNews = await fetchRssViaJsonFallback(rssUrl);
+            if (jsonNews && jsonNews.length) return jsonNews;
+
+            const xmlText = await fetchTextWithFallback(rssUrl);
+            if (xmlText) {
+                const parsed = parseNewsRss(xmlText);
+                if (parsed.length) return parsed;
+            }
+            return [];
+        }
+
+        function getCompanyKeywords(name) {
+            const stopWords = new Set(['شركة', 'شركه', 'المصرية', 'المصريه', 'للاستثمار', 'القابضة', 'القابضه', 'سهم', 'البورصة', 'البورصه']);
+            const clean = normalizeToken(name);
+            return clean.split(/\s+/).map(t => t.trim()).filter(t => t.length >= 3 && !stopWords.has(t.toLowerCase())).slice(0, 6);
+        }
+
+        function buildMubasherAnnouncementsUrl(symbol) {
+            const normalized = String(symbol || '').trim().toLowerCase();
+            if (!normalized) return 'https://www.mubasher.info/markets/EGX';
+            return `https://www.mubasher.info/markets/EGX/stocks/${encodeURIComponent(normalized)}/announcements`;
+        }
+
+        function buildMubasherNewsUrl(symbol) {
+            const normalized = String(symbol || '').trim().toLowerCase();
+            if (!normalized) return 'https://www.mubasher.info/markets/EGX';
+            return `https://www.mubasher.info/markets/EGX/stocks/${encodeURIComponent(normalized)}/news`;
+        }
+
+        function hasStrictSymbolMatch(text, symbol) {
+            const cleanText = String(text || '').toUpperCase();
+            const cleanSymbol = String(symbol || '').toUpperCase();
+            if (!cleanText || !cleanSymbol) return false;
+            const rx = new RegExp(`(^|[^A-Z0-9])${cleanSymbol}([^A-Z0-9]|$)`);
+            return rx.test(cleanText);
+        }
+
+        function isNewsRelevantToStock(item, stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            if (!symbol) return false;
+
+            const title = String(item?.title || '');
+            const description = String(item?.description || '');
+            const link = String(item?.link || '');
+            const textRaw = `${title} ${description} ${link}`;
+            const textNorm = normalizeToken(textRaw);
+
+            if (hasStrictSymbolMatch(textRaw, symbol) || hasStrictSymbolMatch(link, symbol)) return true;
+
+            const keywords = getCompanyKeywords(stock?.name || '');
+            if (!keywords.length) return false;
+
+            const keywordHits = keywords.filter(k => textNorm.includes(k)).length;
+            const fullNameNorm = normalizeToken(stock?.name || '');
+            const hasLongNameChunk = fullNameNorm.length >= 7 && textNorm.includes(fullNameNorm);
+
+            // Strict verification without symbol: require stronger name evidence.
+            if (keywords.length >= 4 && keywordHits >= 3) return true;
+            if (keywords.length >= 2 && keywordHits >= 2 && hasLongNameChunk) return true;
+            if (keywords.length === 1 && keywordHits === 1 && hasLongNameChunk) return true;
+            return false;
+        }
+
+        function getStockUniverse() {
+            const map = new Map();
+
+            function put(symbol, name) {
+                const s = String(symbol || '').trim().toUpperCase();
+                const n = String(name || '').trim();
+                if (!s) return;
+                if (!map.has(s)) {
+                    map.set(s, { symbol: s, name: n || s });
+                    return;
+                }
+                const current = map.get(s);
+                if (!current.name && n) {
+                    current.name = n;
+                    map.set(s, current);
+                }
+            }
+
+            try {
+                const processed = JSON.parse(sessionStorage.getItem('processedData') || localStorage.getItem('processedData') || '[]');
+                (Array.isArray(processed) ? processed : []).forEach(row => put(row?.symbol, row?.name || row?.longName || row?.shortName));
+            } catch {
+            }
+
+            try {
+                const stocksData = JSON.parse(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData') || 'null');
+                const source = stocksData?.companies || stocksData;
+                const companies = Array.isArray(source)
+                    ? source
+                    : (source && typeof source === 'object' ? Object.values(source) : []);
+                companies.forEach(company => put(company?.symbol || company?.ticker || company?.code, company?.name || company?.companyName || company?.arabicName));
+            } catch {
+            }
+
+            return Array.from(map.values()).sort((a, b) => `${a.symbol} ${a.name}`.localeCompare(`${b.symbol} ${b.name}`, 'ar'));
+        }
+
+        function getPortfolioStocks(universe) {
+            const bySymbol = new Map((Array.isArray(universe) ? universe : []).map(stock => [String(stock.symbol || '').toUpperCase(), stock]));
+            try {
+                const portfolio = JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+                if (!Array.isArray(portfolio)) return [];
+                const picked = [];
+                portfolio.forEach(item => {
+                    const symbol = String(item?.symbol || '').trim().toUpperCase();
+                    if (!symbol || !bySymbol.has(symbol)) return;
+                    picked.push(bySymbol.get(symbol));
+                });
+                return picked;
+            } catch {
+                return [];
+            }
+        }
+
+        function buildScopedCacheKey(scope, symbol) {
+            const safeScope = String(scope || 'all').toLowerCase();
+            const safeSymbol = String(symbol || '').trim().toUpperCase();
+            return `${NEWS_CACHE_KEY}_${safeScope}_${safeSymbol || 'ALL'}`;
+        }
+
+        function buildStockNewsQueries(stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            const name = String(stock?.name || symbol).trim();
+            if (!symbol) return [];
+            
+            const queries = [];
+            
+            // رابط EGX الرسمي
+            // ملاحظة: هذه قاعدة عامة، لكن يمكن استخدامها مع مُحلل
+            queries.push(`https://www.egx.com.eg/ar/NewsList.aspx`);
+            
+            // رابط مباشر للإعلانات
+            queries.push(buildMubasherAnnouncementsUrl(symbol));
+            
+            // رابط مباشر لأخبار المباشر
+            queries.push(buildMubasherNewsUrl(symbol));
+            
+            // استعلامات Google News
+            const googleQueries = [
+                `${symbol} سهم بورصة مصر`,
+                `${name} سهم`,
+                `${symbol} EGX`,
+                `${name} EGX news`
+            ];
+            
+            googleQueries.forEach(q => {
+                const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=ar&gl=EG&ceid=EG:ar`;
+                queries.push(rssUrl);
+            });
+            
+            return queries;
+        }
+        
+        // دالة جديدة لتحليل صفحة الأخبار من EGX
+        function parseEGXNewsPage(htmlText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(String(htmlText || ''), 'text/html');
+            const newsItems = [];
+            
+            // محاولة البحث عن روابط الأخبار أو عناصرها
+            // هذا يختلف بناءً على تصميم الموقع
+            try {
+                const allLinks = Array.from(doc.querySelectorAll('a[href*="News"]'));
+                const filteredLinks = allLinks.filter(link => {
+                    const text = String(link.textContent || '').trim();
+                    return text.length > 10 && !text.includes('الصفحة') && !text.includes('التالي') && !text.includes('السابق');
+                });
+                
+                filteredLinks.forEach(link => {
+                    let href = link.getAttribute('href') || '';
+                    if (!href.startsWith('http')) {
+                        if (href.startsWith('/')) {
+                            href = `https://www.egx.com.eg${href}`;
+                        } else {
+                            href = `https://www.egx.com.eg/ar/${href}`;
+                        }
+                    }
+                    
+                    const title = String(link.textContent || '').replace(/\s+/g, ' ').trim();
+                    if (title && href) {
+                        newsItems.push({
+                            title: title,
+                            link: href,
+                            pubDate: new Date().toISOString(),
+                            source: 'EGX الرسمي',
+                            description: ''
+                        });
+                    }
+                });
+            } catch (e) {
+                console.warn('Error parsing EGX page:', e);
+            }
+            
+            // إزالة التكرارات
+            const uniqueNews = [];
+            const seenLinks = new Set();
+            
+            newsItems.forEach(item => {
+                if (!seenLinks.has(item.link.toLowerCase())) {
+                    seenLinks.add(item.link.toLowerCase());
+                    uniqueNews.push(item);
+                }
+            });
+            
+            return uniqueNews;
+        }
+
+        function isBoundTaskRelevant(item, stock) {
+            const symbol = String(stock?.symbol || '').trim().toUpperCase();
+            const hay = `${item?.title || ''} ${item?.description || ''} ${item?.link || ''}`.toUpperCase();
+            if (hasStrictSymbolMatch(hay, symbol)) return true;
+            const link = String(item?.link || '').toLowerCase();
+            if (link.includes(`/stocks/${symbol.toLowerCase()}/`)) return true;
+            return isNewsRelevantToStock(item, stock);
+        }
+
+        function renderSingleStockOptions(stocks) {
+            const select = document.getElementById('singleStockSelect');
+            if (!select) return;
+            const rows = Array.isArray(stocks) ? stocks : [];
+            const options = rows.map(stock => {
+                const symbol = escapeHtml(stock.symbol);
+                const name = escapeHtml(stock.name || stock.symbol);
+                return `<option value="${symbol}">${symbol} - ${name}</option>`;
+            }).join('');
+            select.innerHTML = options;
+        }
+
+        function onScopeChange() {
+            const scope = document.getElementById('searchScope')?.value || 'all';
+            const singleField = document.getElementById('singleStockField');
+            if (singleField) singleField.classList.toggle('hidden', scope !== 'single');
+        }
+
+        function findMatchingStocksForNews(item, universe) {
+            const matches = [];
+            (Array.isArray(universe) ? universe : []).forEach(stock => {
+                if (isNewsRelevantToStock(item, stock)) {
+                    matches.push(stock);
+                }
+            });
+            return matches;
+        }
+
+        function buildSummaryText(type, level) {
+            const typeMap = { positive: 'ايجابي', negative: 'سلبي', neutral: 'محايد' };
+            const levelMap = { high: 'مرتفع', medium: 'متوسط', low: 'محدود' };
+            return `التاثير ${typeMap[type] || 'محايد'} بدرجة ${levelMap[level] || 'متوسطة'}.`;
+        }
+
+        function analyzeNews(item) {
+            const text = normalizeToken(`${item?.title || ''} ${item?.description || ''} ${item?.source || ''}`);
+            let score = 0;
+            const reasons = [];
+
+            POSITIVE_KEYWORDS.forEach(word => {
+                if (text.includes(normalizeToken(word))) score += 1;
+            });
+
+            NEGATIVE_KEYWORDS.forEach(word => {
+                if (text.includes(normalizeToken(word))) score -= 1;
+            });
+
+            const hasHighImpactToken = HIGH_IMPACT_KEYWORDS.some(word => text.includes(normalizeToken(word)));
+            const absScore = Math.abs(score);
+            let impactLevel = 'medium';
+            if (hasHighImpactToken || absScore >= 3) impactLevel = 'high';
+            else if (absScore <= 1) impactLevel = 'low';
+
+            let impactType = 'neutral';
+            if (score >= 2) impactType = 'positive';
+            if (score <= -2) impactType = 'negative';
+
+            if (impactType === 'positive') reasons.push('الخبر يحمل اشارات نمو/ربحية تدعم السهم نسبيا.');
+            else if (impactType === 'negative') reasons.push('الخبر يتضمن اشارات ضغط قد تؤثر سلبا على السهم.');
+            else reasons.push('الخبر معلوماتي او متوازن بدون افضلية قوية.');
+
+            if (impactLevel === 'high') reasons.push('نوع الخبر عادة يكون ذو اثر سعري اكبر مثل النتائج او الصفقات الجوهرية.');
+            else if (impactLevel === 'low') reasons.push('الاثر المتوقع محدود ويحتاج تاكيد من حركة السعر والسيولة.');
+            else reasons.push('الاثر متوسط وقد يظهر تدريجيا خلال الجلسات القادمة.');
+
+            let recommendation = 'wait';
+            if (impactType === 'positive' && impactLevel !== 'low') {
+                recommendation = 'enter';
+                reasons.push('توصية دخول مشروطة بتاكيد فني: اغلاق اعلى من جلسة الخبر مع سيولة افضل.');
+            } else {
+                reasons.push('توصية انتظار لحين تاكيد سلوك السعر وتقليل اشارة مضللة من خبر منفرد.');
+            }
+
+            return { score, impactType, impactLevel, recommendation, reasons, summary: buildSummaryText(impactType, impactLevel) };
+        }
+
+        function dedupeNews(rows) {
+            const seen = new Set();
+            const unique = [];
+            rows.forEach(item => {
+                const key = `${String(item?.symbol || '').toLowerCase()}|${String(item?.title || '').toLowerCase()}|${String(item?.link || '').toLowerCase()}`;
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                unique.push(item);
+            });
+            return unique;
+        }
+
+        function getCache(cacheKey) {
+            try {
+            const raw = localStorage.getItem(cacheKey || NEWS_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed?.items)) return null;
+                const ageMs = Date.now() - Number(parsed?.savedAt || 0);
+                if (ageMs > NEWS_CACHE_MINUTES * 60 * 1000) return null;
+                return parsed;
+            } catch {
+                return null;
+            }
+        }
+
+        function setCache(cacheKey, items, stocksCount, queriesCount) {
+            try {
+                localStorage.setItem(cacheKey || NEWS_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), stocksCount, queriesCount, items }));
+            } catch {
+            }
+        }
+
+        function setStatus(text) {
+            const node = document.getElementById('status');
+            if (node) node.textContent = text;
+        }
+
+        async function runWithConcurrency(tasks, concurrency, onProgress) {
+            const results = [];
+            let index = 0;
+            let done = 0;
+            const size = tasks.length;
+
+            async function worker() {
+                while (true) {
+                    if (index >= size) return;
+                    const taskIndex = index;
+                    index += 1;
+                    try {
+                        results[taskIndex] = await tasks[taskIndex]();
+                    } catch {
+                        results[taskIndex] = null;
+                    }
+                    done += 1;
+                    if (typeof onProgress === 'function') onProgress(done, size);
+                }
+            }
+
+            const workers = [];
+            const safe = Math.max(1, Math.min(8, Number(concurrency) || 5));
+            for (let i = 0; i < safe; i += 1) workers.push(worker());
+            await Promise.all(workers);
+            return results;
+        }
+
+        function renderStats(items) {
+            const host = document.getElementById('statsArea');
+            if (!host) return;
+            const total = items.length;
+            const symbols = new Set(items.map(x => x.symbol)).size;
+            const enters = items.filter(x => x.analysis?.recommendation === 'enter').length;
+            const waits = items.filter(x => x.analysis?.recommendation === 'wait').length;
+            host.innerHTML = `
+                <div class="stat"><div class="k">عدد الاخبار المحللة</div><div class="v">${total.toLocaleString('ar-EG')}</div></div>
+                <div class="stat"><div class="k">عدد الاسهم التي ظهر لها اخبار</div><div class="v">${symbols.toLocaleString('ar-EG')}</div></div>
+                <div class="stat"><div class="k">توصية دخول</div><div class="v">${enters.toLocaleString('ar-EG')}</div></div>
+                <div class="stat"><div class="k">توصية انتظار</div><div class="v">${waits.toLocaleString('ar-EG')}</div></div>
+            `;
+        }
+
+        function impactClass(type) {
+            if (type === 'positive') return 'impact-positive';
+            if (type === 'negative') return 'impact-negative';
+            return 'impact-neutral';
+        }
+
+        function impactLabel(type, level) {
+            const t = type === 'positive' ? 'ايجابي' : type === 'negative' ? 'سلبي' : 'محايد';
+            const l = level === 'high' ? 'مرتفع' : level === 'low' ? 'محدود' : 'متوسط';
+            return `التاثير: ${t} (${l})`;
+        }
+
+        function recommendationClass(value) {
+            return value === 'enter' ? 'rec-enter' : 'rec-wait';
+        }
+
+        function recommendationLabel(value) {
+            return value === 'enter' ? 'التوصية: دخول' : 'التوصية: انتظار';
+        }
+
+        function renderResults(items) {
+            renderStats(items);
+            const host = document.getElementById('resultsArea');
+            if (!host) return;
+
+            if (!items.length) {
+                host.className = 'empty';
+                host.textContent = 'لا توجد نتائج مطابقة للفلاتر الحالية.';
+                return;
+            }
+
+            // تجميع الأخبار حسب السهم
+            const grouped = new Map();
+            items.forEach(item => {
+                if (!grouped.has(item.symbol)) grouped.set(item.symbol, { name: item.name, news: [] });
+                if (grouped.get(item.symbol).news.length < MAX_NEWS_PER_STOCK) {
+                    grouped.get(item.symbol).news.push(item);
+                }
+            });
+
+            host.className = 'news-grid';
+            let html = '';
+            grouped.forEach((data, symbol) => {
+                html += `
+                    <div class="news-item">
+                        <div class="news-head">
+                            <div class="news-symbol"><i class="fas fa-building"></i> ${escapeHtml(symbol)} - ${escapeHtml(data.name)}</div>
+                        </div>
+                        <div class="news-body">
+                            ${data.news.map(item => {
+                                const d = parseDate(item.pubDate);
+                                const dateText = d ? d.toLocaleString('ar-EG') : (item.pubDate || 'تاريخ حديث');
+                                return `
+                                <div class="news-entry">
+                                    <a class="news-title" href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
+                                    <div class="news-time"><i class="far fa-clock"></i> ${escapeHtml(dateText)}</div>
+                                    <div class="badges" style="margin-top:8px;">
+                                        <span class="badge ${impactClass(item.analysis?.impactType)}">${impactLabel(item.analysis?.impactType, item.analysis?.impactLevel)}</span>
+                                        <span class="badge ${recommendationClass(item.analysis?.recommendation)}">${recommendationLabel(item.analysis?.recommendation)}</span>
+                                    </div>
+                                    <div class="sub" style="margin-top:8px; background:rgba(251,191,36,0.05); padding:8px; border-radius:8px;">
+                                        <i class="fas fa-brain"></i> <strong>الخلاصة:</strong> ${escapeHtml(item.analysis?.summary || '')}
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                            <div class="cta-row">
+                                <a class="btn btn-alt" style="font-size:0.85em;" href="${escapeHtml(buildMubasherAnnouncementsUrl(symbol))}" target="_blank">فتح صفحة الإعلانات كاملة</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            host.innerHTML = html;
+        }
+
+        function applyFilters() {
+            const impact = document.getElementById('impactFilter')?.value || 'all';
+            const recommend = document.getElementById('recommendFilter')?.value || 'all';
+            const filtered = fullResults.filter(item => {
+                if (impact !== 'all' && item.analysis?.impactType !== impact) return false;
+                if (recommend !== 'all' && item.analysis?.recommendation !== recommend) return false;
+                return true;
+            });
+            renderResults(filtered);
+        }
+
+        function resetFilters() {
+            const impact = document.getElementById('impactFilter');
+            const recommend = document.getElementById('recommendFilter');
+            if (impact) impact.value = 'all';
+            if (recommend) recommend.value = 'all';
+            renderResults(fullResults);
+        }
+
+        async function loadPortfolioNews() {
+            await loadNews('portfolio', '', true);
+        }
+
+        async function loadSingleStockNews() {
+            const input = String(document.getElementById('singleStockInput')?.value || '').trim().toUpperCase();
+            if (!input) {
+                setStatus('اكتب رمز السهم أولاً ثم اضغط التحميل.');
+                return;
+            }
+            await loadNews('single', input, true);
+        }
+
+        async function loadAllNews() {
+            await loadNews('all', '', true);
+        }
+
+        async function loadEgxGeneralNews() {
+            setStatus('جاري تحميل أخبار وتعاملات البورصة المصرية العامة لآخر 3 أيام...');
+            const host = document.getElementById('resultsArea');
+            if (host) {
+                host.className = 'empty';
+                host.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري جلب أحدث الأخبار والتعاملات...';
+            }
+            
+            try {
+                // استعلام Google News RSS العام
+                const query = 'البورصة المصرية OR إفصاحات البورصة OR تعاملات البورصة';
+                const targetRss = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ar&gl=EG&ceid=EG:ar`;
+                
+                // استخدام rss2json لتفادي حظر Cloudflare/WAF
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRss)}`;
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('فشل الاتصال بخادم جلب الأخبار.');
+                }
+                
+                const data = await response.json();
+                if (data.status !== 'ok' || !Array.isArray(data.items)) {
+                    throw new Error(data.message || 'لا توجد بيانات أخبار متاحة حالياً.');
+                }
+                
+                const now = new Date();
+                const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+                
+                const generalNews = [];
+                data.items.forEach(item => {
+                    const d = parseDate(item.pubDate || item.pub_date);
+                    if (d && d >= tenDaysAgo) {
+                        generalNews.push({
+                            title: item.title,
+                            link: item.link,
+                            pubDate: d.toISOString(),
+                            source: item.author || item.source || 'أخبار البورصة',
+                            description: item.description || '',
+                            symbol: 'EGX',
+                            name: 'أخبار وتعاملات البورصة المصرية',
+                            analysis: analyzeNews(item)
+                        });
+                    }
+                });
+                
+                fullResults = generalNews.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+                renderResults(fullResults);
+                
+                if (fullResults.length === 0) {
+                    setStatus('لم يتم العثور على أخبار خلال آخر 10 أيام.');
+                } else {
+                    setStatus(`تم جلب ${fullResults.length} خبر وتعامل للبورصة المصرية خلال آخر 10 أيام بنجاح!`);
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus(`فشل جلب الأخبار: ${e.message}`);
+                if (host) {
+                    host.className = 'empty';
+                    host.innerHTML = `<i class="fas fa-exclamation-circle"></i> تعذر تحميل الأخبار: ${e.message}`;
+                }
+            }
+        }
+
+        async function loadNews(scope = 'all', singleSymbol = '', force = false) {
+            const selectedSingle = String(singleSymbol || '').trim().toUpperCase();
+            const cacheKey = buildScopedCacheKey(scope, selectedSingle);
+
+            if (!force) {
+                const cache = getCache(cacheKey);
+                if (cache?.items?.length) {
+                    fullResults = cache.items;
+                    renderResults(fullResults);
+                    setStatus(`عرض نسخة محفوظة: ${cache.items.length} خبر (تحديث ${new Date(cache.savedAt).toLocaleString('ar-EG')}).`);
+                    return;
+                }
+            }
+
+            const universe = getStockUniverse();
+            renderSingleStockOptions(universe);
+            onScopeChange();
+            if (!universe.length) {
+                fullResults = [];
+                renderResults(fullResults);
+                setStatus('لا توجد بيانات اسهم متاحة. ارفع البيانات اولا من صفحة رفع البيانات.');
+                return;
+            }
+
+            let selectedStocks = universe;
+            if (scope === 'portfolio') {
+                selectedStocks = getPortfolioStocks(universe);
+                if (!selectedStocks.length) {
+                    fullResults = [];
+                    renderResults(fullResults);
+                    setStatus('لا توجد أسهم داخل المحفظة حاليا. أضف أسهم في صفحة المحفظة ثم أعد المحاولة.');
+                    return;
+                }
+            } else if (scope === 'single') {
+                if (!selectedSingle) {
+                    setStatus('اكتب رمز السهم أولاً ثم اضغط التحميل.');
+                    return;
+                }
+                // البحث أولاً في قاعدة البيانات، وإن لم يوجد نستخدم الرمز مباشرة
+                const found = universe.find(stock => String(stock.symbol || '').toUpperCase() === selectedSingle);
+                selectedStocks = [found || { symbol: selectedSingle, name: selectedSingle }];
+            }
+
+            const tasks = [];
+            selectedStocks.forEach(stock => {
+                buildStockNewsQueries(stock).forEach(query => {
+                    tasks.push(async () => ({ query, stock, rows: await fetchInternetNewsByQuery(query) }));
+                });
+            });
+
+            if (!tasks.length) {
+                fullResults = [];
+                renderResults(fullResults);
+                setStatus('تعذر تجهيز الاستعلامات حاليا.');
+                return;
+            }
+
+            setStatus(`جاري البحث في ${tasks.length} مصدر اخبار لـ ${selectedStocks.length} سهم (EGX الرسمي + مباشر + Google News)...`);
+            const responses = await runWithConcurrency(tasks, 3, (done, total) => {
+                setStatus(`جاري الجلب والتحليل... ${done}/${total}`);
+            });
+
+            const all = [];
+            responses.forEach(resp => {
+                if (!resp || !Array.isArray(resp.rows)) return;
+                resp.rows
+                    .filter(item => isAllowedNewsSource(item))
+                    .forEach(item => {
+                        const d = parseDate(item.pubDate);
+
+                        const matches = resp.stock && isBoundTaskRelevant(item, resp.stock) ? [resp.stock] : [];
+                        if (!matches.length) return;
+
+                        matches.forEach(stock => {
+                            all.push({
+                                ...item,
+                                pubDate: d ? d.toISOString() : (item.pubDate || new Date().toISOString()),
+                                symbol: stock.symbol,
+                                name: stock.name,
+                                analysis: analyzeNews(item)
+                            });
+                        });
+                    });
+            });
+
+            fullResults = dedupeNews(all).sort((a, b) => {
+                const da = parseDate(a.pubDate)?.getTime() || 0;
+                const db = parseDate(b.pubDate)?.getTime() || 0;
+                return db - da;
+            });
+
+            setCache(cacheKey, fullResults, selectedStocks.length, tasks.length);
+            renderResults(fullResults);
+
+            if (!fullResults.length) setStatus('لا توجد اخبار مرتبطة بالاسهم حالياً. حاول لاحقاً أو جرب سهم آخر.');
+            else setStatus(`تم جلب أحدث ${fullResults.length} خبر من ${selectedStocks.length} سهم (EGX الرسمي + مباشر + Google News)!`);
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+        
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            // لا يتم تحميل الأخبار تلقائياً - انتظار ضغط المستخدم على أحد الأزرار
+            setStatus('اضغط على أحد أزرار التحميل لجلب الأخبار.');
+        });
+    </script>
+</body>
+</html>

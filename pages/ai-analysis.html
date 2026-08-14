@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 تحليل بالذكاء الاصطناعي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        .container { max-width: 1300px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 22px; border-bottom: 1px solid #334155; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+        .header h2 { color: #fbbf24; display:flex; gap:10px; align-items:center; }
+        .btn { border:none; border-radius:50px; padding:10px 16px; cursor:pointer; font-weight:700; display:inline-flex; gap:8px; align-items:center; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color:#0f172a; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+
+        .search-wrap { padding: 18px 22px; background:#0f172a; border-bottom: 1px solid #334155; }
+        .search-grid { display:grid; gap:10px; grid-template-columns: 1fr auto auto; }
+        .quick-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .filter-toggle { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #334155; border-radius:999px; background:#111827; color:#cbd5e1; font-size:.9em; }
+        .filter-toggle input { accent-color: #fbbf24; }
+        .search-input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-weight: 700; }
+        .hint { color:#94a3b8; margin-top:8px; font-size:.9em; }
+
+        .suggestions { margin-top: 10px; border:1px solid #334155; border-radius: 10px; overflow: hidden; background:#111827; }
+        .s-item { padding: 10px 12px; border-bottom:1px solid #1f2937; cursor:pointer; display:flex; justify-content:space-between; gap:10px; }
+        .s-item:last-child { border-bottom:none; }
+        .s-item:hover, .s-item.active { background:#1e293b; }
+        .s-symbol { color:#fbbf24; font-weight:700; }
+        .s-name { color:#cbd5e1; }
+
+        .selected { margin-top: 10px; background: linear-gradient(135deg, rgba(59,130,246,.14), rgba(59,130,246,.05)); border:1px solid #3b82f6; border-radius:10px; padding: 10px 12px; display:none; }
+        .selected .sym { color:#fbbf24; font-weight:700; }
+
+        .results { padding: 16px 22px 24px; }
+        .empty { margin: 12px 0; padding: 20px; border:1px dashed #fbbf24; border-radius:12px; color:#fbbf24; background:rgba(251,191,36,.08); text-align:center; }
+        .panel { border:1px solid #334155; border-radius:12px; background:#0f172a; margin-bottom:12px; overflow:hidden; }
+        .panel h3 { padding: 12px 14px; background:#111827; border-bottom:1px solid #334155; color:#fbbf24; font-size:1.02em; }
+        .panel-content { padding: 12px 14px; }
+
+        .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
+        .kpi { background: linear-gradient(135deg, #1e293b, #334155); border:1px solid #475569; border-radius:10px; padding:10px; text-align:center; }
+        .kpi .k { color:#94a3b8; font-size:.88em; margin-bottom:4px; }
+        .kpi .v { color:#e2e8f0; font-size:1.15em; font-weight:700; }
+
+        .decision { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:10px; }
+        .badge { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; font-weight:700; }
+        .buy { background:rgba(16,185,129,.16); color:#10b981; border:1px solid #10b981; }
+        .hold { background:rgba(59,130,246,.16); color:#60a5fa; border:1px solid #3b82f6; }
+        .warn { background:rgba(245,158,11,.16); color:#f59e0b; border:1px solid #f59e0b; }
+        .sell { background:rgba(239,68,68,.16); color:#ef4444; border:1px solid #ef4444; }
+
+        .list { list-style: none; display:grid; gap:8px; }
+        .list li { padding:10px; border:1px solid #334155; border-radius:8px; background:#111827; }
+        .chips { display:flex; flex-wrap:wrap; gap:8px; }
+        .chip { padding:7px 10px; border-radius:999px; font-size:.88em; border:1px solid #334155; background:#111827; color:#e2e8f0; }
+        .chip.up { border-color:#10b981; color:#10b981; }
+        .chip.down { border-color:#ef4444; color:#ef4444; }
+        .chip.neutral { border-color:#f59e0b; color:#f59e0b; }
+
+        .news-meta { color:#94a3b8; font-size:.9em; margin-bottom:10px; }
+        .news-list { display:grid; gap:10px; }
+        .news-item { border:1px solid #334155; border-radius:10px; background:#111827; padding:10px; }
+        .news-title { color:#e2e8f0; font-weight:700; text-decoration:none; display:block; margin-bottom:6px; }
+        .news-title:hover { color:#fbbf24; }
+        .news-source { color:#94a3b8; font-size:.85em; }
+
+        .cta-row { display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
+        .inline-select { background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:999px; padding:7px 10px; font-weight:700; }
+
+        @media (max-width: 880px) {
+            .search-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-robot"></i> تحليل بالذكاء الاصطناعي</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> تحديث البيانات</button>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-arrow-right"></i> الرئيسية</button>
+            </div>
+        </div>
+
+        <div class="search-wrap">
+            <div class="search-grid">
+                <input id="searchInput" class="search-input" type="text" placeholder="اكتب جزء من الكود أو اسم الشركة...">
+                <button class="btn btn-info" onclick="searchStocks()"><i class="fas fa-search"></i> بحث</button>
+                <button class="btn btn-primary" onclick="runAnalysis()"><i class="fas fa-brain"></i> تحليل</button>
+            </div>
+            <div class="quick-actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-info" onclick="showPortfolioStocks()"><i class="fas fa-wallet"></i> أسهم محفظتي</button>
+                <button class="btn btn-primary" onclick="showTopOpportunities()"><i class="fas fa-rocket"></i> أهم الأسهم المقترحة</button>
+                <label class="filter-toggle" style="display:inline-flex; align-items:center; margin:0;"><input id="newOnlyFilter" type="checkbox"> فرص جديدة فقط (خارج المحفظة)</label>
+                
+                <span class="filter-toggle" style="display:inline-flex; align-items:center; gap:8px; padding: 6px 12px;">
+                    <label for="riskProfile" style="color: #cbd5e1; font-size: 0.85em; font-weight:600; margin:0;">نمط المخاطرة:</label>
+                    <select id="riskProfile" class="inline-select" style="background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:4px 8px; font-weight:700; font-size:0.85em; outline:none; cursor:pointer;">
+                        <option value="balanced" selected>متوازن (Balanced)</option>
+                        <option value="conservative">محافظ (Conservative)</option>
+                        <option value="aggressive">جريء (Aggressive)</option>
+                    </select>
+                </span>
+            </div>
+            <div class="hint">يمكنك كتابة: COMI أو أي جزء من اسم الشركة ثم اختيار السهم من القائمة.</div>
+            <div id="suggestions" class="suggestions" style="display:none;"></div>
+            <div id="selectedStock" class="selected"></div>
+        </div>
+
+        <div class="results" id="resultsArea">
+            <div class="empty">
+                <h3>🤖 جاهز للتحليل الذكي</h3>
+                <p>ابحث عن سهم، اختره، ثم اضغط "تحليل".</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let companies = [];
+        let processedMap = new Map();
+        let selectedCompany = null;
+        const MIN_REQUIRED_ANALYSIS_DAYS = 60;
+        let newsRefreshTimer = null;
+        let activeNewsSymbol = null;
+        let decisionRiskProfile = 'balanced';
+
+        function toNum(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function normalizeText(text) {
+            return String(text || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[\u064B-\u0652]/g, '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي');
+        }
+
+                function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            let clean = String(dateStr).trim().replace(/^['"]|['"]$/g, '');
+            if (!clean) return new Date(0);
+
+            if (clean.includes('T')) {
+                const d = new Date(clean);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            let parts = clean.split(/[-/. ]+/);
+            if (parts.length === 3) {
+                let p0 = parseInt(parts[0], 10);
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+
+                if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+                    let year = -1;
+                    let month = -1;
+                    let day = -1;
+
+                    if (parts[0].length === 4 || p0 > 31) {
+                        year = p0;
+                        if (p1 > 12) {
+                            day = p1;
+                            month = p2 - 1;
+                        } else {
+                            month = p1 - 1;
+                            day = p2;
+                        }
+                    } else if (parts[2].length === 4 || p2 > 31) {
+                        year = p2;
+                        if (p0 > 12) {
+                            day = p0;
+                            month = p1 - 1;
+                        } else if (p1 > 12) {
+                            month = p0 - 1;
+                            day = p1;
+                        } else {
+                            day = p0;
+                            month = p1 - 1;
+                        }
+                    } else {
+                        day = p0;
+                        month = p1 - 1;
+                        year = p2 + 2000;
+                    }
+
+                    if (year > 0 && month >= 0 && month < 12 && day > 0 && day <= 31) {
+                        return new Date(year, month, day);
+                    }
+                }
+            }
+
+            const d = new Date(clean);
+            return isNaN(d.getTime()) ? new Date(0) : d;
+        }
+
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+
+            // Fallback when stocksData storage is unavailable or too large.
+            const processedRaw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!processedRaw) return [];
+            try {
+                const rows = JSON.parse(processedRaw);
+                if (!Array.isArray(rows)) return [];
+                return rows.map(row => ({
+                    symbol: row?.symbol,
+                    shortName: row?.name || row?.symbol,
+                    longName: row?.name || row?.symbol,
+                    historical: []
+                }));
+            } catch {
+                return [];
+            }
+        }
+
+        function readProcessedMap() {
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (!raw) return new Map();
+            try {
+                const rows = JSON.parse(raw);
+                if (!Array.isArray(rows)) return new Map();
+                return new Map(rows.map(row => [String(row.symbol || '').toUpperCase(), row]));
+            } catch {
+                return new Map();
+            }
+        }
+
+        function getPortfolioMap() {
+            try {
+                const rows = JSON.parse(localStorage.getItem('userPortfolio') || '[]');
+                if (!Array.isArray(rows)) return new Map();
+                return new Map(rows.map(item => [String(item.symbol || '').toUpperCase(), item]));
+            } catch {
+                return new Map();
+            }
+        }
+
+        function historyPoints(company) {
+            const rows = company?.historical || company?.daily || [];
+            const points = rows.map(row => ({
+                date: row?.date,
+                open: toNum(row?.open ?? row?.o ?? row?.close ?? row?.price),
+                high: toNum(row?.high ?? row?.h ?? row?.close ?? row?.price),
+                low: toNum(row?.low ?? row?.l ?? row?.close ?? row?.price),
+                close: toNum(row?.close ?? row?.price ?? row?.value),
+                volume: toNum(row?.volume ?? row?.vol ?? 0)
+            })).filter(p => p.date && Number.isFinite(p.close));
+
+            points.forEach(p => {
+                if (!Number.isFinite(p.open)) p.open = p.close;
+                if (!Number.isFinite(p.high)) p.high = Math.max(p.open, p.close);
+                if (!Number.isFinite(p.low)) p.low = Math.min(p.open, p.close);
+                if (!Number.isFinite(p.volume)) p.volume = 0;
+            });
+
+            points.sort((a, b) => parseDate(a.date) - parseDate(b.date));
+            return points;
+        }
+
+        function calcSMA(values, period) {
+            if (!Array.isArray(values)) return [];
+            const out = [];
+            for (let i = 0; i < values.length; i++) {
+                if (i < period - 1) {
+                    out.push(null);
+                    continue;
+                }
+                const windowVals = values.slice(i - period + 1, i + 1);
+                const sum = windowVals.reduce((acc, v) => acc + (Number(v) || 0), 0);
+                out.push(sum / period);
+            }
+            return out;
+        }
+
+        function calcRSI(values, period = 14) {
+            if (!Array.isArray(values) || values.length <= period) return null;
+            let gains = 0;
+            let losses = 0;
+            for (let i = values.length - period; i < values.length; i++) {
+                const prev = values[i - 1];
+                const cur = values[i];
+                const diff = cur - prev;
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            if (avgLoss === 0 && avgGain === 0) return 50;
+            if (avgLoss === 0) return 70;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function calcStd(values) {
+            if (!values.length) return 0;
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((acc, v) => acc + ((v - mean) ** 2), 0) / values.length;
+            return Math.sqrt(variance);
+        }
+
+        function detectSupportResistance(points) {
+            if (!points.length) return { support: null, resistance: null };
+            const latest = points[points.length - 1];
+            const recent = points.slice(-30);
+            const lows = recent.map(p => p.low).filter(Number.isFinite);
+            const highs = recent.map(p => p.high).filter(Number.isFinite);
+            const support = lows.length ? Math.min(...lows) : latest.low;
+            const resistance = highs.length ? Math.max(...highs) : latest.high;
+            return { support, resistance };
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function detectHeadAndShoulders(closes) {
+            if (!Array.isArray(closes) || closes.length < 15) return null;
+
+            const peaks = [];
+            for (let i = 1; i < closes.length - 1; i++) {
+                if (closes[i] > closes[i - 1] && closes[i] > closes[i + 1]) peaks.push(i);
+            }
+
+            for (let i = 0; i < peaks.length - 2; i++) {
+                const p1 = peaks[i];
+                const p2 = peaks[i + 1];
+                const p3 = peaks[i + 2];
+                const left = closes[p1];
+                const head = closes[p2];
+                const right = closes[p3];
+
+                const spacingValid = (p2 - p1) >= 2 && (p2 - p1) <= 12 && (p3 - p2) >= 2 && (p3 - p2) <= 12;
+                const headHigher = head > left * 1.03 && head > right * 1.03;
+                const shouldersSimilar = Math.abs(left - right) / Math.max(left, right) <= 0.05;
+
+                if (spacingValid && headHigher && shouldersSimilar) {
+                    return {
+                        type: 'الرأس والكتفين',
+                        direction: 'down',
+                        note: 'نموذج انعكاس هابط محتمل بعد صعود.'
+                    };
+                }
+            }
+            return null;
+        }
+
+        function detectInverseHeadAndShoulders(closes) {
+            if (!Array.isArray(closes) || closes.length < 15) return null;
+
+            const troughs = [];
+            for (let i = 1; i < closes.length - 1; i++) {
+                if (closes[i] < closes[i - 1] && closes[i] < closes[i + 1]) troughs.push(i);
+            }
+
+            for (let i = 0; i < troughs.length - 2; i++) {
+                const t1 = troughs[i];
+                const t2 = troughs[i + 1];
+                const t3 = troughs[i + 2];
+                const left = closes[t1];
+                const head = closes[t2];
+                const right = closes[t3];
+
+                const spacingValid = (t2 - t1) >= 2 && (t2 - t1) <= 12 && (t3 - t2) >= 2 && (t3 - t2) <= 12;
+                const headLower = head < left * 0.97 && head < right * 0.97;
+                const shouldersSimilar = Math.abs(left - right) / Math.max(left, right) <= 0.05;
+
+                if (spacingValid && headLower && shouldersSimilar) {
+                    return {
+                        type: 'الرأس والكتفين المقلوب',
+                        direction: 'up',
+                        note: 'نموذج انعكاس صاعد محتمل بعد هبوط.'
+                    };
+                }
+            }
+            return null;
+        }
+
+        function analyzeCandlestickPatterns(points) {
+            if (!Array.isArray(points) || points.length < 3) {
+                return { tags: [], notes: ['بيانات الشموع غير كافية للتحليل.'] };
+            }
+
+            const tags = [];
+            const notes = [];
+            const last = points[points.length - 1];
+            const prev = points[points.length - 2];
+
+            const body = Math.abs(last.close - last.open);
+            const range = Math.max(last.high - last.low, 0.0001);
+            const lowerWick = Math.min(last.open, last.close) - last.low;
+            const upperWick = last.high - Math.max(last.open, last.close);
+
+            const isHammer = lowerWick >= body * 2.5 && upperWick <= body * 0.4 && last.close >= last.open;
+            const isInvertedHammer = upperWick >= body * 2.5 && lowerWick <= body * 0.4 && last.close >= last.open;
+            const isDoji = body / range <= 0.12;
+
+            if (isHammer) {
+                tags.push({ cls: 'up', text: 'Hammer (الهامر)' });
+                notes.push('شمعة الهامر: ذيل سفلي طويل وجسم صغير، وقد تشير لاحتمال ارتداد صاعد بعد هبوط.');
+            }
+            if (isInvertedHammer) {
+                tags.push({ cls: 'neutral', text: 'Inverted Hammer' });
+                notes.push('المطرقة المقلوبة: تحتاج تأكيدًا من شمعة صاعدة بعدها قبل اعتماد الإشارة.');
+            }
+            if (isDoji) {
+                tags.push({ cls: 'neutral', text: 'Doji (دوجي)' });
+                notes.push('شمعة دوجي: توازن بين المشترين والبائعين، وتؤكدها الشمعة التالية.');
+            }
+
+            const prevBearish = prev.close < prev.open;
+            const lastBullish = last.close > last.open;
+            const bullishEngulfing = prevBearish && lastBullish && last.open <= prev.close && last.close >= prev.open;
+            if (bullishEngulfing) {
+                tags.push({ cls: 'up', text: 'Bullish Engulfing' });
+                notes.push('ابتلاع صاعد: شمعة صاعدة ابتلعت جسم الشمعة السابقة الهابطة.');
+            }
+
+            const closes = points.slice(-35).map(p => p.close);
+            const hs = detectHeadAndShoulders(closes);
+            const invHs = detectInverseHeadAndShoulders(closes);
+            if (hs) {
+                tags.push({ cls: 'down', text: hs.type });
+                notes.push(hs.note);
+            }
+            if (invHs) {
+                tags.push({ cls: 'up', text: invHs.type });
+                notes.push(invHs.note);
+            }
+
+            if (!tags.length) {
+                tags.push({ cls: 'neutral', text: 'لا توجد إشارة شموع قوية الآن' });
+                notes.push('لا يوجد نموذج شموعي مكتمل بوضوح في آخر الشموع.');
+            }
+
+            return { tags, notes };
+        }
+
+        function clearNewsAutoRefresh() {
+            if (newsRefreshTimer) {
+                clearInterval(newsRefreshTimer);
+                newsRefreshTimer = null;
+            }
+        }
+
+        function buildNewsKeywords(symbol, companyName) {
+            const symbolToken = String(symbol || '').trim().toUpperCase();
+            const words = String(companyName || '')
+                .replace(/[()\-_/]/g, ' ')
+                .split(/\s+/)
+                .map(w => w.trim())
+                .filter(w => w.length >= 3)
+                .slice(0, 3);
+            return [symbolToken, ...words].filter(Boolean);
+        }
+
+        function parseNewsRss(xmlText) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xmlText, 'text/xml');
+            const items = Array.from(xml.querySelectorAll('item'));
+            return items.map(item => ({
+                title: (item.querySelector('title')?.textContent || '').trim(),
+                link: (item.querySelector('link')?.textContent || '').trim(),
+                pubDate: (item.querySelector('pubDate')?.textContent || '').trim(),
+                source: (item.querySelector('source')?.textContent || 'Internet').trim()
+            })).filter(x => x.title && x.link);
+        }
+
+        async function fetchTextWithFallback(url) {
+            const endpoints = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint, { cache: 'no-store' });
+                    if (!response.ok) continue;
+                    const text = await response.text();
+                    if (endpoint.includes('/get?url=')) {
+                        try {
+                            const payload = JSON.parse(text);
+                            const contents = payload?.contents;
+                            if (typeof contents === 'string' && contents.length > 10) return contents;
+                        } catch {
+                        }
+                    } else if (text && text.length > 10) {
+                        return text;
+                    }
+                } catch {
+                }
+            }
+            return '';
+        }
+
+        async function fetchInternetNewsByQuery(query) {
+            const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ar&gl=EG&ceid=EG:ar`;
+            const xmlText = await fetchTextWithFallback(rssUrl);
+            if (!xmlText) return [];
+            return parseNewsRss(xmlText);
+        }
+
+        function updateNewsView(news, infoText = '') {
+            const listEl = document.getElementById('newsList');
+            const metaEl = document.getElementById('newsMeta');
+            if (!listEl || !metaEl) return;
+
+            metaEl.textContent = infoText || `آخر تحديث: ${new Date().toLocaleString('ar-EG')}`;
+
+            if (!news.length) {
+                listEl.innerHTML = '<div class="news-item">لا توجد أخبار متاحة حاليًا لهذا السهم.</div>';
+                return;
+            }
+
+            listEl.innerHTML = news.map(item => {
+                const published = item.pubDate ? new Date(item.pubDate).toLocaleString('ar-EG') : 'غير محدد';
+                return `
+                    <div class="news-item">
+                        <a class="news-title" href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
+                        <div class="news-source">${escapeHtml(item.source)} • ${escapeHtml(published)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function fetchStockNews(symbol, companyName) {
+            const keywords = buildNewsKeywords(symbol, companyName);
+            const queries = [
+                `${symbol} ${companyName || ''} سهم`,
+                `${companyName || symbol} اخبار البورصة المصرية`,
+                `${companyName || symbol} موقع الشرق اقتصاد`,
+                `${symbol} Asharq Business`,
+                `${symbol} EGX stock news`,
+                `البورصة المصرية اخبار شركات`
+            ];
+
+            const allNews = [];
+            for (const query of queries) {
+                const rows = await fetchInternetNewsByQuery(query);
+                if (rows.length) allNews.push(...rows);
+                if (allNews.length >= 20) break;
+            }
+
+            if (!allNews.length) return [];
+
+            const unique = [];
+            const seen = new Set();
+            allNews.forEach(item => {
+                const key = (item.link || item.title || '').toLowerCase();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                unique.push({ ...item, source: item.source || 'Internet' });
+            });
+
+            const filtered = unique.filter(item => {
+                const hay = `${item.title} ${item.link}`.toUpperCase();
+                return keywords.some(keyword => hay.includes(String(keyword).toUpperCase()));
+            });
+
+            return (filtered.length ? filtered : unique).slice(0, 8);
+        }
+
+        async function refreshStockNews(forceLabel = false) {
+            if (!selectedCompany) return;
+            const symbol = String(selectedCompany.symbol || '').toUpperCase();
+            const companyName = selectedCompany.longName || selectedCompany.shortName || symbol;
+
+            const listEl = document.getElementById('newsList');
+            const metaEl = document.getElementById('newsMeta');
+            if (!listEl || !metaEl) return;
+
+            if (forceLabel) {
+                metaEl.textContent = 'جاري جلب آخر الأخبار من الإنترنت...';
+                listEl.innerHTML = '<div class="news-item">جاري التحميل...</div>';
+            }
+
+            const news = await fetchStockNews(symbol, companyName);
+            if (!news.length) {
+                updateNewsView([], 'تعذر جلب الأخبار من الإنترنت الآن، جرّب تحديثًا بعد قليل.');
+                return;
+            }
+            updateNewsView(news);
+        }
+
+        function formatRecoTag(type, text) {
+            const map = {
+                buy: 'buy',
+                hold: 'hold',
+                warn: 'warn',
+                sell: 'sell'
+            };
+            const cls = map[type] || 'hold';
+            return `<span class="badge ${cls}">${text}</span>`;
+        }
+
+        function searchStocks() {
+            const query = normalizeText(document.getElementById('searchInput').value);
+            const suggestions = document.getElementById('suggestions');
+
+            if (!query) {
+                suggestions.style.display = 'none';
+                suggestions.innerHTML = '';
+                return;
+            }
+
+            const results = companies
+                .map(c => ({
+                    company: c,
+                    symbol: String(c.symbol || '').toUpperCase(),
+                    name: String(c.longName || c.shortName || c.symbol || '')
+                }))
+                .filter(item => {
+                    const sym = normalizeText(item.symbol);
+                    const nm = normalizeText(item.name);
+                    return sym.includes(query) || nm.includes(query);
+                })
+                .slice(0, 12);
+
+            if (!results.length) {
+                suggestions.style.display = 'block';
+                suggestions.innerHTML = '<div class="s-item"><span class="s-name">لا يوجد سهم مطابق.</span></div>';
+                return;
+            }
+
+            suggestions.style.display = 'block';
+            suggestions.innerHTML = results.map((item, idx) => `
+                <div class="s-item ${idx === 0 ? 'active' : ''}" onclick="pickStock('${item.symbol.replace(/'/g, "\\'")}')">
+                    <span class="s-symbol">${item.symbol}</span>
+                    <span class="s-name">${item.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderQuickList(rows, emptyText) {
+            const suggestions = document.getElementById('suggestions');
+            if (!rows || !rows.length) {
+                suggestions.style.display = 'block';
+                suggestions.innerHTML = `<div class="s-item"><span class="s-name">${emptyText}</span></div>`;
+                return;
+            }
+
+            suggestions.style.display = 'block';
+            suggestions.innerHTML = rows.map((row, idx) => `
+                <div class="s-item ${idx === 0 ? 'active' : ''}" onclick="pickStockAndAnalyze('${String(row.symbol || '').replace(/'/g, "\\'")}')">
+                    <span class="s-symbol">${row.symbol}</span>
+                    <span class="s-name">${row.label}</span>
+                </div>
+            `).join('');
+        }
+
+        function pickStockAndAnalyze(symbol) {
+            pickStock(symbol);
+            runAnalysis();
+        }
+
+        function showPortfolioStocks() {
+            const portfolioMap = getPortfolioMap();
+            if (!portfolioMap.size) {
+                renderQuickList([], 'لا توجد أسهم في المحفظة حالياً.');
+                return;
+            }
+
+            const rows = [];
+            portfolioMap.forEach((item, symbol) => {
+                const company = companies.find(c => String(c.symbol || '').toUpperCase() === symbol);
+                if (!company) return;
+                const qty = Number(item.quantity || 0);
+                const entry = Number(item.entryPrice || 0);
+                rows.push({
+                    symbol,
+                    label: `${company.longName || company.shortName || symbol} | كمية: ${qty.toLocaleString('ar-EG')} | دخول: ${entry.toFixed(2)}`
+                });
+            });
+
+            renderQuickList(rows, 'لا توجد أسهم من المحفظة داخل البيانات الحالية.');
+        }
+
+        function showTopOpportunities() {
+            if (!companies.length) {
+                renderQuickList([], 'لا توجد بيانات أسهم حالياً.');
+                return;
+            }
+
+            const onlyNew = !!document.getElementById('newOnlyFilter')?.checked;
+            const portfolioMap = getPortfolioMap();
+            const ranked = [];
+
+            companies.forEach(company => {
+                const points = historyPoints(company);
+                if (points.length < MIN_REQUIRED_ANALYSIS_DAYS) return;
+
+                const symbol = String(company.symbol || '').toUpperCase();
+                if (onlyNew && portfolioMap.has(symbol)) return;
+                const processed = processedMap.get(symbol) || null;
+                const decision = calcDecision(points, processed);
+
+                const growthScore = decision.score + (decision.ret20 > 0 ? 0.5 : 0) + (decision.volumeRatio >= 1.2 ? 0.5 : 0);
+                if (growthScore < 2.5) return;
+
+                ranked.push({
+                    symbol,
+                    label: `${company.longName || company.shortName || symbol} | درجة: ${growthScore.toFixed(1)} | 20ي: ${decision.ret20.toFixed(1)}%`,
+                    score: growthScore
+                });
+            });
+
+            ranked.sort((a, b) => b.score - a.score);
+            renderQuickList(
+                ranked.slice(0, 12),
+                onlyNew
+                    ? 'لا توجد حالياً فرص جديدة قوية خارج المحفظة وفق معايير التحليل.'
+                    : 'لا توجد حالياً فرص صعود قوية وفق معايير التحليل.'
+            );
+        }
+
+        function pickStock(symbol) {
+            const upper = String(symbol || '').toUpperCase();
+            selectedCompany = companies.find(c => String(c.symbol || '').toUpperCase() === upper) || null;
+            const selectedEl = document.getElementById('selectedStock');
+            const suggestions = document.getElementById('suggestions');
+
+            if (!selectedCompany) {
+                selectedEl.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('searchInput').value = selectedCompany.symbol || '';
+            selectedEl.style.display = 'block';
+            selectedEl.innerHTML = `تم اختيار السهم: <span class="sym">${selectedCompany.symbol || '-'}</span> - ${selectedCompany.longName || selectedCompany.shortName || '-'}`;
+            suggestions.style.display = 'none';
+        }
+
+        function calcDecision(points, processed) {
+            const closes = points.map(p => p.close);
+            const volumes = points.map(p => p.volume);
+            const latest = points[points.length - 1];
+            const prev = points.length > 1 ? points[points.length - 2] : latest;
+            const sma20 = calcSMA(closes, 20).slice(-1)[0];
+            const sma50 = calcSMA(closes, 50).slice(-1)[0];
+            const rsi = Number.isFinite(Number(processed?.rsi)) ? Number(processed.rsi) : calcRSI(closes, 14);
+            const volumeAvg20 = calcSMA(volumes, 20).slice(-1)[0] || 0;
+            const volumeRatio = volumeAvg20 > 0 ? latest.volume / volumeAvg20 : 1;
+            const ret5 = closes.length > 5 ? ((latest.close - closes[closes.length - 6]) / closes[closes.length - 6]) * 100 : 0;
+            const ret20 = closes.length > 20 ? ((latest.close - closes[closes.length - 21]) / closes[closes.length - 21]) * 100 : 0;
+            const dayChange = prev.close ? ((latest.close - prev.close) / prev.close) * 100 : 0;
+            const sr = detectSupportResistance(points);
+            const supportDist = sr.support ? ((latest.close - sr.support) / sr.support) * 100 : null;
+            const resistanceDist = sr.resistance ? ((sr.resistance - latest.close) / latest.close) * 100 : null;
+
+            const returns20 = [];
+            for (let i = Math.max(1, closes.length - 20); i < closes.length; i++) {
+                const oldP = closes[i - 1];
+                const newP = closes[i];
+                if (oldP > 0) returns20.push(((newP - oldP) / oldP) * 100);
+            }
+            const volatility = calcStd(returns20);
+
+            let score = 0;
+            const reasons = [];
+
+            if (Number.isFinite(sma20) && latest.close > sma20) { score += 1; reasons.push('السعر أعلى من متوسط 20 يوم'); }
+            else if (Number.isFinite(sma20)) { score -= 1; reasons.push('السعر أقل من متوسط 20 يوم'); }
+
+            if (Number.isFinite(sma50) && latest.close > sma50) { score += 1; reasons.push('السعر أعلى من متوسط 50 يوم'); }
+            else if (Number.isFinite(sma50)) { score -= 1; reasons.push('السعر أقل من متوسط 50 يوم'); }
+
+            if (Number.isFinite(sma20) && Number.isFinite(sma50)) {
+                if (sma20 > sma50) { score += 1; reasons.push('اتجاه متوسطات داعم للصعود'); }
+                else { score -= 1; reasons.push('اتجاه متوسطات يميل للهبوط'); }
+            }
+
+            if (Number.isFinite(rsi)) {
+                if (rsi <= 35) { score += 1; reasons.push('RSI منخفض (احتمال ارتداد)'); }
+                else if (rsi >= 70) { score -= 1; reasons.push('RSI مرتفع (خطر جني أرباح)'); }
+                else if (rsi >= 45 && rsi <= 60) { score += 0.5; reasons.push('RSI في نطاق متوازن'); }
+            }
+
+            if (ret20 >= 8) { score += 1; reasons.push('أداء 20 يوم إيجابي'); }
+            else if (ret20 <= -8) { score -= 1; reasons.push('أداء 20 يوم ضعيف'); }
+
+            if (volumeRatio >= 1.3 && dayChange > 0) { score += 1; reasons.push('حجم قوي يدعم الحركة الصاعدة'); }
+            else if (volumeRatio <= 0.7) { score -= 0.5; reasons.push('حجم تداول ضعيف'); }
+
+            if (supportDist !== null && supportDist <= 3) { score += 1; reasons.push('السعر قريب من دعم مهم'); }
+            if (resistanceDist !== null && resistanceDist <= 3) { score -= 1; reasons.push('السعر قريب من مقاومة قريبة'); }
+
+            let actionType = 'hold';
+            let actionLabel = 'احتفاظ / مراقبة';
+            if (score >= 3) { actionType = 'buy'; actionLabel = 'دخول تدريجي (شراء)'; }
+            else if (score >= 1.5) { actionType = 'hold'; actionLabel = 'إيجابي - شراء خفيف أو احتفاظ'; }
+            else if (score <= -2.5) { actionType = 'sell'; actionLabel = 'تخفيف / خروج وقائي'; }
+            else if (score <= -1) { actionType = 'warn'; actionLabel = 'حياد حذر - انتظار إشارة أفضل'; }
+
+            const confidence = Math.max(35, Math.min(95, Math.round(50 + (score * 9))));
+            const dataQuality = Math.min(100, Math.round((points.length / 60) * 100));
+
+            let riskLevel = 'متوسطة';
+            if (volatility >= 3.2 || (resistanceDist !== null && resistanceDist <= 2)) riskLevel = 'مرتفعة';
+            else if (volatility <= 1.6 && (supportDist === null || supportDist <= 4.5)) riskLevel = 'منخفضة';
+
+            let executionStyle = 'انتظار تأكيد إضافي قبل توسيع المركز';
+            let positionSize = 'مركز خفيف (10% - 20%)';
+
+            if (actionType === 'buy' && confidence >= 70) {
+                executionStyle = 'دخول تدريجي على دفعتين مع متابعة الحجم';
+                positionSize = riskLevel === 'مرتفعة' ? 'مركز متوسط (20% - 30%)' : 'مركز متوسط/مرتفع (30% - 40%)';
+            } else if (actionType === 'hold') {
+                executionStyle = 'الاحتفاظ مع إضافة فقط عند اختراق واضح أو ارتداد مؤكد من دعم';
+                positionSize = 'بدون زيادة كبيرة حالياً';
+            } else if (actionType === 'warn') {
+                executionStyle = 'الانتظار خارج السهم أو تخفيف المراكز النشطة';
+                positionSize = 'تجنب فتح مركز جديد كبير';
+            } else if (actionType === 'sell') {
+                executionStyle = 'تخفيف/خروج تدريجي مع الالتزام الصارم بوقف الخسارة';
+                positionSize = 'عدم فتح مراكز جديدة';
+            }
+
+            let shortTermView = 'محايد';
+            if (dayChange >= 1.5 && volumeRatio >= 1.2) shortTermView = 'إيجابي';
+            else if (dayChange <= -1.5) shortTermView = 'سلبي';
+
+            let mediumTermView = 'متذبذب';
+            if (ret20 >= 8 && Number.isFinite(sma20) && Number.isFinite(sma50) && sma20 > sma50) mediumTermView = 'صاعد';
+            else if (ret20 <= -8 && Number.isFinite(sma20) && Number.isFinite(sma50) && sma20 < sma50) mediumTermView = 'هابط';
+
+            const stopLoss = sr.support ? Math.max(sr.support * 0.985, latest.low * 0.99) : latest.close * 0.95;
+            const take1 = sr.resistance ? sr.resistance * 0.985 : latest.close * 1.06;
+            const take2 = sr.resistance ? sr.resistance * 1.03 : latest.close * 1.1;
+
+            return {
+                latest,
+                prev,
+                sma20,
+                sma50,
+                rsi,
+                volumeAvg20,
+                volumeRatio,
+                ret5,
+                ret20,
+                dayChange,
+                volatility,
+                support: sr.support,
+                resistance: sr.resistance,
+                supportDist,
+                resistanceDist,
+                score,
+                confidence,
+                dataQuality,
+                riskLevel,
+                executionStyle,
+                positionSize,
+                shortTermView,
+                mediumTermView,
+                reasons,
+                actionType,
+                actionLabel,
+                stopLoss,
+                take1,
+                take2
+            };
+        }
+
+        function analyzeMakerBehavior(points, decision) {
+            const closes = points.map(p => Number(p.close)).filter(Number.isFinite);
+            const volumes = points.map(p => Number(p.volume || 0));
+            const recent = points.slice(-12);
+            const avgVol20 = decision.volumeAvg20 || (volumes.length ? volumes.reduce((a, b) => a + b, 0) / volumes.length : 0);
+
+            let makerScore = 0;
+            const clues = [];
+
+            const upHighVolDays = recent.filter((p, idx) => {
+                const globalIndex = points.length - recent.length + idx;
+                if (globalIndex <= 0) return false;
+                const prevClose = points[globalIndex - 1].close;
+                return p.close > prevClose && (p.volume || 0) >= avgVol20 * 1.25;
+            }).length;
+
+            const downHighVolDays = recent.filter((p, idx) => {
+                const globalIndex = points.length - recent.length + idx;
+                if (globalIndex <= 0) return false;
+                const prevClose = points[globalIndex - 1].close;
+                return p.close < prevClose && (p.volume || 0) >= avgVol20 * 1.25;
+            }).length;
+
+            if (upHighVolDays >= 3) {
+                makerScore += 2;
+                clues.push('جلسات صعود متعددة بحجم أعلى من المتوسط (دعم شرائي واضح).');
+            }
+            if (downHighVolDays >= 3) {
+                makerScore -= 2;
+                clues.push('جلسات هبوط متعددة بحجم مرتفع (ضغط بيعي أو تصريف).');
+            }
+
+            const nearSupport = decision.support ? ((decision.latest.close - decision.support) / decision.support) * 100 <= 2.5 : false;
+            const nearResistance = decision.resistance ? ((decision.resistance - decision.latest.close) / decision.latest.close) * 100 <= 2.5 : false;
+
+            const last3 = points.slice(-3);
+            const supportAbsorption = nearSupport && last3.some(c => {
+                const body = Math.abs((c.close || 0) - (c.open || 0));
+                const lowerWick = Math.min(c.open || c.close || 0, c.close || 0) - (c.low || 0);
+                return (c.volume || 0) >= avgVol20 * 1.2 && lowerWick > body * 1.8 && c.close >= c.open;
+            });
+            if (supportAbsorption) {
+                makerScore += 1.5;
+                clues.push('ظهور امتصاص بيعي قرب الدعم (ذيل سفلي + حجم مرتفع).');
+            }
+
+            const resistanceDistribution = nearResistance && last3.some(c => {
+                const body = Math.abs((c.close || 0) - (c.open || 0));
+                const upperWick = (c.high || 0) - Math.max(c.open || c.close || 0, c.close || 0);
+                return (c.volume || 0) >= avgVol20 * 1.2 && upperWick > body * 1.8 && c.close <= c.open;
+            });
+            if (resistanceDistribution) {
+                makerScore -= 1.5;
+                clues.push('احتمال تصريف قرب المقاومة (ذيل علوي + حجم مرتفع).');
+            }
+
+            if (closes.length >= 6) {
+                const last6 = closes.slice(-6);
+                const higherLows = last6[1] > last6[0] && last6[3] > last6[2] && last6[5] > last6[4];
+                if (higherLows && decision.volumeRatio >= 1.05) {
+                    makerScore += 1;
+                    clues.push('هيكل صاعد تدريجي (قمم/قيعان أعلى) مع تحسن في النشاط.');
+                }
+            }
+
+            let state = 'محايد';
+            let stateType = 'hold';
+            let thought = 'الميكر متوازن بين الدعم والضغط حالياً.';
+
+            if (makerScore >= 2.5) {
+                state = 'تجميع إيجابي';
+                stateType = 'buy';
+                thought = 'تفكير الميكر يميل للتجميع بهدوء ودعم الصعود التدريجي.';
+            } else if (makerScore >= 1) {
+                state = 'دعم انتقائي';
+                stateType = 'hold';
+                thought = 'الميكر يدعم مناطق محددة لكنه لم يؤكد انطلاقة قوية كاملة بعد.';
+            } else if (makerScore <= -2.5) {
+                state = 'تصريف واضح';
+                stateType = 'sell';
+                thought = 'تفكير الميكر يميل لتخفيف المراكز والبيع عند الارتفاعات.';
+            } else if (makerScore <= -1) {
+                state = 'ضغط بيعي';
+                stateType = 'warn';
+                thought = 'الميكر يمارس ضغطاً على السعر مع ضعف في الاحتفاظ بالمكاسب.';
+            }
+
+            const practical = makerScore >= 1.5
+                ? 'التنفيذ الأفضل: شراء تدريجي قرب الدعم وعدم ملاحقة الصعود السريع.'
+                : makerScore <= -1.5
+                    ? 'التنفيذ الأفضل: تخفيف قرب المقاومات والالتزام بوقف الخسارة.'
+                    : 'التنفيذ الأفضل: انتظار كسر/ارتداد مؤكد قبل قرار كبير.';
+
+            return {
+                score: makerScore,
+                state,
+                stateType,
+                thought,
+                clues: clues.length ? clues : ['لا توجد بصمة قوية وواضحة لسلوك الميكر حالياً.'],
+                practical
+            };
+        }
+
+        function portfolioAdvice(symbol, decision) {
+            const portfolioMap = getPortfolioMap();
+            const item = portfolioMap.get(String(symbol || '').toUpperCase());
+            if (!item) {
+                return {
+                    inPortfolio: false,
+                    badge: formatRecoTag(decision.actionType, 'السهم غير موجود في المحفظة'),
+                    text: 'يمكن اعتبار التوصية العامة أعلاه كنقطة قرار للدخول الجديد.'
+                };
+            }
+
+            const entry = Number(item.entryPrice || 0);
+            const qty = Number(item.quantity || 0);
+            const current = decision.latest.close;
+            const pnlPct = entry > 0 ? ((current - entry) / entry) * 100 : 0;
+
+            if (typeof window.getUnifiedPortfolioAdvice === 'function') {
+                const unified = window.getUnifiedPortfolioAdvice({
+                    symbol,
+                    name: symbol,
+                    qty,
+                    entry,
+                    current,
+                    ret: pnlPct,
+                    recommendation: decision.actionType,
+                    rsi: decision.rsi,
+                    support: decision.support,
+                    resistance: decision.resistance,
+                    score: decision.score
+                });
+
+                const typeMap = {
+                    'زيادة مراكز': 'buy',
+                    'احتفاظ': 'hold',
+                    'تقليل مراكز': 'warn',
+                    'خروج': 'sell'
+                };
+                const badgeType = typeMap[unified.text] || 'hold';
+
+                return {
+                    inPortfolio: true,
+                    badge: formatRecoTag(badgeType, `السهم في المحفظة (${unified.text})`),
+                    text: `${(unified.reasons || []).slice(0, 2).join(' | ')} | الكمية: ${qty.toLocaleString('ar-EG')} | سعر الدخول: ${entry.toFixed(2)} | العائد الحالي: ${pnlPct.toFixed(2)}%`
+                };
+            }
+
+            let type = 'hold';
+            let title = 'احتفاظ';
+            let text = 'الوضع الحالي مناسب للاستمرار مع متابعة وقف الخسارة.';
+
+            if (decision.score <= -2.5 && pnlPct <= -7) {
+                type = 'sell';
+                title = 'خروج / وقف خسارة';
+                text = 'الإشارات ضعيفة والخسارة تتزايد؛ الأفضل تقليل المخاطرة والخروج المنضبط.';
+            } else if (decision.score <= -2 && pnlPct >= 8) {
+                type = 'warn';
+                title = 'تخفيف وجني أرباح جزئي';
+                text = 'حققت ربحًا جيدًا مع إشارات ضعف؛ يفضّل جني جزء من الأرباح.';
+            } else if (decision.score >= 2.5 && pnlPct < 0) {
+                type = 'hold';
+                title = 'احتفاظ مع إعادة تقييم';
+                text = 'رغم الخسارة الحالية، المؤشرات تحسنت. احتفظ مع التزام صارم بوقف الخسارة.';
+            } else if (decision.score >= 3 && pnlPct >= 0) {
+                type = 'buy';
+                title = 'احتفاظ قوي / تعزيز مدروس';
+                text = 'الاتجاه يدعم الاستمرار، ويمكن التعزيز تدريجيًا في التصحيحات.';
+            }
+
+            return {
+                inPortfolio: true,
+                badge: formatRecoTag(type, `السهم في المحفظة (${title})`),
+                text: `${text} | الكمية: ${qty.toLocaleString('ar-EG')} | سعر الدخول: ${entry.toFixed(2)} | العائد الحالي: ${pnlPct.toFixed(2)}%`
+            };
+        }
+
+        function setDecisionRiskProfile(value) {
+            decisionRiskProfile = String(value || 'balanced');
+            if (selectedCompany) runAnalysis();
+        }
+
+        function getRiskProfileConfig(key) {
+            const base = {
+                balanced: { stopLossPct: 0.08, take1Pct: 0.10, take2Pct: 0.20, take1SellPct: 0.30, take2SellPct: 0.35, trailPct: 0.10 },
+                conservative: { stopLossPct: 0.06, take1Pct: 0.08, take2Pct: 0.16, take1SellPct: 0.33, take2SellPct: 0.40, trailPct: 0.08 },
+                aggressive: { stopLossPct: 0.10, take1Pct: 0.12, take2Pct: 0.25, take1SellPct: 0.25, take2SellPct: 0.30, trailPct: 0.12 }
+            };
+            return base[key] || base.balanced;
+        }
+
+        function buildPriceTriggers(symbol, decision, riskKey) {
+            const cfg = getRiskProfileConfig(riskKey);
+            const portfolioMap = getPortfolioMap();
+            const item = portfolioMap.get(String(symbol || '').toUpperCase());
+            const current = Number(decision?.latest?.close || 0);
+            const support = Number(decision?.support || 0);
+            const resistance = Number(decision?.resistance || 0);
+            const entry = item ? Number(item.entryPrice || 0) : 0;
+            const qty = item ? Math.max(1, Math.floor(Number(item.quantity || 1))) : 0;
+            const baseRef = entry > 0 ? entry : (current > 0 ? current : 0);
+
+            const stopLoss = (() => {
+                if (support > 0 && current > 0 && support < current) return support * 0.985;
+                if (baseRef > 0) return baseRef * (1 - cfg.stopLossPct);
+                return 0;
+            })();
+
+            const take1 = (() => {
+                if (baseRef <= 0) return 0;
+                const pctTarget = baseRef * (1 + cfg.take1Pct);
+                if (resistance > 0) return Math.min(resistance, pctTarget);
+                return pctTarget;
+            })();
+
+            const take2 = (() => {
+                if (baseRef <= 0) return 0;
+                const pctTarget = baseRef * (1 + cfg.take2Pct);
+                if (resistance > 0) return Math.max(resistance * 1.03, pctTarget);
+                return pctTarget;
+            })();
+
+            const take1SellQty = qty > 0 ? Math.max(1, Math.round(qty * cfg.take1SellPct)) : 0;
+            const take2SellQty = qty > 0 ? Math.max(1, Math.round(qty * cfg.take2SellPct)) : 0;
+
+            return {
+                inPortfolio: Boolean(item),
+                entry,
+                qty,
+                current,
+                support,
+                resistance,
+                stopLoss,
+                take1,
+                take2,
+                take1SellQty,
+                take2SellQty,
+                trailPct: cfg.trailPct
+            };
+        }
+
+        function renderPriceScenarios(symbol, decision, riskKey) {
+            const t = buildPriceTriggers(symbol, decision, riskKey);
+            const riskLabel = riskKey === 'conservative' ? 'محافظ' : riskKey === 'aggressive' ? 'جريء' : 'متوازن';
+
+            const rows = [];
+            if (t.stopLoss > 0) {
+                rows.push({
+                    when: `إذا وصل السعر إلى ${t.stopLoss.toFixed(2)} أو أقل`,
+                    action: t.inPortfolio ? `خروج كامل (بيع ${t.qty.toLocaleString('ar-EG')} سهم)` : 'إلغاء الصفقة / لا تدخل',
+                    why: 'وقف خسارة لحماية رأس المال'
+                });
+            }
+            if (t.take1 > 0) {
+                rows.push({
+                    when: `إذا وصل السعر إلى ${t.take1.toFixed(2)}`,
+                    action: t.inPortfolio ? `بيع جزئي (${t.take1SellQty.toLocaleString('ar-EG')} سهم)` : 'جني جزء من الربح',
+                    why: 'تأمين جزء من الحركة'
+                });
+            }
+            if (t.take2 > 0) {
+                rows.push({
+                    when: `إذا وصل السعر إلى ${t.take2.toFixed(2)}`,
+                    action: t.inPortfolio ? `بيع جزئي (${t.take2SellQty.toLocaleString('ar-EG')} سهم)` : 'جني ربح أكبر',
+                    why: 'استهداف موجة صعود أكبر'
+                });
+            }
+            if (t.trailPct > 0) {
+                rows.push({
+                    when: `بعد تحقيق قمة جديدة، إذا هبط ${Math.round(t.trailPct * 100)}% من القمة`,
+                    action: 'تفعيل وقف متحرك (تقليل/خروج حسب الوضع)',
+                    why: 'حماية الأرباح بعد الصعود'
+                });
+            }
+
+            const header = `
+                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <div class="muted" style="font-size:.9em;">
+                        نمط المخاطرة:
+                        <select class="inline-select" onchange="setDecisionRiskProfile(this.value)">
+                            <option value="balanced" ${riskKey === 'balanced' ? 'selected' : ''}>متوازن</option>
+                            <option value="conservative" ${riskKey === 'conservative' ? 'selected' : ''}>محافظ</option>
+                            <option value="aggressive" ${riskKey === 'aggressive' ? 'selected' : ''}>جريء</option>
+                        </select>
+                        <span style="margin-right:8px;">(${riskLabel})</span>
+                    </div>
+                    <div class="muted" style="font-size:.9em;">
+                        ${t.inPortfolio ? `سعر الدخول: ${t.entry > 0 ? t.entry.toFixed(2) : '-'} | الكمية: ${t.qty.toLocaleString('ar-EG')}` : 'السهم خارج المحفظة'}
+                    </div>
+                </div>
+            `;
+
+            if (!rows.length) {
+                return header + '<div class="muted" style="margin-top:10px;">لا توجد سيناريوهات كافية بسبب نقص سعر مرجعي.</div>';
+            }
+
+            return header + `
+                <ul class="list" style="margin-top:10px;">
+                    ${rows.map(r => `<li><div><strong>${r.when}</strong><div class="muted" style="margin-top:4px;">${r.why}</div></div><div>${r.action}</div></li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function runAnalysis() {
+            const resultsArea = document.getElementById('resultsArea');
+
+            if (!selectedCompany) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ لم يتم اختيار سهم</h3>
+                        <p>ابحث ثم اختر السهم أولًا من النتائج.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const points = historyPoints(selectedCompany);
+            if (points.length < MIN_REQUIRED_ANALYSIS_DAYS) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ بيانات غير كافية</h3>
+                        <p>يجب توفر 60 يوم تداول على الأقل لإجراء التحليل الشامل.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const symbol = String(selectedCompany.symbol || '').toUpperCase();
+            const processed = processedMap.get(symbol) || null;
+            const decision = calcDecision(points, processed);
+            const maker = analyzeMakerBehavior(points, decision);
+            const pAdvice = portfolioAdvice(symbol, decision);
+            const candlePatterns = analyzeCandlestickPatterns(points);
+
+            const recommendationBadge = formatRecoTag(decision.actionType, `التوصية العامة: ${decision.actionLabel}`);
+            const trendText = decision.score >= 2 ? 'اتجاه إيجابي' : decision.score <= -2 ? 'اتجاه ضعيف' : 'اتجاه متذبذب';
+
+            resultsArea.innerHTML = `
+                <div class="panel">
+                    <h3>📌 ملخص السهم</h3>
+                    <div class="panel-content kpis">
+                        <div class="kpi"><div class="k">الرمز</div><div class="v">${symbol}</div></div>
+                        <div class="kpi"><div class="k">الشركة</div><div class="v" style="font-size:1em;">${selectedCompany.longName || selectedCompany.shortName || symbol}</div></div>
+                        <div class="kpi"><div class="k">السعر الحالي</div><div class="v">${decision.latest.close.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">تغير اليوم</div><div class="v">${decision.dayChange.toFixed(2)}%</div></div>
+                        <div class="kpi"><div class="k">عائد 5 أيام</div><div class="v">${decision.ret5.toFixed(2)}%</div></div>
+                        <div class="kpi"><div class="k">عائد 20 يوم</div><div class="v">${decision.ret20.toFixed(2)}%</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🧠 قرار الذكاء الاصطناعي</h3>
+                    <div class="panel-content decision">
+                        <div>
+                            ${recommendationBadge}
+                            <div style="margin-top:8px;">${formatRecoTag('hold', `قراءة الاتجاه: ${trendText}`)}</div>
+                            <div style="margin-top:8px;">${formatRecoTag(decision.confidence >= 70 ? 'buy' : (decision.confidence >= 55 ? 'hold' : 'warn'), `درجة الثقة: ${decision.confidence}%`)}</div>
+                            <div style="margin-top:8px;">${formatRecoTag(decision.riskLevel === 'منخفضة' ? 'buy' : (decision.riskLevel === 'مرتفعة' ? 'sell' : 'hold'), `المخاطرة: ${decision.riskLevel}`)}</div>
+                            <div style="margin-top:8px;">${formatRecoTag(maker.stateType, `سلوك الميكر: ${maker.state}`)}</div>
+                        </div>
+                        <div>
+                            ${pAdvice.badge}
+                            <div style="margin-top:10px;color:#cbd5e1;line-height:1.8;">${pAdvice.text}</div>
+                        </div>
+                    </div>
+                    <div class="panel-content" style="padding-top:0;">
+                        <div class="kpis">
+                            <div class="kpi"><div class="k">تنفيذ القرار</div><div class="v" style="font-size:1em;">${decision.executionStyle}</div></div>
+                            <div class="kpi"><div class="k">حجم مركز مقترح</div><div class="v" style="font-size:1em;">${decision.positionSize}</div></div>
+                            <div class="kpi"><div class="k">اتجاه قصير الأجل</div><div class="v">${decision.shortTermView}</div></div>
+                            <div class="kpi"><div class="k">اتجاه متوسط الأجل</div><div class="v">${decision.mediumTermView}</div></div>
+                            <div class="kpi"><div class="k">جودة البيانات</div><div class="v">${decision.dataQuality}%</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🏦 أداء الميكر وتفكيره</h3>
+                    <div class="panel-content">
+                        <div class="kpis" style="margin-bottom:10px;">
+                            <div class="kpi"><div class="k">تقييم الميكر</div><div class="v">${maker.state}</div></div>
+                            <div class="kpi"><div class="k">درجة السلوك</div><div class="v">${maker.score.toFixed(1)}</div></div>
+                            <div class="kpi"><div class="k">قراءة التفكير</div><div class="v" style="font-size:1em;">${maker.thought}</div></div>
+                        </div>
+                        <ul class="list">
+                            ${maker.clues.map(item => `<li>${item}</li>`).join('')}
+                            <li><strong>خلاصة تنفيذية:</strong> ${maker.practical}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 المؤشرات الفنية وحجم التداول</h3>
+                    <div class="panel-content kpis">
+                        <div class="kpi"><div class="k">RSI</div><div class="v">${Number.isFinite(decision.rsi) ? decision.rsi.toFixed(1) : '-'}</div></div>
+                        <div class="kpi"><div class="k">SMA 20</div><div class="v">${Number.isFinite(decision.sma20) ? decision.sma20.toFixed(2) : '-'}</div></div>
+                        <div class="kpi"><div class="k">SMA 50</div><div class="v">${Number.isFinite(decision.sma50) ? decision.sma50.toFixed(2) : '-'}</div></div>
+                        <div class="kpi"><div class="k">الحجم الحالي</div><div class="v">${(decision.latest.volume || 0).toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">متوسط حجم 20 يوم</div><div class="v">${(decision.volumeAvg20 || 0).toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">قوة الحجم</div><div class="v">${decision.volumeRatio.toFixed(2)}x</div></div>
+                        <div class="kpi"><div class="k">دعم</div><div class="v">${decision.support ? decision.support.toFixed(2) : '-'}</div></div>
+                        <div class="kpi"><div class="k">مقاومة</div><div class="v">${decision.resistance ? decision.resistance.toFixed(2) : '-'}</div></div>
+                        <div class="kpi"><div class="k">التذبذب (20 يوم)</div><div class="v">${decision.volatility.toFixed(2)}%</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🎯 خطة الدخول والخروج</h3>
+                    <div class="panel-content kpis">
+                        <div class="kpi"><div class="k">سعر دخول مقترح</div><div class="v">${(decision.support ? Math.max(decision.support * 1.005, decision.latest.close * 0.99) : decision.latest.close).toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">وقف خسارة</div><div class="v">${decision.stopLoss.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">هدف أول</div><div class="v">${decision.take1.toFixed(2)}</div></div>
+                        <div class="kpi"><div class="k">هدف ثانٍ</div><div class="v">${decision.take2.toFixed(2)}</div></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🧭 إذا وصل السعر… ماذا أفعل؟</h3>
+                    <div class="panel-content">
+                        ${renderPriceScenarios(symbol, decision, decisionRiskProfile)}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📝 أسباب القرار</h3>
+                    <div class="panel-content">
+                        <ul class="list">
+                            ${decision.reasons.slice(0, 8).map(reason => `<li>${reason}</li>`).join('') || '<li>لا توجد أسباب كافية.</li>'}
+                        </ul>
+                        <div class="cta-row">
+                            <button class="btn btn-info" onclick="openStockAnalysis('${symbol}')"><i class="fas fa-chart-line"></i> فتح الرسم التفصيلي</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>🔍 تحليل الشموع للسهم المختار</h3>
+                    <div class="panel-content">
+                        <div class="chips">
+                            ${candlePatterns.tags.map(tag => `<span class="chip ${tag.cls}">${tag.text}</span>`).join('')}
+                        </div>
+                        <ul class="list" style="margin-top:10px;">
+                            ${candlePatterns.notes.map(note => `<li>${note}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>📰 آخر الأخبار الخاصة بالسهم</h3>
+                    <div class="panel-content">
+                        <div id="newsMeta" class="news-meta">جاري تجهيز الأخبار...</div>
+                        <div id="newsList" class="news-list">
+                            <div class="news-item">سيتم تحميل الأخبار بعد انتهاء التحليل.</div>
+                        </div>
+                        <div class="cta-row">
+                            <button class="btn btn-info" onclick="refreshStockNews(true)"><i class="fas fa-newspaper"></i> تحديث الأخبار الآن</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            activeNewsSymbol = symbol;
+            clearNewsAutoRefresh();
+            refreshStockNews(true);
+            newsRefreshTimer = setInterval(() => {
+                if (activeNewsSymbol === symbol) refreshStockNews(false);
+            }, 300000);
+        }
+
+        function refreshData() {
+            companies = readStocksData();
+            processedMap = readProcessedMap();
+            selectedCompany = null;
+            activeNewsSymbol = null;
+            clearNewsAutoRefresh();
+            document.getElementById('searchInput').value = '';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('selectedStock').style.display = 'none';
+
+            const resultsArea = document.getElementById('resultsArea');
+            if (!companies.length) {
+                resultsArea.innerHTML = `
+                    <div class="empty">
+                        <h3>⚠️ لا توجد بيانات أسهم</h3>
+                        <p>ارجع للرئيسية وارفع ملف البيانات أولًا.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsArea.innerHTML = `
+                <div class="empty">
+                    <h3>✅ تم تحميل البيانات</h3>
+                    <p>عدد الأسهم المتاحة للتحليل: ${companies.length}</p>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            refreshData();
+
+            const input = document.getElementById('searchInput');
+            input.addEventListener('input', searchStocks);
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (!selectedCompany) searchStocks();
+                    else runAnalysis();
+                }
+            });
+
+            const profile = document.getElementById('riskProfile');
+            if (profile) {
+                profile.addEventListener('change', function() {
+                    decisionRiskProfile = this.value;
+                    if (selectedCompany) runAnalysis();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

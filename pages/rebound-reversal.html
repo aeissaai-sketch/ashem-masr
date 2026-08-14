@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔄 بداية ارتداد من الهبوط</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="shared-analysis.js"></script>
+    <script>
+        if (typeof window.openStockAnalysis !== 'function') {
+            window.openStockAnalysis = function(symbol) {
+                alert(`تعذر فتح تحليل السهم ${symbol}.\nتأكد من تحميل الصفحة بالكامل ثم حاول مرة أخرى.`);
+            };
+        }
+    </script>
+    <script src="global-sidebar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 15px; color: #e2e8f0; }
+        
+        .container { max-width: 1400px; margin: 0 auto; background: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+        
+        .header { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            padding: 20px 25px; 
+            border-bottom: 1px solid #334155; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 15px; 
+            flex-wrap: wrap; 
+        }
+        .header h2 { color: #fbbf24; display: flex; gap: 12px; align-items: center; font-size: 1.6rem; }
+        
+        .btn { border: none; border-radius: 50px; padding: 10px 20px; cursor: pointer; font-weight: 700; display: inline-flex; gap: 8px; align-items: center; transition: all 0.2s ease; }
+        .btn-primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0f172a; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+        .btn-info:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        
+        .guide { margin: 15px 25px; padding: 15px; border-radius: 12px; background: rgba(251, 191, 36, 0.08); border: 1px solid #fbbf24; color: #cbd5e1; line-height: 1.9; font-size: 0.95rem; }
+        .guide strong { color: #fbbf24; }
+        
+        .tools { 
+            padding: 15px 25px; 
+            background: #0f172a; 
+            border-bottom: 1px solid #334155; 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+        }
+        .tools label { display: flex; flex-direction: column; gap: 5px; font-size: 0.85rem; color: #94a3b8; font-weight: 600; }
+        .tools select, .tools input { 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            color: #e2e8f0; 
+            border-radius: 8px; 
+            padding: 8px 12px; 
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .tools select:focus, .tools input:focus { border-color: #3b82f6; }
+        .tools input.search-input { width: 250px; }
+        .tools input.num-input { width: 120px; }
+        
+        .meta { color: #94a3b8; font-size: 0.9rem; margin-right: auto; }
+        
+        .table-wrap { padding: 15px; overflow-x: auto; background: #0f172a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th { background: linear-gradient(135deg, #1e293b, #0f172a); color: #fbbf24; padding: 14px 10px; text-align: center; font-weight: 700; border-bottom: 2px solid #334155; font-size: 0.95rem; }
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background: #334155; }
+        td { border-bottom: 1px solid #334155; padding: 12px 10px; text-align: center; font-size: 0.9rem; vertical-align: middle; }
+        tr { transition: background 0.15s; }
+        tr:hover { background: rgba(51, 65, 85, 0.6); }
+        
+        .up { color: #10b981; font-weight: bold; }
+        .down { color: #ef4444; font-weight: bold; }
+        .neutral { color: #cbd5e1; }
+        
+        .badge { padding: 5px 12px; border-radius: 999px; font-size: 0.8em; font-weight: 700; display: inline-block; text-align: center; }
+        .b-strong { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; }
+        .b-good { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid #3b82f6; }
+        .b-watch { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid #94a3b8; }
+        
+        .analysis-text { text-align: right; line-height: 1.6; font-size: 0.85rem; color: #cbd5e1; max-width: 450px; margin: 0 auto; }
+        
+        .empty { margin: 25px; padding: 30px; text-align: center; border: 1px dashed #fbbf24; border-radius: 12px; color: #fbbf24; background: rgba(251, 191, 36, 0.04); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-undo"></i> بداية الارتداد من الهبوط (نهاية التصحيح السلبي)</h2>
+            <div>
+                <button class="btn btn-info" onclick="window.location.href='../index.html'"><i class="fas fa-home"></i> الرئيسية</button>
+                <button class="btn btn-primary" onclick="updateTable()"><i class="fas fa-sync-alt"></i> تحديث التحليل</button>
+            </div>
+        </div>
+
+        <div class="guide">
+            <strong>منهجية الفرز الفنية (تأسيس القيعان والانعكاس):</strong>
+            <br>1) <strong>التصحيح السلبي:</strong> هبط السهم بنسبة 5% على الأقل من قمته القريبة قبل الوصول للقاع.
+            <br>2) <strong>تأكيد القاع:</strong> يتم فرز السهم حسب عدد الجلسات المنقضية منذ تسجيل القاع الفعلي (جلسة واحدة، جلستان، أو ثلاث جلسات) لرصد الانطلاقة مبكراً.
+            <br>3) <strong>التحليل والقرار الذكي:</strong> يتم تقييم السهم فنيًا بالاعتماد على زيادة أحجام السيولة اليومية وتأثيرها على كسر مقاومة الهبوط أو الارتداد من دعوم حديدية.
+        </div>
+
+        <div class="tools">
+            <label>أيام الارتداد من القاع
+                <select id="sessionsSinceBottom">
+                    <option value="1">آخر جلسة (يوم 1 ارتداد)</option>
+                    <option value="2" selected>آخر جلستين (يوم 1-2 ارتداد)</option>
+                    <option value="3">آخر 3 جلسات (يوم 1-3 ارتداد)</option>
+                </select>
+            </label>
+            <label>أقل نزول لتصحيح القمة % 
+                <input id="minDrop" class="num-input" type="number" value="5" min="2" max="40">
+            </label>
+            <label>أقل ارتداد من القاع %
+                <input id="minRebound" class="num-input" type="number" value="0.5" step="0.1" min="0.1" max="20">
+            </label>
+            <label>فلترة وتصفية الجدول 
+                <input id="tableFilter" class="search-input" type="text" placeholder="ابحث بكود السهم أو اسم الشركة...">
+            </label>
+            <button class="btn btn-info" onclick="updateTable()"><i class="fas fa-filter"></i> تصفية</button>
+            <span class="meta" id="metaInfo">جاري تحميل البيانات...</span>
+        </div>
+
+        <div id="noData" class="empty" style="display:none;">
+            <h3>⚠️ لا توجد أسهم مطابقة لشروط الارتداد حالياً</h3>
+            <p>حاول تغيير فلاتر البحث أو تأكد من رفع بيانات الجلسة كاملة.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table id="reboundTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="setSort('symbol')">الكود <span id="sort-symbol"></span></th>
+                        <th class="sortable" onclick="setSort('name')">اسم الشركة <span id="sort-name"></span></th>
+                        <th class="sortable" onclick="setSort('price')">السعر الحالي <span id="sort-price"></span></th>
+                        <th class="sortable" onclick="setSort('change')">التغير اليومي % <span id="sort-change"></span></th>
+                        <th class="sortable" onclick="setSort('bottom')">قاع الارتداد <span id="sort-bottom"></span></th>
+                        <th class="sortable" onclick="setSort('peak')">القمة قبل الهبوط <span id="sort-peak"></span></th>
+                        <th class="sortable" onclick="setSort('dropPercent')">حجم الهبوط % <span id="sort-dropPercent"></span></th>
+                        <th class="sortable" onclick="setSort('reboundPercent')">نسبة الارتداد % <span id="sort-reboundPercent"></span></th>
+                        <th class="sortable" onclick="setSort('sessions')">جلسات منذ القاع <span id="sort-sessions"></span></th>
+                        <th class="sortable" onclick="setSort('score')">الدرجة الفنية <span id="sort-score"></span></th>
+                        <th>التوصية</th>
+                        <th>التحليل الفني الذكي ومستويات الدعم والسيولة</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let rawRows = [];
+        let sortState = { key: 'score', direction: 'desc' };
+
+        function readStocksData() {
+            const raw = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    const source = data.companies || data;
+                    if (Array.isArray(source)) return source;
+                    if (source && typeof source === 'object') return Object.values(source);
+                } catch {}
+            }
+            return [];
+        }
+
+        function getSeries(company) {
+            const rows = company.historical || company.daily || [];
+            return rows
+                .map(x => {
+                    const close = Number(x.close ?? x.price ?? x.value);
+                    const open = Number(x.open ?? x.o ?? x.close ?? x.price);
+                    const high = Number(x.high ?? x.h ?? x.max ?? x.highest ?? x.close ?? x.price);
+                    const low = Number(x.low ?? x.l ?? x.min ?? x.lowest ?? x.close ?? x.price ?? x.value);
+                    const volume = Number(x.volume ?? x.vol ?? x.v ?? 0);
+                    const change = x.change ?? '0.0';
+                    return { date: x.date, close, open, high, low, volume, change };
+                })
+                .filter(x => Number.isFinite(x.close) && Number.isFinite(x.low));
+        }
+
+        function recBadge(recommendation) {
+            if (recommendation.includes("دخول") || recommendation.includes("شراء")) {
+                return `<span class="badge b-strong">${recommendation}</span>`;
+            } else if (recommendation.includes("تدريجي") || recommendation.includes("تجميع")) {
+                return `<span class="badge b-good">${recommendation}</span>`;
+            }
+            return `<span class="badge b-watch">${recommendation}</span>`;
+        }
+
+        function compareValues(a, b, key) {
+            const av = a[key];
+            const bv = b[key];
+            if (typeof av === 'string' || typeof bv === 'string') {
+                return String(av).localeCompare(String(bv), 'ar', { sensitivity: 'base' });
+            }
+            return (Number(av) || 0) - (Number(bv) || 0);
+        }
+
+        function updateSortIndicators() {
+            const keys = ['symbol', 'name', 'price', 'change', 'bottom', 'peak', 'dropPercent', 'reboundPercent', 'sessions', 'score'];
+            keys.forEach(key => {
+                const indicator = document.getElementById(`sort-${key}`);
+                if (!indicator) return;
+                indicator.textContent = sortState.key === key ? (sortState.direction === 'asc' ? '▲' : '▼') : '';
+            });
+        }
+
+        function getFilteredAndSortedRows() {
+            const filterValue = (document.getElementById('tableFilter')?.value || '').trim().toLowerCase();
+            const filtered = rawRows.filter(row => {
+                if (!filterValue) return true;
+                const symbol = (row.symbol || '').toLowerCase();
+                const name = (row.name || '').toLowerCase();
+                return symbol.includes(filterValue) || name.includes(filterValue);
+            });
+
+            filtered.sort((a, b) => {
+                const result = compareValues(a, b, sortState.key);
+                return sortState.direction === 'asc' ? result : -result;
+            });
+
+            return filtered;
+        }
+
+        function renderTable() {
+            const body = document.getElementById('tableBody');
+            const table = document.getElementById('reboundTable');
+            const noData = document.getElementById('noData');
+            const meta = document.getElementById('metaInfo');
+            const rows = getFilteredAndSortedRows();
+
+            updateSortIndicators();
+
+            if (!rows.length) {
+                noData.style.display = 'block';
+                table.style.display = 'none';
+                meta.textContent = rawRows.length ? `لا توجد نتائج مطابقة للفلترة` : `لا توجد أسهم مطابقة للشروط`;
+                return;
+            }
+
+            body.innerHTML = rows.map(r => `
+                <tr onclick="openStockAnalysis('${r.symbol}')" style="cursor:pointer;">
+                    <td style="color:#fbbf24;font-weight:700;">${r.symbol}</td>
+                    <td style="font-weight:600;">${r.name}</td>
+                    <td class="up">${r.price.toFixed(2)}</td>
+                    <td class="${r.changeVal >= 0 ? 'up' : 'down'}">${r.changeVal >= 0 ? '+' : ''}${r.changeVal.toFixed(2)}%</td>
+                    <td class="down">${r.bottom.toFixed(2)}</td>
+                    <td class="up">${r.peak.toFixed(2)}</td>
+                    <td class="down">${r.dropPercent.toFixed(1)}%</td>
+                    <td class="up">${r.reboundPercent.toFixed(1)}%</td>
+                    <td>${r.sessions} ${r.sessions === 1 ? 'جلسة' : 'جلسات'}</td>
+                    <td style="font-weight:bold;color:#fbbf24;">${r.score.toFixed(1)}</td>
+                    <td>${recBadge(r.recommendation)}</td>
+                    <td><div class="analysis-text">${r.reason}</div></td>
+                </tr>
+            `).join('');
+
+            noData.style.display = 'none';
+            table.style.display = 'table';
+            meta.textContent = `الظاهر: ${rows.length} سهم | إجمالي الفرص المكتشفة: ${rawRows.length} سهم`;
+        }
+
+        function setSort(key) {
+            if (sortState.key === key) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.direction = 'desc';
+            }
+            renderTable();
+        }
+
+        function updateTable() {
+            const sessionsLimit = Number(document.getElementById('sessionsSinceBottom').value);
+            const minDrop = Number(document.getElementById('minDrop').value);
+            const minRebound = Number(document.getElementById('minRebound').value);
+
+            const stocks = readStocksData();
+            const rows = [];
+
+            stocks.forEach(company => {
+                const series = getSeries(company);
+                if (series.length < 10) return;
+
+                const points = series.slice(-20); // analyze last 20 sessions
+                const lastIdx = points.length - 1;
+                const currentClose = points[lastIdx].close;
+                const currentOpen = points[lastIdx].open ?? currentClose;
+                const currentHigh = points[lastIdx].high ?? currentClose;
+                const currentLow = points[lastIdx].low ?? currentClose;
+                
+                let changeVal = 0.0;
+                try {
+                    changeVal = parseFloat(points[lastIdx].change);
+                } catch {
+                    const prev = lastIdx > 0 ? points[lastIdx - 1].close : currentClose;
+                    changeVal = prev > 0 ? ((currentClose - prev) / prev) * 100 : 0.0;
+                }
+                if (isNaN(changeVal)) changeVal = 0.0;
+
+                // Find lowest low (bottom) in the last 12 sessions
+                const searchRange = Math.min(12, points.length);
+                let bottomPrice = Infinity;
+                let bottomIdx = -1;
+                
+                for (let j = points.length - 1; j >= points.length - searchRange; j--) {
+                    if (points[j].low < bottomPrice) {
+                        bottomPrice = points[j].low;
+                        bottomIdx = j;
+                    }
+                }
+
+                if (bottomIdx < 0 || bottomIdx === lastIdx) return; // Skip if bottom is the current session itself (needs at least 1 session of confirmation)
+
+                const sessionsSinceBottom = lastIdx - bottomIdx;
+                if (sessionsSinceBottom > sessionsLimit || sessionsSinceBottom < 1) return;
+
+                // Find peak before bottom (within 15 sessions before bottom)
+                let peakPrice = -Infinity;
+                let peakIdx = -1;
+                const peakStart = Math.max(0, bottomIdx - 15);
+                
+                for (let j = bottomIdx; j >= peakStart; j--) {
+                    if (points[j].high > peakPrice) {
+                        peakPrice = points[j].high;
+                        peakIdx = j;
+                    }
+                }
+
+                if (peakIdx < 0 || peakPrice <= bottomPrice) return;
+
+                const dropPercent = ((peakPrice - bottomPrice) / peakPrice) * 100;
+                if (dropPercent < minDrop) return;
+
+                const reboundPercent = ((currentClose - bottomPrice) / bottomPrice) * 100;
+                if (reboundPercent < minRebound) return;
+
+                // Calculate Volume Ratio (today's volume vs 5-day average volume)
+                let avgVol = 0;
+                let volCount = 0;
+                for (let j = lastIdx - 1; j >= lastIdx - 5 && j >= 0; j--) {
+                    avgVol += points[j].volume;
+                    volCount++;
+                }
+                avgVol = volCount > 0 ? (avgVol / volCount) : 1.0;
+                const curVol = points[lastIdx].volume;
+                const volRatio = avgVol > 0 ? (curVol / avgVol) : 1.0;
+
+                // Calculate Score
+                const recencyBonus = Math.max(0, (4 - sessionsSinceBottom) * 2.0); 
+                const dropScore = Math.min(dropPercent, 20) * 0.3;
+                const reboundScore = Math.min(reboundPercent, 8) * 0.4;
+                const volumeBonus = Math.min(volRatio, 3.0) * 1.5;
+                const score = dropScore + recencyBonus + reboundScore + volumeBonus;
+
+                // Dynamic Recommendation & Analysis in Arabic
+                let recommendation = "مراقبة (Watch)";
+                let reason = "";
+
+                if (reboundPercent > 3.0 && volRatio > 1.4) {
+                    recommendation = "دخول قوي (Strong Buy)";
+                    reason = `السهم حقق ارتداداً مميزاً بنسبة <strong>+${reboundPercent.toFixed(1)}%</strong> من القاع الحديدي عند <strong>${bottomPrice.toFixed(2)} ج.م</strong>. جاء الصعود مصحوباً بارتفاع حجم التداول بمعدل <strong>${volRatio.toFixed(1)}x</strong>، مما يؤكد دخول سيولة مشتري قوية. الدعم الفوري عند ${bottomPrice.toFixed(2)} ج.م والمستهدف الصاعد يقترب من ${peakPrice.toFixed(2)} ج.م.`;
+                } else if (reboundPercent > 1.2) {
+                    recommendation = "شراء تدريجي (Buy)";
+                    reason = `ارتداد إيجابي بنسبة <strong>+${reboundPercent.toFixed(1)}%</strong> من قاع الدعم بعد تصحيح بلغت نسبته ${dropPercent.toFixed(1)}%. السيولة معتدلة ونوصي بالتجميع التدريجي قرب مستويات الدعم ${bottomPrice.toFixed(2)} ج.م مع مستهدف ${(currentClose * 1.1).toFixed(2)} ج.م.`;
+                } else {
+                    recommendation = "مراقبة وتجميع (Hold)";
+                    reason = `ارتداد طفيف بنسبة <strong>+${reboundPercent.toFixed(1)}%</strong> فوق قاع الهبوط. السهم يمر بمرحلة تجميع عرضي وتجفيف عروض. يفضل المراقبة اللصيقة لفرصة اختراق المقاومة القريبة عند ${(currentClose * 1.04).toFixed(2)} ج.م.`;
+                }
+
+                rows.push({
+                    symbol: company.symbol || '-',
+                    name: company.shortName || company.longName || (company.symbol || '-'),
+                    price: currentClose,
+                    changeVal,
+                    bottom: bottomPrice,
+                    peak: peakPrice,
+                    dropPercent,
+                    reboundPercent,
+                    sessions: sessionsSinceBottom,
+                    score,
+                    recommendation,
+                    reason
+                });
+            });
+
+            rawRows = rows;
+            renderTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.__stockDataRestorePromise) {
+                try { await window.__stockDataRestorePromise; } catch {}
+            }
+            const tableFilterInput = document.getElementById('tableFilter');
+            if (tableFilterInput) {
+                tableFilterInput.addEventListener('input', renderTable);
+            }
+            const dropSelector = document.getElementById('sessionsSinceBottom');
+            if (dropSelector) {
+                dropSelector.addEventListener('change', updateTable);
+            }
+            updateTable();
+        });
+    </script>
+</body>
+</html>
