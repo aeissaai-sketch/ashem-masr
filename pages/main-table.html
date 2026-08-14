@@ -437,40 +437,34 @@
             const searchInput = document.getElementById('searchInput');
             const refreshBtn = document.getElementById('refreshBtn');
             
-            // محاولة الحصول على البيانات من sessionStorage ثم localStorage
-            let savedData = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
-            
-            if (!savedData) {
-                try {
-                    loading.style.display = 'block';
-                    noDataMessage.style.display = 'none';
-                    table.style.display = 'none';
+            try {
+                loading.style.display = 'block';
+                noDataMessage.style.display = 'none';
+                table.style.display = 'none';
+                
+                const data = await getStockDataFromSupabase();
+                if (data && data.companies) {
+                    sessionStorage.setItem('stocksData', JSON.stringify(data));
+                    localStorage.setItem('stocksData', JSON.stringify(data));
                     
-                    const data = await getStockDataFromSupabase();
-                    if (data && data.companies) {
-                        sessionStorage.setItem('stocksData', JSON.stringify(data));
-                        localStorage.setItem('stocksData', JSON.stringify(data));
-                        
-                        const companiesList = Array.isArray(data.companies) ? data.companies : Object.values(data.companies);
-                        processedData = companiesList.map(company => ({
-                            symbol: company.symbol,
-                            name: company.longName || company.shortName || company.symbol,
-                            currentPrice: Number(company.price || 0),
-                            change: '0.0',
-                            changeValue: 0,
-                            volumeRatio: 1,
-                            rsi: 50,
-                            support: 0,
-                            resistance: 0
-                        }));
-                        
-                        sessionStorage.setItem('processedData', JSON.stringify(processedData));
-                        localStorage.setItem('processedData', JSON.stringify(processedData));
-                        savedData = JSON.stringify(processedData);
-                    }
-                } catch (e) {
-                    console.error('Failed to load stock data from Supabase:', e);
+                    const companiesList = Array.isArray(data.companies) ? data.companies : Object.values(data.companies);
+                    processedData = companiesList.map(company => ({
+                        symbol: company.symbol,
+                        name: company.longName || company.shortName || company.symbol,
+                        currentPrice: Number(company.price || 0),
+                        change: '0.0',
+                        changeValue: 0,
+                        volumeRatio: 1,
+                        rsi: 50,
+                        support: 0,
+                        resistance: 0
+                    }));
+                    
+                    sessionStorage.setItem('processedData', JSON.stringify(processedData));
+                    localStorage.setItem('processedData', JSON.stringify(processedData));
                 }
+            } catch (e) {
+                console.error('Failed to load stock data from Supabase:', e);
             }
             
             buildHistoricalClosesMap();
