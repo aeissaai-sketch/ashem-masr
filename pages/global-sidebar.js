@@ -221,8 +221,10 @@
         }
 
         // التراجع الاحتياطي (Fallback) لـ localStorage لضمان التوافق القديم
-        let hasStocks = Boolean(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData'));
-        let hasProcessed = Boolean(sessionStorage.getItem('processedData') || localStorage.getItem('processedData'));
+        let hasStocks = Boolean(sessionStorage.getItem('stocksData'));
+        let hasProcessed = Boolean(sessionStorage.getItem('processedData'));
+        const cacheTime = sessionStorage.getItem('lastSupabaseFetchTime');
+        const isCacheValid = cacheTime && (Date.now() - Number(cacheTime) < 5 * 60 * 1000); // 5 minutes cache
         
         if (cached && (!hasStocks || !hasProcessed)) {
             if (!hasStocks && cached.stocksDataRaw) {
@@ -254,14 +256,14 @@
                     } catch (e) {}
                 }
             }
-            hasStocks = Boolean(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData'));
-            hasProcessed = Boolean(sessionStorage.getItem('processedData') || localStorage.getItem('processedData'));
+            hasStocks = Boolean(sessionStorage.getItem('stocksData'));
+            hasProcessed = Boolean(sessionStorage.getItem('processedData'));
         }
 
-        // 3. IF STILL MISSING, fetch directly from Supabase and run calculations!
-        if (!hasStocks || !hasProcessed) {
+        // 3. IF STILL MISSING OR CACHE EXPIRED, fetch directly from Supabase and run calculations!
+        if (!hasStocks || !hasProcessed || !isCacheValid) {
             try {
-                console.log("🌐 Sidebar: Fetching fresh stock data from Supabase...");
+                console.log("🌐 Sidebar: Fetching fresh stock data from Supabase (Cache invalid or missing)...");
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/all_stocks_data?select=*`, { 
                     headers: supabaseHeaders,
                     cache: 'no-store'
@@ -339,6 +341,7 @@
 
                     sessionStorage.setItem('processedData', JSON.stringify(processed));
                     localStorage.setItem('processedData', JSON.stringify(processed));
+                    sessionStorage.setItem('lastSupabaseFetchTime', Date.now().toString());
                     window.processedData = processed;
                     console.log("✅ Sidebar: Successfully synchronized and processed stock data from Supabase!");
                 }

@@ -69,12 +69,37 @@ for stock in all_stocks:
         
     yf_sym = f"{sym}.CA"
     current_price = None
+    current_open = None
+    current_high = None
+    current_low = None
+    current_volume = 0
     
-    # Extract price from yfinance
+    # Extract OHLCV from yfinance
     if data is not None and yf_sym in data['Close'].columns:
-        prices = data['Close'][yf_sym].dropna()
-        if not prices.empty:
-            current_price = float(prices.iloc[-1])
+        closes = data['Close'][yf_sym].dropna()
+        if not closes.empty:
+            idx = closes.index[-1]
+            current_price = float(closes.iloc[-1])
+            
+            try:
+                current_open = float(data['Open'][yf_sym].loc[idx])
+            except:
+                current_open = current_price
+                
+            try:
+                current_high = float(data['High'][yf_sym].loc[idx])
+            except:
+                current_high = current_price
+                
+            try:
+                current_low = float(data['Low'][yf_sym].loc[idx])
+            except:
+                current_low = current_price
+                
+            try:
+                current_volume = int(data['Volume'][yf_sym].loc[idx])
+            except:
+                current_volume = 0
             
     if current_price is None or current_price == 0:
         # Skip updating if no price fetched
@@ -86,13 +111,21 @@ for stock in all_stocks:
     for point in history:
         if point.get('date') == today_cairo:
             point['close'] = current_price
+            point['open'] = current_open if current_open is not None else current_price
+            point['high'] = current_high if current_high is not None else current_price
+            point['low'] = current_low if current_low is not None else current_price
+            point['volume'] = current_volume
             date_exists = True
             break
             
     if not date_exists:
         history.append({
             "date": today_cairo,
-            "close": current_price
+            "close": current_price,
+            "open": current_open if current_open is not None else current_price,
+            "high": current_high if current_high is not None else current_price,
+            "low": current_low if current_low is not None else current_price,
+            "volume": current_volume
         })
         # Keep history capped at 200 days
         if len(history) > 200:
@@ -120,7 +153,7 @@ if all_stocks_payload:
     for i in range(0, len(all_stocks_payload), batch_size):
         batch = all_stocks_payload[i:i+batch_size]
         try:
-            res = requests.post(f"{SUPABASE_URL}/rest/v1/all_stocks_data", headers=headers, json=batch)
+            res = requests.post(f"{SUPABASE_URL}/rest/v1/all_stocks_data?on_conflict=symbol", headers=headers, json=batch)
             if res.status_code not in [200, 201]:
                 print(f"Failed to upload batch {i//batch_size + 1}: {res.text}")
             else:
