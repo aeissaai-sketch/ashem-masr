@@ -151,6 +151,42 @@
     }
 
     async function restoreDatasetsToStorageIfMissing() {
+        const SUPABASE_URL = "https://urshusyogkcmlvjqmjly.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_CN_bPJCoE0nXcZTuSaWHoA_MsmD9bN0";
+        const supabaseHeaders = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "Content-Type": "application/json"
+        };
+
+        // 1. Fetch portfolio from Supabase if not present in localStorage
+        const hasPortfolio = Boolean(localStorage.getItem('userPortfolio'));
+        if (!hasPortfolio) {
+            try {
+                console.log("🔍 Sidebar: Fetching portfolio from Supabase...");
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/portfolio?select=*`, { 
+                    headers: supabaseHeaders,
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    const port = rows.map(r => ({
+                        symbol: r.symbol,
+                        name: r.name,
+                        quantity: Number(r.quantity),
+                        entryPrice: Number(r.entry_price),
+                        marketPrice: Number(r.market_price || r.entry_price),
+                        sector: r.sector || 'Other',
+                        addedDate: new Date(r.updated_at || Date.now()).toLocaleDateString('en-GB')
+                    }));
+                    localStorage.setItem('userPortfolio', JSON.stringify(port));
+                    console.log("✅ Sidebar: Portfolio restored from Supabase!");
+                }
+            } catch (e) {
+                console.error("Sidebar: Failed to restore portfolio:", e);
+            }
+        }
+
         let cached = null;
         try {
             cached = await cacheGet();
@@ -185,8 +221,8 @@
         }
 
         // التراجع الاحتياطي (Fallback) لـ localStorage لضمان التوافق القديم
-        const hasStocks = Boolean(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData'));
-        const hasProcessed = Boolean(sessionStorage.getItem('processedData') || localStorage.getItem('processedData'));
+        let hasStocks = Boolean(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData'));
+        let hasProcessed = Boolean(sessionStorage.getItem('processedData') || localStorage.getItem('processedData'));
         
         if (cached && (!hasStocks || !hasProcessed)) {
             if (!hasStocks && cached.stocksDataRaw) {
@@ -217,6 +253,97 @@
                         }
                     } catch (e) {}
                 }
+            }
+            hasStocks = Boolean(sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData'));
+            hasProcessed = Boolean(sessionStorage.getItem('processedData') || localStorage.getItem('processedData'));
+        }
+
+        // 3. IF STILL MISSING, fetch directly from Supabase and run calculations!
+        if (!hasStocks || !hasProcessed) {
+            try {
+                console.log("🌐 Sidebar: Fetching fresh stock data from Supabase...");
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/all_stocks_data?select=*`, { 
+                    headers: supabaseHeaders,
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    const companiesList = rows.map(r => ({
+                        symbol: r.symbol,
+                        longName: r.name,
+                        shortName: r.name,
+                        price: Number(r.current_price || 0),
+                        historical: r.history || []
+                    }));
+                    const data = { companies: companiesList };
+
+                    sessionStorage.setItem('stocksData', JSON.stringify(data));
+                    localStorage.setItem('stocksData', JSON.stringify(data));
+                    window.stocksData = companiesList;
+
+                    // Calculate processedData
+                    const processed = companiesList.map(company => {
+                        const symbol = String(company.symbol || '').toUpperCase();
+                        const name = company.longName || company.shortName || symbol;
+                        
+                        const pricePoints = (company.historical || []).map(item => ({
+                            date: item.date,
+                            price: parseFloat(item.close),
+                            volume: Number(item.volume ?? item.vol ?? 0)
+                        })).filter(p => p.date && !isNaN(p.price));
+                        
+                        if (pricePoints.length === 0) return null;
+                        
+                        // Sort pricePoints by date
+                        pricePoints.sort((a, b) => {
+                            const da = a.date.split(/[-/. ]+/);
+                            const db = b.date.split(/[-/. ]+/);
+                            return new Date(da[0], da[1]-1, da[2]) - new Date(db[0], db[1]-1, db[2]);
+                        });
+                        
+                        const prices = pricePoints.map(p => p.price);
+                        const volumes = pricePoints.map(p => p.volume);
+                        const currentPrice = prices[prices.length - 1];
+                        const previousPrice = prices.length > 1 ? prices[prices.length - 2] : currentPrice;
+                        const changeValue = previousPrice ? ((currentPrice - previousPrice) / previousPrice * 100) : 0;
+                        
+                        const recentVolumes = volumes.slice(-20).filter(v => Number.isFinite(v) && v > 0);
+                        const latestVolume = volumes.length ? Number(volumes[volumes.length - 1] || 0) : 0;
+                        const avgVolume20 = recentVolumes.length
+                            ? recentVolumes.reduce((sum, value) => sum + value, 0) / recentVolumes.length
+                            : 0;
+                        const volumeRatio = avgVolume20 > 0 ? latestVolume / avgVolume20 : 1;
+                        
+                        const rsi = typeof calculateRSI === 'function' ? calculateRSI(prices) : 50;
+                        const sr = typeof calculateSupportResistance === 'function' ? calculateSupportResistance(prices) : { support: 0, resistance: 0 };
+                        
+                        let recText = 'neutral';
+                        if (typeof getRecommendation === 'function') {
+                            const recObj = getRecommendation(rsi, [], currentPrice, sr.support, sr.resistance, volumeRatio, changeValue, symbol);
+                            recText = recObj.recommendation || 'neutral';
+                        }
+                        
+                        return {
+                            symbol: symbol,
+                            name: name,
+                            currentPrice: currentPrice,
+                            change: changeValue.toFixed(1),
+                            changeValue: changeValue,
+                            volumeRatio: volumeRatio,
+                            rsi: rsi,
+                            support: sr.support,
+                            resistance: sr.resistance,
+                            recommendation: recText
+                        };
+                    }).filter(Boolean);
+
+                    sessionStorage.setItem('processedData', JSON.stringify(processed));
+                    localStorage.setItem('processedData', JSON.stringify(processed));
+                    window.processedData = processed;
+                    console.log("✅ Sidebar: Successfully synchronized and processed stock data from Supabase!");
+                }
+            } catch (err) {
+                console.error("Sidebar: Failed auto-sync with Supabase:", err);
             }
         }
 
