@@ -921,40 +921,37 @@
         }
 
         function getCurrentPriceInfo(item, fallbackPrice) {
+            const symbol = String(item?.symbol || '').toUpperCase();
+            
+            // 1. Try to find the live price from processedData (loaded from all_stocks_data database)
+            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            if (raw) {
+                try {
+                    const rows = JSON.parse(raw) || [];
+                    const found = rows.find(r => r.symbol === symbol);
+                    const marketPrice = found ? number(found.currentPrice) : 0;
+                    if (marketPrice > 0) {
+                        return { price: marketPrice, source: 'market' };
+                    }
+                } catch (e) {
+                    console.error("Error parsing processedData in getCurrentPriceInfo:", e);
+                }
+            }
+
+            // 2. Fall back to manual price (for funds or custom items)
+            const manualPrice = number(item?.manualCurrentPrice);
+            if (isFundStockName(item?.name) && manualPrice > 0) {
+                return { price: manualPrice, source: 'manual' };
+            }
+
+            // 3. Fall back to the stored marketPrice in the item
             const itemMarketPrice = number(item?.marketPrice);
             if (itemMarketPrice > 0) {
                 return { price: itemMarketPrice, source: 'market' };
             }
-            const symbol = String(item?.symbol || '').toUpperCase();
-            const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
-            if (!raw) {
-                const manualPrice = number(item?.manualCurrentPrice);
-                if (isFundStockName(item?.name) && manualPrice > 0) {
-                    return { price: manualPrice, source: 'manual' };
-                }
-                return { price: number(fallbackPrice), source: 'entry' };
-            }
-            try {
-                const rows = JSON.parse(raw) || [];
-                const found = rows.find(r => r.symbol === symbol);
-                const marketPrice = found ? number(found.currentPrice) : 0;
-                if (marketPrice > 0) {
-                    return { price: marketPrice, source: 'market' };
-                }
 
-                const manualPrice = number(item?.manualCurrentPrice);
-                if (isFundStockName(item?.name) && manualPrice > 0) {
-                    return { price: manualPrice, source: 'manual' };
-                }
-
-                return { price: number(fallbackPrice), source: 'entry' };
-            } catch (e) {
-                const manualPrice = number(item?.manualCurrentPrice);
-                if (isFundStockName(item?.name) && manualPrice > 0) {
-                    return { price: manualPrice, source: 'manual' };
-                }
-                return { price: number(fallbackPrice), source: 'entry' };
-            }
+            // 4. Fall back to entry price
+            return { price: number(fallbackPrice), source: 'entry' };
         }
 
         function getProcessedMap() {
