@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- TradingView Lightweight Charts Script -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <script src="shared-analysis.js"></script>
     <script src="global-sidebar.js"></script>
     <style>
@@ -592,6 +592,9 @@
                         <button class="control-btn" id="toggleSMA" onclick="toggleOverlay('sma')"><i class="fas fa-chart-line"></i> SMA 50/200</button>
                         <button class="control-btn" id="toggleBB" onclick="toggleOverlay('bb')"><i class="fas fa-arrows-left-right-to-line"></i> Bollinger Bands</button>
                         <button class="control-btn" id="toggleST" onclick="toggleOverlay('st')"><i class="fas fa-arrow-trend-up"></i> SuperTrend</button>
+                        <button class="control-btn" id="toggleUT" onclick="toggleOverlay('ut')"><i class="fas fa-bell"></i> UT Bot Alerts</button>
+                        <button class="control-btn" id="toggleTLB" onclick="toggleOverlay('tlb')"><i class="fas fa-slash"></i> Trendlines with Breaks</button>
+                        <button class="control-btn" id="toggleCSP" onclick="toggleOverlay('csp')"><i class="fas fa-circle-info"></i> Candlestick Patterns</button>
                     </div>
 
                     <!-- Support and Resistance mini table on the left -->
@@ -773,6 +776,9 @@
         let bbLowerSeries = null;
         let superTrendUpSeries = null;
         let superTrendDownSeries = null;
+        let utSeries = null;
+        let tlbResSeries = null;
+        let tlbSupSeries = null;
 
         // Sub-indicator series objects
         let rsiSeries = null;
@@ -787,7 +793,10 @@
             ema: false,
             sma: false,
             bb: false,
-            st: false
+            st: false,
+            ut: false,
+            tlb: false,
+            csp: false
         };
 
         // Global arrays to store latest computed indicator values (to display in legends on default)
@@ -934,6 +943,260 @@
             
             return { up: upPoints, down: downPoints };
         }
+
+        // ==================== NEW INDICATORS CALCULATIONS ====================
+
+        function calcUTBotData(chartData, keyValue = 2, atrPeriod = 1) {
+            if (chartData.length < atrPeriod + 1) return { stop: [], signals: [] };
+
+            const tr = [];
+            for (let i = 0; i < chartData.length; i++) {
+                if (i === 0) {
+                    tr.push(chartData[i].high - chartData[i].low);
+                } else {
+                    const h_l = chartData[i].high - chartData[i].low;
+                    const h_pc = Math.abs(chartData[i].high - chartData[i-1].close);
+                    const l_pc = Math.abs(chartData[i].low - chartData[i-1].close);
+                    tr.push(Math.max(h_l, h_pc, l_pc));
+                }
+            }
+
+            const atr = [];
+            let trSum = 0;
+            for (let i = 0; i < chartData.length; i++) {
+                if (i < atrPeriod) {
+                    trSum += tr[i];
+                    atr.push(trSum / (i + 1));
+                } else {
+                    const prevAtr = atr[i - 1];
+                    const val = (prevAtr * (atrPeriod - 1) + tr[i]) / atrPeriod;
+                    atr.push(val);
+                }
+            }
+
+            const stop = [];
+            const signals = [];
+            let lastStop = 0;
+
+            for (let i = 0; i < chartData.length; i++) {
+                const close = chartData[i].close;
+                const nLoss = keyValue * atr[i];
+
+                let currentStop = 0;
+                if (i === 0) {
+                    currentStop = close - nLoss;
+                    stop.push({ time: chartData[i].time, value: currentStop });
+                    lastStop = currentStop;
+                    continue;
+                }
+
+                const prevClose = chartData[i - 1].close;
+
+                if (close > lastStop && prevClose > lastStop) {
+                    currentStop = Math.max(lastStop, close - nLoss);
+                } else if (close < lastStop && prevClose < lastStop) {
+                    currentStop = Math.min(lastStop, close + nLoss);
+                } else if (close > lastStop) {
+                    currentStop = close - nLoss;
+                } else {
+                    currentStop = close + nLoss;
+                }
+
+                stop.push({ time: chartData[i].time, value: currentStop });
+
+                if (close > currentStop && prevClose <= lastStop) {
+                    signals.push({
+                        time: chartData[i].time,
+                        position: 'belowBar',
+                        color: '#10b981',
+                        shape: 'arrowUp',
+                        text: 'BUY'
+                    });
+                } else if (close < currentStop && prevClose >= lastStop) {
+                    signals.push({
+                        time: chartData[i].time,
+                        position: 'aboveBar',
+                        color: '#ef4444',
+                        shape: 'arrowDown',
+                        text: 'SELL'
+                    });
+                }
+
+                lastStop = currentStop;
+            }
+
+            return { stop, signals };
+        }
+
+        function calcTrendlinesWithBreaks(chartData) {
+            if (chartData.length < 20) return { resistance: [], support: [], signals: [] };
+
+            const signals = [];
+            const resistance = [];
+            const support = [];
+
+            const pivotHighs = [];
+            const pivotLows = [];
+
+            for (let i = 3; i < chartData.length - 3; i++) {
+                const h = chartData[i].high;
+                const l = chartData[i].low;
+
+                if (h > chartData[i-1].high && h > chartData[i-2].high && h > chartData[i-3].high &&
+                    h > chartData[i+1].high && h > chartData[i+2].high && h > chartData[i+3].high) {
+                    pivotHighs.push({ index: i, time: chartData[i].time, value: h });
+                }
+
+                if (l < chartData[i-1].low && l < chartData[i-2].low && l < chartData[i-3].low &&
+                    l < chartData[i+1].low && l < chartData[i+2].low && l < chartData[i+3].low) {
+                    pivotLows.push({ index: i, time: chartData[i].time, value: l });
+                }
+            }
+
+            let activeResLine = null;
+            let activeSupLine = null;
+
+            for (let i = 0; i < chartData.length; i++) {
+                const time = chartData[i].time;
+                const close = chartData[i].close;
+
+                const newPH = pivotHighs.filter(p => p.index === i - 3)[0];
+                if (newPH) {
+                    const prevPHs = pivotHighs.filter(p => p.index < newPH.index);
+                    if (prevPHs.length > 0) {
+                        const prevPH = prevPHs[prevPHs.length - 1];
+                        const run = newPH.index - prevPH.index;
+                        const rise = newPH.value - prevPH.value;
+                        const slope = rise / run;
+                        activeResLine = { startIdx: prevPH.index, startVal: prevPH.value, slope: slope };
+                    }
+                }
+
+                const newPL = pivotLows.filter(p => p.index === i - 3)[0];
+                if (newPL) {
+                    const prevPLs = pivotLows.filter(p => p.index < newPL.index);
+                    if (prevPLs.length > 0) {
+                        const prevPL = prevPLs[prevPLs.length - 1];
+                        const run = newPL.index - prevPL.index;
+                        const rise = newPL.value - prevPL.value;
+                        const slope = rise / run;
+                        activeSupLine = { startIdx: prevPL.index, startVal: prevPL.value, slope: slope };
+                    }
+                }
+
+                if (activeResLine) {
+                    const currentResVal = activeResLine.startVal + (i - activeResLine.startIdx) * activeResLine.slope;
+                    resistance.push({ time: time, value: currentResVal });
+                    
+                    const prevClose = i > 0 ? chartData[i-1].close : close;
+                    const prevResVal = activeResLine.startVal + (i - 1 - activeResLine.startIdx) * activeResLine.slope;
+                    if (close > currentResVal && prevClose <= prevResVal) {
+                        signals.push({
+                            time: time,
+                            position: 'belowBar',
+                            color: '#60a5fa',
+                            shape: 'circle',
+                            text: 'B'
+                        });
+                        activeResLine = null;
+                    }
+                }
+
+                if (activeSupLine) {
+                    const currentSupVal = activeSupLine.startVal + (i - activeSupLine.startIdx) * activeSupLine.slope;
+                    support.push({ time: time, value: currentSupVal });
+
+                    const prevClose = i > 0 ? chartData[i-1].close : close;
+                    const prevSupVal = activeSupLine.startVal + (i - 1 - activeSupLine.startIdx) * activeSupLine.slope;
+                    if (close < currentSupVal && prevClose >= prevSupVal) {
+                        signals.push({
+                            time: time,
+                            position: 'aboveBar',
+                            color: '#f43f5e',
+                            shape: 'circle',
+                            text: 'S'
+                        });
+                        activeSupLine = null;
+                    }
+                }
+            }
+
+            return { resistance, support, signals };
+        }
+
+        function detectCandlestickPatterns(chartData) {
+            const signals = [];
+            for (let i = 1; i < chartData.length; i++) {
+                const c = chartData[i];
+                const prev = chartData[i-1];
+                
+                const body = Math.abs(c.close - c.open);
+                const range = c.high - c.low;
+                if (range <= 0) continue;
+
+                const isBullish = c.close >= c.open;
+                const upperShadow = c.high - Math.max(c.open, c.close);
+                const lowerShadow = Math.min(c.open, c.close) - c.low;
+
+                if (body <= range * 0.1) {
+                    signals.push({
+                        time: c.time,
+                        position: 'aboveBar',
+                        color: '#cbd5e1',
+                        shape: 'circle',
+                        text: 'Doji'
+                    });
+                    continue;
+                }
+
+                if (lowerShadow >= body * 2 && upperShadow <= range * 0.1 && body > 0) {
+                    signals.push({
+                        time: c.time,
+                        position: 'belowBar',
+                        color: '#10b981',
+                        shape: 'arrowUp',
+                        text: 'Hammer'
+                    });
+                    continue;
+                }
+
+                if (upperShadow >= body * 2 && lowerShadow <= range * 0.1 && body > 0) {
+                    signals.push({
+                        time: c.time,
+                        position: 'aboveBar',
+                        color: '#ef4444',
+                        shape: 'arrowDown',
+                        text: 'Star'
+                    });
+                    continue;
+                }
+
+                const prevBody = Math.abs(prev.close - prev.open);
+                const prevIsBullish = prev.close >= prev.open;
+                if (body > prevBody && isBullish !== prevIsBullish && prevBody > 0) {
+                    if (isBullish) {
+                        signals.push({
+                            time: c.time,
+                            position: 'belowBar',
+                            color: '#10b981',
+                            shape: 'arrowUp',
+                            text: 'B.Engulf'
+                        });
+                    } else {
+                        signals.push({
+                            time: c.time,
+                            position: 'aboveBar',
+                            color: '#ef4444',
+                            shape: 'arrowDown',
+                            text: 'B.Engulf'
+                        });
+                    }
+                }
+            }
+            return signals;
+        }
+
+        // =====================================================================
 
         function calcRSIHistory(data, period = 14) {
             if (data.length < period + 1) return [];
@@ -1116,18 +1379,22 @@
 
             createIndicatorSeries();
 
-            // Sync timescales
+            // Sync timescales with safe range checks
             let isSyncing = false;
             chart.timeScale().subscribeVisibleTimeRangeChange(range => {
-                if (isSyncing) return;
+                if (isSyncing || !range || !indicatorChart) return;
                 isSyncing = true;
-                indicatorChart.timeScale().setVisibleRange(range);
+                try {
+                    indicatorChart.timeScale().setVisibleRange(range);
+                } catch(e) {}
                 isSyncing = false;
             });
             indicatorChart.timeScale().subscribeVisibleTimeRangeChange(range => {
-                if (isSyncing) return;
+                if (isSyncing || !range || !chart) return;
                 isSyncing = true;
-                chart.timeScale().setVisibleRange(range);
+                try {
+                    chart.timeScale().setVisibleRange(range);
+                } catch(e) {}
                 isSyncing = false;
             });
             
@@ -1387,6 +1654,55 @@
                     superTrendDownSeries = null;
                     stDataGlobal = { up: [], down: [] };
                 }
+            }
+
+            // 5. UT Bot Alerts
+            const markers = [];
+            if (activeOverlays.ut) {
+                if (!utSeries) {
+                    utSeries = chart.addLineSeries({ color: 'rgba(245, 158, 11, 0.4)', lineWidth: 1.2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'UT Stop', priceLineVisible: false, lastValueVisible: false });
+                }
+                const utData = calcUTBotData(chartData, 2, 1);
+                utSeries.setData(utData.stop);
+                utData.signals.forEach(m => markers.push(m));
+            } else {
+                if (utSeries) {
+                    chart.removeSeries(utSeries);
+                    utSeries = null;
+                }
+            }
+
+            // 6. Trendlines with Breaks
+            if (activeOverlays.tlb) {
+                if (!tlbResSeries) {
+                    tlbResSeries = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1.5, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Resistance TL', priceLineVisible: false, lastValueVisible: false });
+                    tlbSupSeries = chart.addLineSeries({ color: '#f43f5e', lineWidth: 1.5, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Support TL', priceLineVisible: false, lastValueVisible: false });
+                }
+                const tlbData = calcTrendlinesWithBreaks(chartData);
+                tlbResSeries.setData(tlbData.resistance);
+                tlbSupSeries.setData(tlbData.support);
+                tlbData.signals.forEach(m => markers.push(m));
+            } else {
+                if (tlbResSeries) {
+                    chart.removeSeries(tlbResSeries);
+                    chart.removeSeries(tlbSupSeries);
+                    tlbResSeries = null;
+                    tlbSupSeries = null;
+                }
+            }
+
+            // 7. Candlestick Patterns
+            if (activeOverlays.csp) {
+                const cspMarkers = detectCandlestickPatterns(chartData);
+                cspMarkers.forEach(m => markers.push(m));
+            }
+
+            // Set combined markers
+            if (markers.length > 0) {
+                markers.sort((a, b) => a.time.localeCompare(b.time));
+                mainSeries.setMarkers(markers);
+            } else {
+                mainSeries.setMarkers([]);
             }
 
             updateOverlayLegendText(null);
