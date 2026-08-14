@@ -894,19 +894,15 @@
                 }
             }
             try {
-                const stamp = Date.now();
-                const response = await fetch(`Data/portfolio.json?_ts=${stamp}`, { cache: 'no-store' });
-                if (response.ok) {
-                    const serverPortfolio = await response.json();
-                    if (Array.isArray(serverPortfolio)) {
-                        portfolio = serverPortfolio;
-                        localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
-                        setTextIfExists('statPortfolio', portfolio.length + ' سهم');
-                        console.log('✅ Synchronized portfolio from server disk successfully in dashboard.');
-                    }
+                const serverPortfolio = await getPortfolioFromSupabase();
+                if (Array.isArray(serverPortfolio)) {
+                    portfolio = serverPortfolio;
+                    localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+                    setTextIfExists('statPortfolio', portfolio.length + ' سهم');
+                    console.log('✅ Synchronized portfolio from Supabase successfully in dashboard.');
                 }
             } catch (e) {
-                console.warn('Could not sync portfolio from server:', e);
+                console.warn('Could not sync portfolio from Supabase:', e);
             }
         }
 
