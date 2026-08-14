@@ -1741,93 +1741,23 @@
             // مزامنة فورية مع التطبيق الرئيسي دائماً
             syncDataToMainApp();
 
-            // إذا الملف مفتوح بصلاحية كتابة، احفظ تلقائياً على القرص
-            if (currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
-                try {
-                    if (currentFileHandle.requestPermission) {
-                        const perm = await currentFileHandle.requestPermission({ mode: 'readwrite' });
-                        if (perm !== 'granted') {
-                            throw new Error('صلاحية الكتابة غير متاحة');
-                        }
-                    }
-
-                    const writable = await currentFileHandle.createWritable();
-                    const dataStr = JSON.stringify(database, null, 2);
-                    await writable.write(dataStr);
-                    await writable.close();
-                    addLog(`💾 حفظ تلقائي ناجح على الملف (${contextLabel})`, 'success');
-                    return true;
-                } catch (error) {
-                    addLog(`⚠️ تعذر الحفظ المباشر على الملف: ${error.message}`, 'warning');
-                }
+            try {
+                addLog(`🔄 جاري مزامنة التغييرات تلقائياً في السحاب (${contextLabel})...`, 'info');
+                await saveStockDataToSupabase(database);
+                addLog(`💾 تم الحفظ والمزامنة السحابية بنجاح (${contextLabel})`, 'success');
+                return true;
+            } catch (error) {
+                addLog(`⚠️ تعذر الحفظ التلقائي في السحاب: ${error.message}`, 'warning');
+                return false;
             }
-
-            // fallback: حفظ تلقائي في التخزين المحلي
-            addLog(`⚠️ لم يتم الحفظ في ملف JSON لعدم وجود ربط كتابة. تم الحفظ مؤقتًا في التخزين المحلي فقط (${contextLabel})`, 'warning');
-            return false;
         }
 
         async function linkWritableHandleWithoutWriting(actionLabel = 'التعديلات') {
-            if (!('showOpenFilePicker' in window)) {
-                addLog('❌ هذا المتصفح لا يدعم ربط ملف بصلاحية كتابة مباشرة.', 'error');
-                return false;
-            }
-
-            try {
-                const [handle] = await window.showOpenFilePicker({
-                    types: [{
-                        description: 'JSON Files',
-                        accept: { 'application/json': ['.json'] }
-                    }]
-                });
-
-                if (!handle) return false;
-
-                if (handle.requestPermission) {
-                    const perm = await handle.requestPermission({ mode: 'readwrite' });
-                    if (perm !== 'granted') {
-                        addLog('⛔ تم رفض صلاحية الكتابة. لن يتم الربط.', 'error');
-                        return false;
-                    }
-                }
-
-                currentFileHandle = handle;
-                currentFileName = handle.name || currentFileName || DEFAULT_DATA_FILE_PATH;
-                await savePersistentHandle(handle);
-                updateFileInfo();
-                addLog(`🔗 تم ربط الملف بنجاح (${currentFileName}) للحفظ التلقائي بعد ${actionLabel}`, 'success');
-                return true;
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    addLog(`⚠️ تعذر ربط الملف للحفظ التلقائي: ${error.message}`, 'warning');
-                }
-                return false;
-            }
+            return true;
         }
 
         async function ensureWritableHandleForAutoSave(actionLabel = 'التعديلات') {
-            if (currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
-                return true;
-            }
-
-            const restored = await restorePersistentHandle(false);
-            if (restored && currentFileHandle && typeof currentFileHandle.createWritable === 'function') {
-                return true;
-            }
-
-            if (!('showOpenFilePicker' in window)) {
-                addLog(`⚠️ المتصفح لا يدعم ربط ملف للحفظ التلقائي بعد ${actionLabel}. سيتم الحفظ في التخزين المحلي فقط.`, 'warning');
-                return false;
-            }
-
-            addLog(`📌 لتمكين الحفظ التلقائي الفعلي بعد ${actionLabel} اختر ملف Data/stock_data.json مرة واحدة`, 'info');
-            const linked = await linkWritableHandleWithoutWriting(actionLabel);
-            if (!linked) {
-                addLog(`⚠️ لم يتم ربط ملف للحفظ التلقائي بعد ${actionLabel}. التغييرات محفوظة محلياً فقط.`, 'warning');
-                return false;
-            }
-
-            addLog('✅ تم ربط ملف للحفظ التلقائي المباشر', 'success');
+            // مزامنة السحاب لا تتطلب ربط ملف محلي
             return true;
         }
 
@@ -3537,19 +3467,25 @@
                 localFileInput.value = DEFAULT_DATA_FILE_PATH;
             }
 
-            addLog('🔐 افتح ملف ../Data/stock_data.json عبر زر "فتح ملف JSON" ومنح صلاحية كتابة قبل أي تعديل.', 'warning');
-
             const localLoadBtn = document.querySelector('button[onclick="loadLocalFile()"]');
             const localBrowseBtn = document.querySelector('button[onclick="browseLocalFile()"]');
             if (localLoadBtn) localLoadBtn.disabled = true;
             if (localBrowseBtn) localBrowseBtn.disabled = true;
 
-            const restored = await restorePersistentHandle(true);
-            if (!restored) {
-                addLog('ℹ️ لم يتم العثور على ربط صالح تلقائياً. استخدم "فتح ملف JSON" مرة واحدة.', 'info');
+            // Load current stock database from Supabase automatically
+            try {
+                addLog('🔍 جاري تحميل البيانات الحالية من قاعدة البيانات السحابية Supabase...', 'info');
+                const cloudData = await getStockDataFromSupabase();
+                database = {
+                    companies: normalizeImportedCompanies(cloudData.companies)
+                };
+                addLog(`✅ تم تحميل ${Object.keys(database.companies).length} شركة من السحابة بنجاح!`, 'success');
+                updateFileInfo();
+                updateDisplay();
+                document.getElementById('saveBtn').disabled = false;
+            } catch (error) {
+                addLog(`❌ فشل تحميل البيانات من السحابة: ${error.message}`, 'error');
             }
-            
-            document.getElementById('saveBtn').disabled = !currentFileHandle;
 
             ['customStockSymbol', 'customStockShortName', 'customStockLongName'].forEach(id => {
                 const input = document.getElementById(id);
