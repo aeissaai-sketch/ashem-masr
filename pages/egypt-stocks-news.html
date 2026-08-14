@@ -6,6 +6,7 @@
     <title>اخبار الاسهم المصرية - EGX</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="global-sidebar.js"></script>
+    <script src="supabase-api.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 14px; color: #e2e8f0; }
@@ -1188,6 +1189,49 @@
                 return;
             }
 
+            setStatus('جاري جلب أحدث الأخبار من قاعدة البيانات السحابية (Supabase)...');
+
+            let cachedNews = [];
+            try {
+                // Fetch the central NEWS_CACHE row from Supabase
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/all_stocks_data?symbol=eq.NEWS_CACHE`, {
+                    headers: supabaseHeaders,
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    cachedNews = rows[0]?.history || [];
+                    console.log(`Fetched ${cachedNews.length} news items from NEWS_CACHE.`);
+                }
+            } catch (e) {
+                console.error("Failed to fetch NEWS_CACHE from Supabase:", e);
+            }
+
+            let filteredNews = [];
+            if (cachedNews.length > 0) {
+                // If we got news from the database cache, filter it accordingly
+                if (scope === 'all') {
+                    filteredNews = cachedNews;
+                } else if (scope === 'portfolio') {
+                    const portfolioStocks = new Set(getPortfolioStocks(universe).map(s => s.symbol));
+                    filteredNews = cachedNews.filter(item => portfolioStocks.has(item.symbol));
+                } else if (scope === 'single') {
+                    filteredNews = cachedNews.filter(item => item.symbol === selectedSingle);
+                }
+            }
+
+            // If we successfully fetched and matched items, render them
+            if (filteredNews.length > 0) {
+                fullResults = filteredNews;
+                setCache(cacheKey, fullResults, 1, 1);
+                renderResults(fullResults);
+                setStatus(`تم تحميل ${fullResults.length} خبر بنجاح من قاعدة البيانات السحابية!`);
+                return;
+            }
+
+            // Fallback: if NEWS_CACHE is empty or failed, run the old concurrent proxy scrapers
+            addLog('⚠️ تعذر العثور على أخبار سحابية مخزنة. جاري جلب الأخبار مباشرة عبر البروكسي...', 'warning');
+
             let selectedStocks = universe;
             if (scope === 'portfolio') {
                 selectedStocks = getPortfolioStocks(universe);
@@ -1202,7 +1246,6 @@
                     setStatus('اكتب رمز السهم أولاً ثم اضغط التحميل.');
                     return;
                 }
-                // البحث أولاً في قاعدة البيانات، وإن لم يوجد نستخدم الرمز مباشرة
                 const found = universe.find(stock => String(stock.symbol || '').toUpperCase() === selectedSingle);
                 selectedStocks = [found || { symbol: selectedSingle, name: selectedSingle }];
             }
@@ -1233,7 +1276,6 @@
                     .filter(item => isAllowedNewsSource(item))
                     .forEach(item => {
                         const d = parseDate(item.pubDate);
-
                         const matches = resp.stock && isBoundTaskRelevant(item, resp.stock) ? [resp.stock] : [];
                         if (!matches.length) return;
 

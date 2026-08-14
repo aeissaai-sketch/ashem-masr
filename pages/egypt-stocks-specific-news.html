@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أخبار الأسهم المخصصة - EGX</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="supabase-api.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; padding: 14px; color: #e2e8f0; }
@@ -2141,7 +2142,7 @@
         async function fetchNewsForWatchlist() {
             const feedContainer = document.getElementById('newsFeed');
             
-            // عرض هيكل التحميل (Skeleton Loader) في حال عدم وجود كاش
+            // Show Skeleton Loader if cache is empty
             const hasPendingLoad = watchlist.some(sym => !allNewsCache[sym]);
             if (hasPendingLoad && Object.keys(allNewsCache).length === 0) {
                 feedContainer.innerHTML = Array(3).fill(0).map(() => `
@@ -2155,10 +2156,50 @@
 
             document.getElementById('statusText').textContent = 'جاري التحميل...';
             document.getElementById('status').style.display = 'block';
+            document.getElementById('status').textContent = 'جاري جلب أحدث الأخبار من قاعدة البيانات السحابية...';
 
+            let cachedNews = [];
+            try {
+                // Fetch the central NEWS_CACHE row from Supabase
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/all_stocks_data?symbol=eq.NEWS_CACHE`, {
+                    headers: supabaseHeaders,
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    cachedNews = rows[0]?.history || [];
+                    console.log(`Fetched ${cachedNews.length} items from Supabase news cache.`);
+                }
+            } catch (e) {
+                console.error("Failed to fetch NEWS_CACHE from Supabase:", e);
+            }
+
+            if (cachedNews.length > 0) {
+                // Populate allNewsCache from the database news
+                watchlist.forEach(symbol => {
+                    const symbolUpper = symbol.toUpperCase();
+                    allNewsCache[symbol] = cachedNews.filter(item => item.symbol === symbolUpper);
+                });
+
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('statusText').textContent = 'جاهز';
+                
+                // Count how many watchlist symbols have news
+                let found = 0;
+                watchlist.forEach(sym => {
+                    if (allNewsCache[sym] && allNewsCache[sym].length > 0) found++;
+                });
+                document.getElementById('newsCount').textContent = found;
+                
+                filterAndRenderNewsFeed();
+                return;
+            }
+
+            // Fallback: if database cache failed or was empty, run old proxy scraping worker pool
+            document.getElementById('status').textContent = '⚠️ فشل جلب الأخبار من السحاب. جاري الجلب عبر البروكسي...';
             let loaded = 0;
             let found = 0;
-            const cacheDuration = 15 * 60 * 1000; // 15 دقيقة كاش
+            const cacheDuration = 15 * 60 * 1000; // 15 mins cache
             const concurrency = 3;
             let index = 0;
 
@@ -2170,7 +2211,6 @@
                     const stock = stocksData.find(s => s.symbol.toUpperCase() === symbol);
                     if (!stock) continue;
 
-                    // فحص الكاش المؤقت في sessionStorage
                     let cachedData = null;
                     try {
                         cachedData = JSON.parse(sessionStorage.getItem('news_cache_' + symbol));
@@ -2180,11 +2220,10 @@
                         allNewsCache[symbol] = cachedData.news;
                         if (cachedData.news.length > 0) found++;
                         loaded++;
-                        document.getElementById('status').textContent = `تم تحميل ${symbol} من الذاكرة المؤقتة... (${loaded}/${watchlist.length})`;
+                        document.getElementById('status').textContent = `تم تحميل ${symbol} من الذاكرة... (${loaded}/${watchlist.length})`;
                         continue;
                     }
 
-                    // جلب البيانات من الإنترنت
                     try {
                         document.getElementById('status').textContent = `جاري جلب أخبار ${symbol}... (${loaded + 1}/${watchlist.length})`;
                         const news = await fetchFromGoogleNews(stock);
