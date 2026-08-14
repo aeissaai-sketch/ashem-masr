@@ -21,6 +21,7 @@ async function getPortfolioFromSupabase() {
         name: r.name,
         quantity: Number(r.quantity),
         entryPrice: Number(r.entry_price),
+        marketPrice: Number(r.market_price || r.entry_price),
         sector: r.sector || 'Other',
         addedDate: new Date(r.updated_at || Date.now()).toLocaleDateString('en-GB')
     }));

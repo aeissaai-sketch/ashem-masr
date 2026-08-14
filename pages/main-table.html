@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="supabase-api.js"></script>
     <script src="shared-analysis.js"></script>
     <script src="global-sidebar.js"></script>
     <script>
@@ -428,8 +429,8 @@
             { key: 'near-low-60', label: 'قريب من الأدنى', icon: 'fa-arrow-trend-down' }
         ];
 
-        // ==================== تحميل البيانات من sessionStorage فقط ====================
-        function loadData() {
+        // ==================== تحميل البيانات من السحاب أو sessionStorage ====================
+        async function loadData() {
             const loading = document.getElementById('loading');
             const table = document.getElementById('mainTable');
             const noDataMessage = document.getElementById('noDataMessage');
@@ -437,7 +438,41 @@
             const refreshBtn = document.getElementById('refreshBtn');
             
             // محاولة الحصول على البيانات من sessionStorage ثم localStorage
-            const savedData = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            let savedData = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+            
+            if (!savedData) {
+                try {
+                    loading.style.display = 'block';
+                    noDataMessage.style.display = 'none';
+                    table.style.display = 'none';
+                    
+                    const data = await getStockDataFromSupabase();
+                    if (data && data.companies) {
+                        sessionStorage.setItem('stocksData', JSON.stringify(data));
+                        localStorage.setItem('stocksData', JSON.stringify(data));
+                        
+                        const companiesList = Array.isArray(data.companies) ? data.companies : Object.values(data.companies);
+                        processedData = companiesList.map(company => ({
+                            symbol: company.symbol,
+                            name: company.longName || company.shortName || company.symbol,
+                            currentPrice: Number(company.price || 0),
+                            change: '0.0',
+                            changeValue: 0,
+                            volumeRatio: 1,
+                            rsi: 50,
+                            support: 0,
+                            resistance: 0
+                        }));
+                        
+                        sessionStorage.setItem('processedData', JSON.stringify(processedData));
+                        localStorage.setItem('processedData', JSON.stringify(processedData));
+                        savedData = JSON.stringify(processedData);
+                    }
+                } catch (e) {
+                    console.error('Failed to load stock data from Supabase:', e);
+                }
+            }
+            
             buildHistoricalClosesMap();
             updatePeriodLowHeader();
             
