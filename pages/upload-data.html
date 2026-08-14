@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 نظام تحليل الأسهم - الإصدار النهائي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="supabase-api.js"></script>
     <script src="global-sidebar.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1846,7 +1847,7 @@
 
             const saveBtn = document.getElementById('saveBtn');
             if (saveBtn) {
-                saveBtn.disabled = !(currentFileHandle && typeof currentFileHandle.createWritable === 'function');
+                saveBtn.disabled = false; // Always enabled for Supabase cloud saving!
             }
         }
 
@@ -2087,30 +2088,13 @@
 
         // ==================== حفظ الملف ====================
         async function saveFile() {
-            if (!currentFileHandle) {
-                addLog('❌ لا يوجد ربط كتابة مع ملف البيانات. افتح الملف من زر "فتح ملف JSON" أولاً.', 'error');
-                return false;
-            }
-
             try {
-                if (currentFileHandle.requestPermission) {
-                    const perm = await currentFileHandle.requestPermission({ mode: 'readwrite' });
-                    if (perm !== 'granted') {
-                        throw new Error('لم يتم منح صلاحية الكتابة على الملف');
-                    }
-                }
-
-                const writable = await currentFileHandle.createWritable();
-                const dataStr = JSON.stringify(database, null, 2);
-                await writable.write(dataStr);
-                await writable.close();
-                
-                addLog(`✅ تم حفظ التغييرات على ${currentFileName}`, 'success');
-                updateFileInfo();
+                addLog('🔄 جاري حفظ البيانات وتحديثها في قاعدة البيانات السحابية (Supabase)...', 'info');
+                await saveStockDataToSupabase(database);
+                addLog('✅ تم حفظ التغييرات وتحديث الأسعار بنجاح في السحاب!', 'success');
                 return true;
-                
             } catch (error) {
-                addLog('❌ فشل في الحفظ: ' + error.message, 'error');
+                addLog('❌ فشل الحفظ في السحاب: ' + error.message, 'error');
                 return false;
             }
         }

@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="supabase-api.js"></script>
     <script src="shared-analysis.js"></script>
     <script>
         if (typeof window.openStockAnalysis !== 'function') {
@@ -518,37 +519,26 @@
             }
         }
 
-        function setPortfolio(portfolio) {
+        async function setPortfolio(portfolio) {
             localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
-            // Automatically save to server
-            fetch('/api/save-portfolio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(portfolio)
-            }).then(r => r.json()).then(data => {
-                if (data.success) {
-                    console.log('✅ Portfolio successfully saved to server disk.');
-                } else {
-                    console.error('❌ Failed to save portfolio to server disk:', data.error);
-                }
-            }).catch(e => {
-                console.error('❌ Network error saving portfolio:', e);
-            });
+            try {
+                await savePortfolioToSupabase(portfolio);
+                console.log('✅ Portfolio successfully saved to Supabase.');
+            } catch (e) {
+                console.error('❌ Error saving portfolio to Supabase:', e);
+                alert('⚠️ فشل حفظ التغييرات سحابياً، سيتم الحفظ مؤقتاً في المتصفح فقط: ' + e.message);
+            }
         }
 
         async function syncPortfolioFromServer() {
             try {
-                const stamp = Date.now();
-                const response = await fetch(`../Data/portfolio.json?_ts=${stamp}`, { cache: 'no-store' });
-                if (response.ok) {
-                    const serverPortfolio = await response.json();
-                    if (Array.isArray(serverPortfolio) && serverPortfolio.length > 0) {
-                        localStorage.setItem('userPortfolio', JSON.stringify(serverPortfolio));
-                        console.log('✅ Synchronized portfolio from server disk successfully.');
-                    }
+                const serverPortfolio = await getPortfolioFromSupabase();
+                if (Array.isArray(serverPortfolio)) {
+                    localStorage.setItem('userPortfolio', JSON.stringify(serverPortfolio));
+                    console.log('✅ Synchronized portfolio from Supabase successfully.');
                 }
             } catch (e) {
-                console.warn('Could not sync portfolio from server:', e);
+                console.warn('Could not sync portfolio from Supabase:', e);
             }
         }
 

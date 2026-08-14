@@ -6,6 +6,7 @@
     <title>📊 منصة تحليل الأسهم - رفع يدوي</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="pages/global-sidebar.js"></script>
+    <script src="pages/supabase-api.js"></script>
     <style>
         /* نفس التنسيقات السابقة مع إضافة تنسيقات جديدة */
         * {
@@ -1156,30 +1157,27 @@
 
         async function loadDefaultDataFile() {
             try {
-                const response = await fetch(DEFAULT_STOCKS_DATA_FILE, { cache: 'no-store' });
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                stocksData = await response.json();
+                showNotification('🔄 جاري تحميل بيانات الأسهم من السحاب...', 'info');
+                stocksData = await getStockDataFromSupabase();
                 processStocks(stocksData);
 
                 warningMessage.classList.add('hidden');
                 statsArea.classList.remove('hidden');
                 updatePagesState(true);
 
-                const fileLabel = DEFAULT_STOCKS_DATA_FILE;
+                const fileLabel = "Supabase Cloud DB";
                 selectedFileName.textContent = fileLabel;
-                selectedFileSize.textContent = '(تحميل تلقائي من مجلد Data)';
+                selectedFileSize.textContent = '(قاعدة بيانات سحابية حية)';
                 selectedContainer.classList.remove('hidden');
 
                 localStorage.setItem('lastUploadedFileName', fileLabel);
                 localStorage.removeItem('lastUploadedFileSize');
                 setActiveDataSource(fileLabel);
-                showNotification('✅ تم تحميل بيانات الأسهم من Data/stock_data.json', 'success');
+                showNotification('✅ تم تحميل بيانات الأسهم بنجاح من السحاب', 'success');
                 return true;
             } catch (error) {
-                console.warn('تعذر تحميل ملف Data الافتراضي:', error);
+                console.error('تعذر تحميل البيانات من Supabase:', error);
+                showNotification('⚠️ فشل التحميل من السحاب، محاولة الاسترجاع من الذاكرة المحلية...', 'error');
                 return false;
             }
         }
