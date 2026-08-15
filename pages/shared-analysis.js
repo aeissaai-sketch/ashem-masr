@@ -19,6 +19,30 @@
     let gaLwcChartType = 'candle'; // 'candle' or 'line'
     let gaLwcResizeObserver = null;
 
+    // Active overlay states for advanced modal
+    const gaActiveOverlays = {
+        ema: false,
+        sma: false,
+        bb: false,
+        st: false,
+        ut: false,
+        tlb: false,
+        csp: false
+    };
+
+    let gaLwcEma9Series = null;
+    let gaLwcEma21Series = null;
+    let gaLwcSma50Series = null;
+    let gaLwcSma200Series = null;
+    let gaLwcBbUpperSeries = null;
+    let gaLwcBbMiddleSeries = null;
+    let gaLwcBbLowerSeries = null;
+    let gaLwcSuperTrendUpSeries = null;
+    let gaLwcSuperTrendDownSeries = null;
+    let gaLwcUtSeries = null;
+    let gaLwcTlbResSeries = null;
+    let gaLwcTlbSupSeries = null;
+
     function getJsonFromStorage(key) {
         const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
         if (!raw) return null;
@@ -989,6 +1013,32 @@
             .ga-size-btn{background:#334155;color:#e2e8f0;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700}
             .ga-size-label{color:#94a3b8;font-size:.9em;min-width:62px;text-align:center}
             
+            .ga-control-btn {
+                background: rgba(31, 41, 55, 0.6);
+                border: 1px solid #334155;
+                color: #94a3b8;
+                padding: 5px 10px;
+                font-size: 0.78em;
+                border-radius: 6px;
+                cursor: pointer;
+                font-family: inherit;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.2s ease;
+            }
+            .ga-control-btn:hover {
+                color: #e2e8f0;
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.1);
+            }
+            .ga-control-btn.active {
+                color: #fff;
+                border-color: #3b82f6;
+                background: #3b82f6;
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            }
+            
             /* LWC Fullscreen Overlay Style */
             .ga-full{--ga-scale:1;display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0d1117;z-index:10000;padding:24px;overflow:hidden;font-size:calc(1rem * var(--ga-scale))}
             .ga-full.active{display:flex;flex-direction:column}
@@ -1141,6 +1191,17 @@
                     </div>
                     <button class="ga-full-close" onclick="closeAdvancedStockAnalysis()">&times;</button>
                 </div>
+            </div>
+            <!-- Indicator Toggle Buttons -->
+            <div style="display:flex; gap:10px; align-items:center; padding: 6px 20px; background: rgba(30, 41, 59, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.05); direction:rtl; flex-wrap:wrap;">
+                <span style="font-size:0.85em; color:#fbbf24; font-weight:bold;"><i class="fas fa-chart-line"></i> المؤشرات الفنية:</span>
+                <button class="ga-control-btn" id="gaToggleEMA" onclick="gaToggleOverlay('ema')"><i class="fas fa-chart-line"></i> EMA 9/21</button>
+                <button class="ga-control-btn" id="gaToggleSMA" onclick="gaToggleOverlay('sma')"><i class="fas fa-chart-line"></i> SMA 50/200</button>
+                <button class="ga-control-btn" id="gaToggleBB" onclick="gaToggleOverlay('bb')"><i class="fas fa-arrows-left-right-to-line"></i> Bollinger Bands</button>
+                <button class="ga-control-btn" id="gaToggleST" onclick="gaToggleOverlay('st')"><i class="fas fa-arrow-trend-up"></i> SuperTrend</button>
+                <button class="ga-control-btn" id="gaToggleUT" onclick="gaToggleOverlay('ut')"><i class="fas fa-bell"></i> UT Bot Alerts</button>
+                <button class="ga-control-btn" id="gaToggleTLB" onclick="gaToggleOverlay('tlb')"><i class="fas fa-slash"></i> Trendlines with Breaks</button>
+                <button class="ga-control-btn" id="gaToggleCSP" onclick="gaToggleOverlay('csp')"><i class="fas fa-circle-info"></i> Candlestick Patterns</button>
             </div>
             <div class="ga-lwc-container" id="gaLwcChartContainer">
                 <div id="gaLwcLoader" style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(11, 15, 25, 0.8); display:flex; align-items:center; justify-content:center; z-index:20; border-radius:12px; backdrop-filter:blur(2px);">
@@ -1734,6 +1795,566 @@
         }
     }
 
+    // ==================== INDICATORS CALCULATIONS & OVERLAYS ====================
+
+    function calcEMAData(data, period) {
+        if (data.length < period) return [];
+        const emaPoints = [];
+        const k = 2 / (period + 1);
+        let sum = 0;
+        for (let i = 0; i < period; i++) {
+            sum += data[i].close;
+        }
+        let prevEma = sum / period;
+        emaPoints.push({ time: data[period - 1].time, value: prevEma });
+
+        for (let i = period; i < data.length; i++) {
+            const currentEma = data[i].close * k + prevEma * (1 - k);
+            emaPoints.push({ time: data[i].time, value: currentEma });
+            prevEma = currentEma;
+        }
+        return emaPoints;
+    }
+
+    function calcSMAData(data, period) {
+        if (data.length < period) return [];
+        const smaPoints = [];
+        let sum = 0;
+        for (let i = 0; i < period; i++) {
+            sum += data[i].close;
+        }
+        smaPoints.push({ time: data[period - 1].time, value: sum / period });
+
+        for (let i = period; i < data.length; i++) {
+            sum = sum - data[i - period].close + data[i].close;
+            smaPoints.push({ time: data[i].time, value: sum / period });
+        }
+        return smaPoints;
+    }
+
+    function calcBBData(data, period = 20, multiplier = 2) {
+        if (data.length < period) return { upper: [], middle: [], lower: [] };
+        const upper = [];
+        const middle = [];
+        const lower = [];
+
+        for (let i = period - 1; i < data.length; i++) {
+            let sum = 0;
+            for (let j = 0; j < period; j++) {
+                sum += data[i - j].close;
+            }
+            const mean = sum / period;
+
+            let sumSqDiff = 0;
+            for (let j = 0; j < period; j++) {
+                sumSqDiff += Math.pow(data[i - j].close - mean, 2);
+            }
+            const stdDev = Math.sqrt(sumSqDiff / period);
+
+            const time = data[i].time;
+            middle.push({ time, value: mean });
+            upper.push({ time, value: mean + multiplier * stdDev });
+            lower.push({ time, value: mean - multiplier * stdDev });
+        }
+
+        return { upper, middle, lower };
+    }
+
+    function calcSuperTrendData(data, period = 10, multiplier = 3) {
+        if (data.length < period + 1) return { up: [], down: [] };
+
+        const tr = [];
+        for (let i = 0; i < data.length; i++) {
+            if (i === 0) {
+                tr.push(data[i].high - data[i].low);
+            } else {
+                const h_l = data[i].high - data[i].low;
+                const h_pc = Math.abs(data[i].high - data[i-1].close);
+                const l_pc = Math.abs(data[i].low - data[i-1].close);
+                tr.push(Math.max(h_l, h_pc, l_pc));
+            }
+        }
+
+        const atr = [];
+        let trSum = 0;
+        for (let i = 0; i < data.length; i++) {
+            if (i < period) {
+                trSum += tr[i];
+                atr.push(trSum / (i + 1));
+            } else {
+                const prevAtr = atr[i - 1];
+                const val = (prevAtr * (period - 1) + tr[i]) / period;
+                atr.push(val);
+            }
+        }
+
+        const upPoints = [];
+        const downPoints = [];
+        let prevClose = data[0].close;
+        let prevUpper = 0;
+        let prevLower = 0;
+        let prevTrend = 1;
+
+        for (let i = 0; i < data.length; i++) {
+            if (i < period) continue;
+
+            const close = data[i].close;
+            const high = data[i].high;
+            const low = data[i].low;
+
+            const hl2 = (high + low) / 2;
+            const basicUpper = hl2 + multiplier * atr[i];
+            const basicLower = hl2 - multiplier * atr[i];
+
+            let finalUpper = basicUpper;
+            if (basicUpper < prevUpper || prevClose > prevUpper) {
+                finalUpper = basicUpper;
+            } else {
+                finalUpper = prevUpper;
+            }
+
+            let finalLower = basicLower;
+            if (basicLower > prevLower || prevClose < prevLower) {
+                finalLower = basicLower;
+            } else {
+                finalLower = prevLower;
+            }
+
+            let trend = prevTrend;
+            if (close > prevUpper) {
+                trend = 1;
+            } else if (close < prevLower) {
+                trend = -1;
+            }
+
+            const val = trend === 1 ? finalLower : finalUpper;
+            if (trend === 1) {
+                upPoints.push({ time: data[i].time, value: val });
+            } else {
+                downPoints.push({ time: data[i].time, value: val });
+            }
+
+            prevUpper = finalUpper;
+            prevLower = finalLower;
+            prevTrend = trend;
+            prevClose = close;
+        }
+
+        return { up: upPoints, down: downPoints };
+    }
+
+    function calcUTBotData(chartData, keyValue = 2, atrPeriod = 1) {
+        if (chartData.length < atrPeriod + 1) return { stop: [], signals: [] };
+
+        const tr = [];
+        for (let i = 0; i < chartData.length; i++) {
+            if (i === 0) {
+                tr.push(chartData[i].high - chartData[i].low);
+            } else {
+                const h_l = chartData[i].high - chartData[i].low;
+                const h_pc = Math.abs(chartData[i].high - chartData[i-1].close);
+                const l_pc = Math.abs(chartData[i].low - chartData[i-1].close);
+                tr.push(Math.max(h_l, h_pc, l_pc));
+            }
+        }
+
+        const atr = [];
+        let trSum = 0;
+        for (let i = 0; i < chartData.length; i++) {
+            if (i < atrPeriod) {
+                trSum += tr[i];
+                atr.push(trSum / (i + 1));
+            } else {
+                const prevAtr = atr[i - 1];
+                const val = (prevAtr * (atrPeriod - 1) + tr[i]) / atrPeriod;
+                atr.push(val);
+            }
+        }
+
+        const stop = [];
+        const signals = [];
+        let lastStop = 0;
+
+        for (let i = 0; i < chartData.length; i++) {
+            const close = chartData[i].close;
+            const nLoss = keyValue * atr[i];
+
+            let currentStop = 0;
+            if (i === 0) {
+                currentStop = close - nLoss;
+                stop.push({ time: chartData[i].time, value: currentStop });
+                lastStop = currentStop;
+                continue;
+            }
+
+            const prevClose = chartData[i - 1].close;
+
+            if (close > lastStop && prevClose > lastStop) {
+                currentStop = Math.max(lastStop, close - nLoss);
+            } else if (close < lastStop && prevClose < lastStop) {
+                currentStop = Math.min(lastStop, close + nLoss);
+            } else if (close > lastStop) {
+                currentStop = close - nLoss;
+            } else {
+                currentStop = close + nLoss;
+            }
+
+            stop.push({ time: chartData[i].time, value: currentStop });
+
+            if (close > currentStop && prevClose <= lastStop) {
+                signals.push({
+                    time: chartData[i].time,
+                    position: 'belowBar',
+                    color: '#10b981',
+                    shape: 'arrowUp',
+                    text: 'BUY'
+                });
+            } else if (close < currentStop && prevClose >= lastStop) {
+                signals.push({
+                    time: chartData[i].time,
+                    position: 'aboveBar',
+                    color: '#ef4444',
+                    shape: 'arrowDown',
+                    text: 'SELL'
+                });
+            }
+
+            lastStop = currentStop;
+        }
+
+        return { stop, signals };
+    }
+
+    function calcTrendlinesWithBreaks(chartData) {
+        if (chartData.length < 20) return { resistance: [], support: [], signals: [] };
+
+        const signals = [];
+        const resistance = [];
+        const support = [];
+
+        const pivotHighs = [];
+        const pivotLows = [];
+
+        for (let i = 3; i < chartData.length - 3; i++) {
+            const h = chartData[i].high;
+            const l = chartData[i].low;
+
+            if (h > chartData[i-1].high && h > chartData[i-2].high && h > chartData[i-3].high &&
+                h > chartData[i+1].high && h > chartData[i+2].high && h > chartData[i+3].high) {
+                pivotHighs.push({ index: i, time: chartData[i].time, value: h });
+            }
+
+            if (l < chartData[i-1].low && l < chartData[i-2].low && l < chartData[i-3].low &&
+                l < chartData[i+1].low && l < chartData[i+2].low && l < chartData[i+3].low) {
+                pivotLows.push({ index: i, time: chartData[i].time, value: l });
+            }
+        }
+
+        let activeResLine = null;
+        let activeSupLine = null;
+
+        for (let i = 0; i < chartData.length; i++) {
+            const time = chartData[i].time;
+            const close = chartData[i].close;
+
+            const newPH = pivotHighs.filter(p => p.index === i - 3)[0];
+            if (newPH) {
+                const prevPHs = pivotHighs.filter(p => p.index < newPH.index);
+                if (prevPHs.length > 0) {
+                    const prevPH = prevPHs[prevPHs.length - 1];
+                    const run = newPH.index - prevPH.index;
+                    const rise = newPH.value - prevPH.value;
+                    const slope = rise / run;
+                    activeResLine = { startIdx: prevPH.index, startVal: prevPH.value, slope: slope };
+                }
+            }
+
+            const newPL = pivotLows.filter(p => p.index === i - 3)[0];
+            if (newPL) {
+                const prevPLs = pivotLows.filter(p => p.index < newPL.index);
+                if (prevPLs.length > 0) {
+                    const prevPL = prevPLs[prevPLs.length - 1];
+                    const run = newPL.index - prevPL.index;
+                    const rise = newPL.value - prevPL.value;
+                    const slope = rise / run;
+                    activeSupLine = { startIdx: prevPL.index, startVal: prevPL.value, slope: slope };
+                }
+            }
+
+            if (activeResLine) {
+                const currentResVal = activeResLine.startVal + (i - activeResLine.startIdx) * activeResLine.slope;
+                resistance.push({ time: time, value: currentResVal });
+                
+                const prevClose = i > 0 ? chartData[i-1].close : close;
+                const prevResVal = activeResLine.startVal + (i - 1 - activeResLine.startIdx) * activeResLine.slope;
+                if (close > currentResVal && prevClose <= prevResVal) {
+                    signals.push({
+                        time: time,
+                        position: 'belowBar',
+                        color: '#60a5fa',
+                        shape: 'circle',
+                        text: 'B'
+                    });
+                    activeResLine = null;
+                }
+            }
+
+            if (activeSupLine) {
+                const currentSupVal = activeSupLine.startVal + (i - activeSupLine.startIdx) * activeSupLine.slope;
+                support.push({ time: time, value: currentSupVal });
+
+                const prevClose = i > 0 ? chartData[i-1].close : close;
+                const prevSupVal = activeSupLine.startVal + (i - 1 - activeSupLine.startIdx) * activeSupLine.slope;
+                if (close < currentSupVal && prevClose >= prevSupVal) {
+                    signals.push({
+                        time: time,
+                        position: 'aboveBar',
+                        color: '#f43f5e',
+                        shape: 'circle',
+                        text: 'S'
+                    });
+                    activeSupLine = null;
+                }
+            }
+        }
+
+        return { resistance, support, signals };
+    }
+
+    function detectCandlestickPatterns(chartData) {
+        const signals = [];
+        for (let i = 1; i < chartData.length; i++) {
+            const c = chartData[i];
+            const prev = chartData[i-1];
+            
+            const body = Math.abs(c.close - c.open);
+            const range = c.high - c.low;
+            if (range <= 0) continue;
+
+            const isBullish = c.close >= c.open;
+            const upperShadow = c.high - Math.max(c.open, c.close);
+            const lowerShadow = Math.min(c.open, c.close) - c.low;
+
+            if (body <= range * 0.1) {
+                signals.push({
+                    time: c.time,
+                    position: 'aboveBar',
+                    color: '#cbd5e1',
+                    shape: 'circle',
+                    text: 'Doji'
+                });
+                continue;
+            }
+
+            if (lowerShadow >= body * 2 && upperShadow <= range * 0.1 && body > 0) {
+                signals.push({
+                    time: c.time,
+                    position: 'belowBar',
+                    color: '#10b981',
+                    shape: 'arrowUp',
+                    text: 'Hammer'
+                });
+                continue;
+            }
+
+            if (upperShadow >= body * 2 && lowerShadow <= range * 0.1 && body > 0) {
+                signals.push({
+                    time: c.time,
+                    position: 'aboveBar',
+                    color: '#ef4444',
+                    shape: 'arrowDown',
+                    text: 'Star'
+                });
+                continue;
+            }
+
+            const prevBody = Math.abs(prev.close - prev.open);
+            const prevIsBullish = prev.close >= prev.open;
+            if (body > prevBody && isBullish !== prevIsBullish && prevBody > 0) {
+                if (isBullish) {
+                    signals.push({
+                        time: c.time,
+                        position: 'belowBar',
+                        color: '#10b981',
+                        shape: 'arrowUp',
+                        text: 'B.Engulf'
+                    });
+                } else {
+                    signals.push({
+                        time: c.time,
+                        position: 'aboveBar',
+                        color: '#ef4444',
+                        shape: 'arrowDown',
+                        text: 'B.Engulf'
+                    });
+                }
+            }
+        }
+        return signals;
+    }
+
+    function renderGaActiveOverlays(chartData) {
+        if (!gaLwcChart || !chartData.length) return;
+
+        // 1. EMA 9/21
+        if (gaActiveOverlays.ema) {
+            if (!gaLwcEma9Series) {
+                gaLwcEma9Series = gaLwcChart.addLineSeries({ color: '#f59e0b', lineWidth: 1.5, title: 'EMA 9' });
+                gaLwcEma21Series = gaLwcChart.addLineSeries({ color: '#a855f7', lineWidth: 1.5, title: 'EMA 21' });
+            }
+            const ema9 = calcEMAData(chartData, 9);
+            const ema21 = calcEMAData(chartData, 21);
+            gaLwcEma9Series.setData(ema9);
+            gaLwcEma21Series.setData(ema21);
+        } else {
+            if (gaLwcEma9Series) {
+                gaLwcChart.removeSeries(gaLwcEma9Series);
+                gaLwcChart.removeSeries(gaLwcEma21Series);
+                gaLwcEma9Series = null;
+                gaLwcEma21Series = null;
+            }
+        }
+
+        // 2. SMA 50/200
+        if (gaActiveOverlays.sma) {
+            if (!gaLwcSma50Series) {
+                gaLwcSma50Series = gaLwcChart.addLineSeries({ color: '#3b82f6', lineWidth: 1.5, title: 'SMA 50' });
+                gaLwcSma200Series = gaLwcChart.addLineSeries({ color: '#ef4444', lineWidth: 1.5, title: 'SMA 200' });
+            }
+            const sma50 = calcSMAData(chartData, 50);
+            const sma200 = calcSMAData(chartData, 200);
+            gaLwcSma50Series.setData(sma50);
+            gaLwcSma200Series.setData(sma200);
+        } else {
+            if (gaLwcSma50Series) {
+                gaLwcChart.removeSeries(gaLwcSma50Series);
+                gaLwcChart.removeSeries(gaLwcSma200Series);
+                gaLwcSma50Series = null;
+                gaLwcSma200Series = null;
+            }
+        }
+
+        // 3. Bollinger Bands
+        if (gaActiveOverlays.bb) {
+            if (!gaLwcBbUpperSeries) {
+                gaLwcBbUpperSeries = gaLwcChart.addLineSeries({ color: 'rgba(99, 102, 241, 0.7)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'BB Upper' });
+                gaLwcBbMiddleSeries = gaLwcChart.addLineSeries({ color: 'rgba(99, 102, 241, 0.4)', lineWidth: 1, title: 'BB Middle' });
+                gaLwcBbLowerSeries = gaLwcChart.addLineSeries({ color: 'rgba(99, 102, 241, 0.7)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'BB Lower' });
+            }
+            const bb = calcBBData(chartData, 20, 2);
+            gaLwcBbUpperSeries.setData(bb.upper);
+            gaLwcBbMiddleSeries.setData(bb.middle);
+            gaLwcBbLowerSeries.setData(bb.lower);
+        } else {
+            if (gaLwcBbUpperSeries) {
+                gaLwcChart.removeSeries(gaLwcBbUpperSeries);
+                gaLwcChart.removeSeries(gaLwcBbMiddleSeries);
+                gaLwcChart.removeSeries(gaLwcBbLowerSeries);
+                gaLwcBbUpperSeries = null;
+                gaLwcBbMiddleSeries = null;
+                gaLwcBbLowerSeries = null;
+            }
+        }
+
+        // 4. SuperTrend
+        if (gaActiveOverlays.st) {
+            if (!gaLwcSuperTrendUpSeries) {
+                gaLwcSuperTrendUpSeries = gaLwcChart.addLineSeries({ color: '#10b981', lineWidth: 2, title: 'SuperTrend Up' });
+                gaLwcSuperTrendDownSeries = gaLwcChart.addLineSeries({ color: '#ef4444', lineWidth: 2, title: 'SuperTrend Down' });
+            }
+            const st = calcSuperTrendData(chartData, 10, 3);
+            gaLwcSuperTrendUpSeries.setData(st.up);
+            gaLwcSuperTrendDownSeries.setData(st.down);
+        } else {
+            if (gaLwcSuperTrendUpSeries) {
+                gaLwcChart.removeSeries(gaLwcSuperTrendUpSeries);
+                gaLwcChart.removeSeries(gaLwcSuperTrendDownSeries);
+                gaLwcSuperTrendUpSeries = null;
+                gaLwcSuperTrendDownSeries = null;
+            }
+        }
+
+        // 5. UT Bot Alerts
+        const markers = [];
+        if (gaActiveOverlays.ut) {
+            if (!gaLwcUtSeries) {
+                gaLwcUtSeries = gaLwcChart.addLineSeries({ color: 'rgba(245, 158, 11, 0.4)', lineWidth: 1.2, lineStyle: LightweightCharts.LineStyle.Dotted, title: 'UT Stop', priceLineVisible: false, lastValueVisible: false });
+            }
+            const utData = calcUTBotData(chartData, 2, 1);
+            gaLwcUtSeries.setData(utData.stop);
+            utData.signals.forEach(m => markers.push(m));
+        } else {
+            if (gaLwcUtSeries) {
+                gaLwcChart.removeSeries(gaLwcUtSeries);
+                gaLwcUtSeries = null;
+            }
+        }
+
+        // 6. Trendlines with Breaks
+        if (gaActiveOverlays.tlb) {
+            if (!gaLwcTlbResSeries) {
+                gaLwcTlbResSeries = gaLwcChart.addLineSeries({ color: '#60a5fa', lineWidth: 1.5, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Resistance TL', priceLineVisible: false, lastValueVisible: false });
+                gaLwcTlbSupSeries = gaLwcChart.addLineSeries({ color: '#f43f5e', lineWidth: 1.5, lineStyle: LightweightCharts.LineStyle.Dashed, title: 'Support TL', priceLineVisible: false, lastValueVisible: false });
+            }
+            const tlbData = calcTrendlinesWithBreaks(chartData);
+            gaLwcTlbResSeries.setData(tlbData.resistance);
+            gaLwcTlbSupSeries.setData(tlbData.support);
+            tlbData.signals.forEach(m => markers.push(m));
+        } else {
+            if (gaLwcTlbResSeries) {
+                gaLwcChart.removeSeries(gaLwcTlbResSeries);
+                gaLwcChart.removeSeries(gaLwcTlbSupSeries);
+                gaLwcTlbResSeries = null;
+                gaLwcTlbSupSeries = null;
+            }
+        }
+
+        // 7. Candlestick Patterns
+        if (gaActiveOverlays.csp) {
+            const cspMarkers = detectCandlestickPatterns(chartData);
+            cspMarkers.forEach(m => markers.push(m));
+        }
+
+        // Set combined markers
+        if (markers.length > 0) {
+            markers.sort((a, b) => a.time.localeCompare(b.time));
+            gaLwcMainSeries.setMarkers(markers);
+        } else {
+            gaLwcMainSeries.setMarkers([]);
+        }
+    }
+
+    window.gaToggleOverlay = function(type) {
+        gaActiveOverlays[type] = !gaActiveOverlays[type];
+        const btn = document.getElementById('gaToggle' + type.toUpperCase());
+        if (btn) btn.classList.toggle('active', gaActiveOverlays[type]);
+        
+        // Re-render chart overlays
+        if (gaLwcChart && currentPoints && currentPoints.length > 0) {
+            // Get standard chartData structure
+            const chartData = [];
+            const seenDates = new Set();
+            currentPoints.forEach(item => {
+                const dateStr = formatDateToISO(item.date);
+                if (!dateStr || seenDates.has(dateStr)) return;
+                seenDates.add(dateStr);
+                const closeVal = Number(item.close ?? item.price ?? 0);
+                const openVal = Number(item.open ?? closeVal);
+                const highVal = Number(item.high ?? Math.max(openVal, closeVal));
+                const lowVal = Number(item.low ?? Math.min(openVal, closeVal));
+                chartData.push({
+                    time: dateStr,
+                    open: openVal,
+                    high: highVal,
+                    low: lowVal,
+                    close: closeVal
+                });
+            });
+            chartData.sort((a, b) => a.time.localeCompare(b.time));
+            renderGaActiveOverlays(chartData);
+        }
+    };
+
     function initializeLwcChart() {
         const container = document.getElementById('gaLwcChartContainer');
         if (!container || gaLwcChart) return;
@@ -1946,6 +2567,28 @@
             gaLwcMainSeries.setData(chartData);
             if (gaLwcVolumeSeries) gaLwcVolumeSeries.setData(volumeData);
             gaLwcChart.timeScale().fitContent(); // Auto scale LWC
+
+            // Build OHLC array for indicator calculations
+            const parsedDataForIndicators = [];
+            const seenDates2 = new Set();
+            currentPoints.forEach(item => {
+                const dateStr = formatDateToISO(item.date);
+                if (!dateStr || seenDates2.has(dateStr)) return;
+                seenDates2.add(dateStr);
+                const closeVal = Number(item.close ?? item.price ?? 0);
+                const openVal = Number(item.open ?? closeVal);
+                const highVal = Number(item.high ?? Math.max(openVal, closeVal));
+                const lowVal = Number(item.low ?? Math.min(openVal, closeVal));
+                parsedDataForIndicators.push({
+                    time: dateStr,
+                    open: openVal,
+                    high: highVal,
+                    low: lowVal,
+                    close: closeVal
+                });
+            });
+            parsedDataForIndicators.sort((a, b) => a.time.localeCompare(b.time));
+            renderGaActiveOverlays(parsedDataForIndicators);
         } catch(e) {
             console.error("LWC setData error:", e);
         }
@@ -2277,6 +2920,24 @@
     window.closeAdvancedStockAnalysis = function () {
         const fullscreen = document.getElementById('globalAdvancedModal');
         if (fullscreen) fullscreen.classList.remove('active');
+        if (gaLwcChart) {
+            try {
+                if (gaLwcEma9Series) { gaLwcChart.removeSeries(gaLwcEma9Series); gaLwcEma9Series = null; }
+                if (gaLwcEma21Series) { gaLwcChart.removeSeries(gaLwcEma21Series); gaLwcEma21Series = null; }
+                if (gaLwcSma50Series) { gaLwcChart.removeSeries(gaLwcSma50Series); gaLwcSma50Series = null; }
+                if (gaLwcSma200Series) { gaLwcChart.removeSeries(gaLwcSma200Series); gaLwcSma200Series = null; }
+                if (gaLwcBbUpperSeries) { gaLwcChart.removeSeries(gaLwcBbUpperSeries); gaLwcBbUpperSeries = null; }
+                if (gaLwcBbMiddleSeries) { gaLwcChart.removeSeries(gaLwcBbMiddleSeries); gaLwcBbMiddleSeries = null; }
+                if (gaLwcBbLowerSeries) { gaLwcChart.removeSeries(gaLwcBbLowerSeries); gaLwcBbLowerSeries = null; }
+                if (gaLwcSuperTrendUpSeries) { gaLwcChart.removeSeries(gaLwcSuperTrendUpSeries); gaLwcSuperTrendUpSeries = null; }
+                if (gaLwcSuperTrendDownSeries) { gaLwcChart.removeSeries(gaLwcSuperTrendDownSeries); gaLwcSuperTrendDownSeries = null; }
+                if (gaLwcUtSeries) { gaLwcChart.removeSeries(gaLwcUtSeries); gaLwcUtSeries = null; }
+                if (gaLwcTlbResSeries) { gaLwcChart.removeSeries(gaLwcTlbResSeries); gaLwcTlbResSeries = null; }
+                if (gaLwcTlbSupSeries) { gaLwcChart.removeSeries(gaLwcTlbSupSeries); gaLwcTlbSupSeries = null; }
+            } catch(e) {}
+            try { gaLwcChart.remove(); } catch(e) {}
+            gaLwcChart = null;
+        }
     };
 
     window.refreshCurrentStockNews = function (forceLoading = true) {

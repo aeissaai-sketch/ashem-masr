@@ -1,0 +1,148 @@
+
+--- Anchor 1 parent structure ---
+<tr class="row-E_V4eEAD listRow" data-rowkey="EGX:AALR" tabindex="-1">
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <span class="tickerCell-t7nCkzMw">
+   <span>
+   </span>
+   <img alt="" class="logo-VCNKubWq xsmall-VCNKubWq tickerLogo-t7nCkzMw wrapper-hct2yJvK skeleton-VCNKubWq" crossorigin="" src="https://s3-symbol-logo.tradingview.com/general-company-for-land-reclamationdevelopment-and-reconstru.svg"/>
+   <a class="apply-common-tooltip tickerNameBox-t7nCkzMw tickerName-t7nCkzMw" href="/symbols/EGX-AALR/" tabindex="-1" target="_blank" title="AALR − العامة لاستصلاح الأراضي">
+    AALR
+   </a>
+   <a class="apply-overflow-tooltip tickerDescription-WjYk5eOQ interactiveTickerDescription-WjYk5eOQ" data-overflow-tooltip-text="AALR − العامة لاستصلاح الأراضي" href="/symbols/EGX-AALR/" tabindex="-1" target="_blank">
+    العامة لاستصلاح الأراضي
+   </a>
+   <div class="marksContainer-UiZ1dogR">
+    <span class="dataMode-hemod8Gc">
+    </span>
+   </div>
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  300.00
+  <span class="currency-_W710Gzb">
+   <!-- -->
+   EGP
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  <span class="positive-zZRMXAIr">
+   +2.41%
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  193.64 K
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  0.85
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  1.95 B
+  <span class="currency-_W710Gzb">
+   <!-- -->
+   EGP
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  0.00%
+ </td>
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <a class="link-dvxYVADc apply-common-tooltip" href="/markets/stocks-egypt/sectorandindustry-sector/finance/" tabindex="-1" target="_blank" title="القطاع المالي">
+   القطاع المالي
+  </a>
+ </td>
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <div class="container-qpkmsax8 neutral-qpkmsax8">
+   <span aria-hidden="true" class="ratingIcon-qpkmsax8" role="img">
+    <svg height="18" viewbox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg">
+     <path d="M5 9h9v1H5V9Z" fill="currentColor">
+     </path>
+    </svg>
+   </span>
+   لا يوجد تقييم
+  </div>
+ </td>
+</tr>
+
+--- Anchor 2 parent structure ---
+<tr class="row-E_V4eEAD listRow" data-rowkey="EGX:AALR" tabindex="-1">
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <span class="tickerCell-t7nCkzMw">
+   <span>
+   </span>
+   <img alt="" class="logo-VCNKubWq xsmall-VCNKubWq tickerLogo-t7nCkzMw wrapper-hct2yJvK skeleton-VCNKubWq" crossorigin="" src="https://s3-symbol-logo.tradingview.com/general-company-for-land-reclamationdevelopment-and-reconstru.svg"/>
+   <a class="apply-common-tooltip tickerNameBox-t7nCkzMw tickerName-t7nCkzMw" href="/symbols/EGX-AALR/" tabindex="-1" target="_blank" title="AALR − العامة لاستصلاح الأراضي">
+    AALR
+   </a>
+   <a class="apply-overflow-tooltip tickerDescription-WjYk5eOQ interactiveTickerDescription-WjYk5eOQ" data-overflow-tooltip-text="AALR − العامة لاستصلاح الأراضي" href="/symbols/EGX-AALR/" tabindex="-1" target="_blank">
+    العامة لاستصلاح الأراضي
+   </a>
+   <div class="marksContainer-UiZ1dogR">
+    <span class="dataMode-hemod8Gc">
+    </span>
+   </div>
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  300.00
+  <span class="currency-_W710Gzb">
+   <!-- -->
+   EGP
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  <span class="positive-zZRMXAIr">
+   +2.41%
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  193.64 K
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  0.85
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  1.95 B
+  <span class="currency-_W710Gzb">
+   <!-- -->
+   EGP
+  </span>
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  —
+ </td>
+ <td class="cell-WB4YVCAw right-WB4YVCAw">
+  0.00%
+ </td>
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <a class="link-dvxYVADc apply-common-tooltip" href="/markets/stocks-egypt/sectorandindustry-sector/finance/" tabindex="-1" target="_blank" title="القطاع المالي">
+   القطاع المالي
+  </a>
+ </td>
+ <td class="cell-WB4YVCAw left-WB4YVCAw">
+  <div class="container-qpkmsax8 neutral-qpkmsax8">
+   <span aria-hidden="true" class="ratingIcon-qpkmsax8" role="img">
+    <svg height="18" viewbox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg">
+     <path d="M5 9h9v1H5V9Z" fill="currentColor">
+     </path>
+    </svg>
+   </span>
+   لا يوجد تقييم
+  </div>
+ </td>
+</tr>
