@@ -2382,6 +2382,25 @@
             }
 
             await syncPortfolioFromServer();
+            try {
+                const stocksData = await loadLatestStocksDataForHistoryExport();
+                if (stocksData) {
+                    const raw = sessionStorage.getItem('processedData') || localStorage.getItem('processedData');
+                    if (!raw) {
+                        const companies = getStockDataCompanies(stocksData);
+                        const processedData = companies.map(c => ({
+                            symbol: c.symbol,
+                            currentPrice: c.price,
+                            longName: c.longName,
+                            shortName: c.shortName
+                        }));
+                        localStorage.setItem('processedData', JSON.stringify(processedData));
+                        sessionStorage.setItem('processedData', JSON.stringify(processedData));
+                    }
+                }
+            } catch(e) {
+                console.warn("Could not pre-load stocksData for prices fallback:", e);
+            }
             loadPortfolio();
         });
     </script>

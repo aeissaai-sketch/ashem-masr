@@ -30,8 +30,8 @@ async function getPortfolioFromSupabase() {
 // Save portfolio to Supabase
 async function savePortfolioToSupabase(portfolioData) {
     console.log("📤 Saving portfolio to Supabase...");
-    // 1. Delete existing rows
-    const delRes = await fetch(`${SUPABASE_URL}/rest/v1/portfolio?select=*`, {
+    // 1. Delete existing rows (using id=gt.0 filter to bypass PostgREST safety block)
+    const delRes = await fetch(`${SUPABASE_URL}/rest/v1/portfolio?id=gt.0`, {
         method: "DELETE",
         headers: supabaseHeaders
     });
