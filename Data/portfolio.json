@@ -1,0 +1,142 @@
+[
+  {
+    "symbol": "TMGH",
+    "name": "مجموعة طلعت مصطفى القابضة",
+    "quantity": 2800,
+    "entryPrice": 96.67,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "FERC",
+    "name": "فيركيم مصر للاسمدة والكيماويات",
+    "quantity": 1965,
+    "entryPrice": 76.43,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "ABUK",
+    "name": "ابوقير للاسمدة والصناعات الكيماوية",
+    "quantity": 750,
+    "entryPrice": 72.13,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "QNBE",
+    "name": "بنك قطر الوطني",
+    "quantity": 3000,
+    "entryPrice": 54.35,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "EFID",
+    "name": "ايديتا للصناعات الغذائية",
+    "quantity": 7500,
+    "entryPrice": 28.18,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "JUFO",
+    "name": "جهينة للصناعات الغذائية",
+    "quantity": 3670,
+    "entryPrice": 24.9,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "HRHO",
+    "name": "مجموعة اي اف جي القابضة",
+    "quantity": 17447,
+    "entryPrice": 26.91,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "EFIH",
+    "name": "اي فاينانس للاستثمارات المالية والرقمية",
+    "quantity": 11000,
+    "entryPrice": 23.87,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "FWRY",
+    "name": "فوري لتكنولوجيا البنوك والمدفوعات الالكترونية",
+    "quantity": 10133,
+    "entryPrice": 19.13,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "TAQA",
+    "name": "طاقة عربية",
+    "quantity": 7500,
+    "entryPrice": 15.57,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "PHDC",
+    "name": "بالم هيلز للتعمير",
+    "quantity": 7500,
+    "entryPrice": 15.3,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "IBCT",
+    "name": "انترناشيونال بزنيس كوربوريشن للتجارة والتوكيلات التجارية",
+    "quantity": 10000,
+    "entryPrice": 12.23,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "FNAR",
+    "name": "الفنار للمقاولات العمومية والإنشاءات والتجارة والاستيراد",
+    "quantity": 8200,
+    "entryPrice": 10.76,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "RACC",
+    "name": "راية لخدمات مراكز الاتصالات",
+    "quantity": 4716,
+    "entryPrice": 10.46,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "FCMD",
+    "name": "فيوتشر كير للصناعات الطبية",
+    "quantity": 30091,
+    "entryPrice": 8.45,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "BONY",
+    "name": "بنيان للتنمية والتجارة",
+    "quantity": 11000,
+    "entryPrice": 4.52,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "FCMD_R3",
+    "name": "حق اكتتاب شركة فيوتشر كير للصناعات الطبية -3",
+    "quantity": 10000,
+    "entryPrice": 1.44,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "KORA",
+    "name": "قرة لمشروعات الطاقة والاستثمار",
+    "quantity": 61271,
+    "entryPrice": 3.36,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "BTFH",
+    "name": "بلتون القابضة",
+    "quantity": 116623,
+    "entryPrice": 3.01,
+    "addedDate": "16/08/2026"
+  },
+  {
+    "symbol": "ACTF",
+    "name": "اكت فاينانشال للاستشارات",
+    "quantity": 50000,
+    "entryPrice": 2.75,
+    "addedDate": "16/08/2026"
+  }
+]

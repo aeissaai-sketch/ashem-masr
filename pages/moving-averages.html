@@ -300,6 +300,7 @@
                     <tr>
                         <th class="sortable" onclick="setSort('symbol')">الرمز والشركة <span id="sort-symbol" class="sort-icon">↕</span></th>
                         <th class="sortable" onclick="setSort('currentPrice')">السعر الحالي <span id="sort-currentPrice" class="sort-icon">↕</span></th>
+                        <th class="sortable" onclick="setSort('sma10')">متوسط 10 أيام <span id="sort-sma10" class="sort-icon">↕</span></th>
                         <th class="sortable" onclick="setSort('sma20')">متوسط 20 يوم <span id="sort-sma20" class="sort-icon">↕</span></th>
                         <th class="sortable" onclick="setSort('sma50')">متوسط 50 يوم <span id="sort-sma50" class="sort-icon">↕</span></th>
                         <th class="sortable" onclick="setSort('sma100')">متوسط 100 يوم <span id="sort-sma100" class="sort-icon">↕</span></th>
@@ -458,11 +459,18 @@
             
             let isBullishCross = (prevPrice < prevAvg && price >= avg);
             let isBearishCross = (prevPrice > prevAvg && price <= avg);
+            let isCloseToCross = (price < avg && price >= avg * 0.985);
 
             if (isBullishCross) {
                 return `
                     <span class="badge bg-cross-up">🔥 اختراق صاعد</span>
                     <div style="font-size:0.75em; color:#f59e0b; margin-top:2px;">اخترق المتوسط لأعلى</div>
+                `;
+            }
+            if (isCloseToCross) {
+                return `
+                    <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);">⏳ قرب اختراق</span>
+                    <div style="font-size:0.75em; color:#60a5fa; margin-top:2px;">قريب من الاختراق لأعلى</div>
                 `;
             }
             if (isBearishCross) {
@@ -478,7 +486,7 @@
         }
 
         function updateSortIcons() {
-            const keys = ['symbol', 'currentPrice', 'sma20', 'sma50', 'sma100', 'sma200', 'crossState', 'rating', 'platformRec'];
+            const keys = ['symbol', 'currentPrice', 'sma10', 'sma20', 'sma50', 'sma100', 'sma200', 'crossState', 'rating', 'platformRec'];
             keys.forEach(k => {
                 const icon = document.getElementById(`sort-${k}`);
                 if (!icon) return;
@@ -487,11 +495,20 @@
         }
 
         function renderTable() {
-            const raw = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
             const noDataMsg = document.getElementById('noDataMessage');
             const table = document.getElementById('averagesTable');
 
-            if (!raw) {
+            let data = window.stocksData;
+            if (!data) {
+                const raw = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+                if (raw) {
+                    try {
+                        data = JSON.parse(raw);
+                    } catch(e) {}
+                }
+            }
+
+            if (!data) {
                 if (noDataMsg) noDataMsg.style.display = 'block';
                 if (table) table.style.display = 'none';
                 return;
@@ -500,7 +517,6 @@
             if (noDataMsg) noDataMsg.style.display = 'none';
             if (table) table.style.display = 'table';
             
-            const data = JSON.parse(raw);
             const source = data?.companies ?? data;
             const companies = Array.isArray(source) ? source : Object.values(source || {});
             const search = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -519,6 +535,7 @@
                 // اختيار الدالة بناء على النوع المختار (SMA/EMA)
                 const calcFunc = type === 'EMA' ? calcEMA : calcSMA;
 
+                const sma10 = calcFunc(prices, 10);
                 const sma20 = calcFunc(prices, 20);
                 const sma50 = calcFunc(prices, 50);
                 const sma100 = calcFunc(prices, 100);
@@ -526,6 +543,7 @@
 
                 // حساب القيم السابقة للكشف عن الاختراق/الكسر
                 const prevPrices = prices.slice(0, -1);
+                const prevSma10 = calcFunc(prevPrices, 10);
                 const prevSma20 = calcFunc(prevPrices, 20);
                 const prevSma50 = calcFunc(prevPrices, 50);
                 const prevSma100 = calcFunc(prevPrices, 100);
@@ -550,7 +568,7 @@
                 // حساب التقييم العام بناء على عدد المتوسطات التي يقع السعر فوقها
                 let score = 0;
                 let count = 0;
-                [sma20, sma50, sma100, sma200].forEach(val => { 
+                [sma10, sma20, sma50, sma100, sma200].forEach(val => { 
                     if (val) { 
                         score += (currentPrice >= val ? 1 : -1); 
                         count++; 
@@ -573,6 +591,7 @@
                     name: c.shortName || '',
                     currentPrice,
                     prevPrice,
+                    sma10, prevSma10,
                     sma20, prevSma20,
                     sma50, prevSma50,
                     sma100, prevSma100,
@@ -648,6 +667,10 @@
                     <td><strong>${i.symbol}</strong><br><small style="color: #94a3b8;">${i.name}</small></td>
                     <td><span class="up" style="font-size: 1.05em;">${i.currentPrice.toFixed(2)}</span></td>
                     <td>
+                        <span style="font-weight: 500;">${i.sma10 ? i.sma10.toFixed(2) : '—'}</span><br>
+                        ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma10, i.prevSma10)}
+                    </td>
+                    <td>
                         <span style="font-weight: 500;">${i.sma20 ? i.sma20.toFixed(2) : '—'}</span><br>
                         ${getStatusBadge(i.currentPrice, i.prevPrice, i.sma20, i.prevSma20)}
                     </td>
@@ -677,7 +700,56 @@
             });
         }
         
-        window.onload = renderTable;
+        async function initPage() {
+            let data = window.stocksData;
+            if (!data) {
+                const raw = localStorage.getItem('stocksData') || sessionStorage.getItem('stocksData');
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        data = parsed.companies || parsed;
+                    } catch(e) {}
+                }
+            }
+            
+            if (!data) {
+                console.log("🔍 stocksData not found, fetching from server...");
+                try {
+                    const stamp = Date.now();
+                    const candidates = [
+                        `../Data/stock_data.json?_ts=${stamp}`,
+                        `../stock_data.json?_ts=${stamp}`,
+                        `../../Data/stock_data.json?_ts=${stamp}`,
+                        `../../../Data/stock_data.json?_ts=${stamp}`,
+                        `stock_data.json?_ts=${stamp}`
+                    ];
+                    let fetchedData = null;
+                    for (const url of candidates) {
+                        try {
+                            const res = await fetch(url, { cache: 'no-store' });
+                            if (res.ok) {
+                                fetchedData = await res.json();
+                                break;
+                            }
+                        } catch {}
+                    }
+                    if (fetchedData) {
+                        const cleanList = fetchedData.companies || fetchedData;
+                        window.stocksData = cleanList;
+                        try {
+                            sessionStorage.setItem('stocksData', JSON.stringify(cleanList));
+                        } catch(e) {}
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch stock_data.json on startup:", e);
+                }
+            } else {
+                window.stocksData = data.companies || data;
+            }
+            renderTable();
+        }
+        
+        window.onload = initPage;
     </script>
 </body>
 </html>
