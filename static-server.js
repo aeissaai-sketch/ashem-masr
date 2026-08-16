@@ -208,7 +208,7 @@ app.post('/api/save-portfolio', async (req, res) => {
         
         // 2. Sync to Supabase
         console.log("📤 Syncing portfolio to Supabase...");
-        await makeSupabaseRequest('DELETE', '/portfolio?id=gt.0'); // Clear existing
+        await makeSupabaseRequest('DELETE', '/portfolio?symbol=not.is.null'); // Clear existing
         if (portfolioData.length > 0) {
             const payload = portfolioData.map(item => ({
                 symbol: item.symbol,
