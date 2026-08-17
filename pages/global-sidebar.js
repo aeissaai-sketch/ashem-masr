@@ -99,7 +99,8 @@
                 longName: company.longName || company.shortName || symbol,
                 historical: trimmed,
                 exclusion: company.exclusion || null,
-                sector: company.sector || null
+                sector: company.sector || null,
+                egx_index: company.egx_index || null
             };
         });
 
@@ -194,12 +195,36 @@
             console.error("Failed to read IndexedDB:", e);
         }
 
+        try {
+            const rawStocks = sessionStorage.getItem('stocksData') || localStorage.getItem('stocksData');
+            if (rawStocks) {
+                const parsed = JSON.parse(rawStocks);
+                const list = parsed.companies ? Object.values(parsed.companies) : (Array.isArray(parsed) ? parsed : []);
+                const hasSectors = list.some(c => c && c.sector);
+                if (!hasSectors && list.length > 0) {
+                    console.log("Sectors missing in storage, clearing stocksData cache...");
+                    sessionStorage.removeItem('stocksData');
+                    sessionStorage.removeItem('processedData');
+                    localStorage.removeItem('stocksData');
+                    localStorage.removeItem('processedData');
+                }
+            }
+        } catch (e) {}
+
         if (cached) {
             if (cached.stocksDataRaw) {
                 try {
                     const parsed = JSON.parse(cached.stocksDataRaw);
                     const source = parsed.companies || parsed;
-                    window.stocksData = Array.isArray(source) ? source : Object.values(source);
+                    const list = Array.isArray(source) ? source : Object.values(source);
+                    const hasSectors = list.some(c => c && c.sector);
+                    if (!hasSectors && list.length > 0) {
+                        console.log("Sectors missing in IndexedDB, clearing cache...");
+                        cached.stocksDataRaw = null;
+                        cached.processedDataRaw = null;
+                    } else {
+                        window.stocksData = list;
+                    }
                 } catch (e) {
                     console.error("Failed parsing stocksDataRaw from IndexedDB:", e);
                 }
@@ -275,7 +300,9 @@
                         longName: r.name,
                         shortName: r.name,
                         price: Number(r.current_price || 0),
-                        historical: r.history || []
+                        historical: r.history || [],
+                        sector: r.sector || null,
+                        egx_index: r.egx_index || null
                     }));
                     const data = { companies: companiesList };
 
