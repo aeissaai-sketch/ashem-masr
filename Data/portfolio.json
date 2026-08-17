@@ -1,136 +1,66 @@
 [
   {
-    "symbol": "EFID",
-    "name": "EFID",
-    "quantity": 5000,
-    "entryPrice": 28.18,
-    "marketPrice": 33.85
-  },
-  {
-    "symbol": "EFIH",
-    "name": "EFIH",
-    "quantity": 11000,
-    "entryPrice": 23.87,
-    "marketPrice": 24.9
+    "symbol": "PHDC",
+    "name": "PHDC",
+    "quantity": 10815,
+    "entryPrice": 15.4,
+    "marketPrice": 15.63
   },
   {
     "symbol": "BONY",
     "name": "BONY",
     "quantity": 11000,
     "entryPrice": 4.52,
-    "marketPrice": 4.72
-  },
-  {
-    "symbol": "ABUK",
-    "name": "ABUK",
-    "quantity": 750,
-    "entryPrice": 72.13,
-    "marketPrice": 79.55
-  },
-  {
-    "symbol": "FWRY",
-    "name": "FWRY",
-    "quantity": 10133,
-    "entryPrice": 19.13,
-    "marketPrice": 19.3
-  },
-  {
-    "symbol": "QNBE",
-    "name": "QNBE",
-    "quantity": 3000,
-    "entryPrice": 54.35,
-    "marketPrice": 59.8
-  },
-  {
-    "symbol": "ACTF",
-    "name": "ACTF",
-    "quantity": 50000,
-    "entryPrice": 2.75,
-    "marketPrice": 2.79
-  },
-  {
-    "symbol": "RACC",
-    "name": "RACC",
-    "quantity": 4716,
-    "entryPrice": 10.46,
-    "marketPrice": 10.5
-  },
-  {
-    "symbol": "FERC",
-    "name": "FERC",
-    "quantity": 1965,
-    "entryPrice": 76.43,
-    "marketPrice": 81.72
-  },
-  {
-    "symbol": "JUFO",
-    "name": "JUFO",
-    "quantity": 3670,
-    "entryPrice": 24.9,
-    "marketPrice": 27.39
+    "marketPrice": 4.78
   },
   {
     "symbol": "TAQA",
     "name": "TAQA",
     "quantity": 7500,
     "entryPrice": 15.57,
-    "marketPrice": 15.52
-  },
-  {
-    "symbol": "BTFH",
-    "name": "BTFH",
-    "quantity": 116623,
-    "entryPrice": 3.01,
-    "marketPrice": 3.09
-  },
-  {
-    "symbol": "RAYA",
-    "name": "RAYA",
-    "quantity": 14781,
-    "entryPrice": 7.12,
-    "marketPrice": 7.1
+    "marketPrice": 15.45
   },
   {
     "symbol": "FCMD",
     "name": "FCMD",
     "quantity": 30091,
     "entryPrice": 8.45,
-    "marketPrice": 6.62
+    "marketPrice": 6.68
   },
   {
-    "symbol": "IBCT",
-    "name": "IBCT",
-    "quantity": 10000,
-    "entryPrice": 12.23,
-    "marketPrice": 14.02
+    "symbol": "RAYA",
+    "name": "RAYA",
+    "quantity": 14781,
+    "entryPrice": 7.12,
+    "marketPrice": 7.29
   },
   {
-    "symbol": "HRHO",
-    "name": "HRHO",
-    "quantity": 17447,
-    "entryPrice": 26.91,
-    "marketPrice": 26.69
+    "symbol": "BTFH",
+    "name": "BTFH",
+    "quantity": 116623,
+    "entryPrice": 3.01,
+    "marketPrice": 3.13
   },
   {
-    "symbol": "PHDC",
-    "name": "PHDC",
-    "quantity": 7500,
-    "entryPrice": 15.3,
-    "marketPrice": 15.3
+    "symbol": "FNAR",
+    "name": "FNAR",
+    "quantity": 9755,
+    "entryPrice": 11.11,
+    "marketPrice": 13.16
   },
   {
-    "symbol": "KORA",
-    "name": "KORA",
-    "quantity": 61271,
-    "entryPrice": 3.36,
-    "marketPrice": 3.33
+    "symbol": "QNBE",
+    "name": "QNBE",
+    "quantity": 3000,
+    "entryPrice": 54.35,
+    "marketPrice": 60.0
   },
   {
-    "symbol": "TMGH",
-    "name": "TMGH",
-    "quantity": 2800,
-    "entryPrice": 96.67,
-    "marketPrice": 97.8
+    "symbol": "ACTF",
+    "name": "ACTF",
+    "quantity": 50000,
+    "entryPrice": 2.75,
+    "marketPrice": 2.76
   },
   {
     "symbol": "FCMD_R3",
@@ -140,10 +70,80 @@
     "marketPrice": 4.36
   },
   {
-    "symbol": "FNAR",
-    "name": "FNAR",
-    "quantity": 9755,
-    "entryPrice": 11.11,
-    "marketPrice": 13.05
+    "symbol": "HRHO",
+    "name": "HRHO",
+    "quantity": 17447,
+    "entryPrice": 26.91,
+    "marketPrice": 26.35
+  },
+  {
+    "symbol": "TMGH",
+    "name": "TMGH",
+    "quantity": 2800,
+    "entryPrice": 96.67,
+    "marketPrice": 97.78
+  },
+  {
+    "symbol": "IBCT",
+    "name": "IBCT",
+    "quantity": 10000,
+    "entryPrice": 12.23,
+    "marketPrice": 13.88
+  },
+  {
+    "symbol": "KORA",
+    "name": "KORA",
+    "quantity": 79947,
+    "entryPrice": 3.35,
+    "marketPrice": 3.31
+  },
+  {
+    "symbol": "FWRY",
+    "name": "FWRY",
+    "quantity": 10969,
+    "entryPrice": 19.15,
+    "marketPrice": 19.16
+  },
+  {
+    "symbol": "EFIH",
+    "name": "EFIH",
+    "quantity": 8500,
+    "entryPrice": 23.87,
+    "marketPrice": 24.59
+  },
+  {
+    "symbol": "ABUK",
+    "name": "ABUK",
+    "quantity": 750,
+    "entryPrice": 72.13,
+    "marketPrice": 78.55
+  },
+  {
+    "symbol": "JUFO",
+    "name": "JUFO",
+    "quantity": 3670,
+    "entryPrice": 24.9,
+    "marketPrice": 27.29
+  },
+  {
+    "symbol": "FERC",
+    "name": "FERC",
+    "quantity": 1965,
+    "entryPrice": 76.43,
+    "marketPrice": 79.88
+  },
+  {
+    "symbol": "RACC",
+    "name": "RACC",
+    "quantity": 4716,
+    "entryPrice": 10.46,
+    "marketPrice": 10.5
+  },
+  {
+    "symbol": "EFID",
+    "name": "EFID",
+    "quantity": 3500,
+    "entryPrice": 28.18,
+    "marketPrice": 33.99
   }
 ]
