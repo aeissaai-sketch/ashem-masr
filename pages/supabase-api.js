@@ -7,8 +7,21 @@ const supabaseHeaders = {
     "Content-Type": "application/json"
 };
 
-// Fetch portfolio from Supabase
+// Fetch portfolio from Supabase (with instant local server fallback if running locally)
 async function getPortfolioFromSupabase() {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+            console.log("⚡ Fetching portfolio from local server instantly...");
+            const localRes = await fetch('/Data/portfolio.json', { cache: 'no-store' });
+            if (localRes.ok) {
+                const data = await localRes.json();
+                return data;
+            }
+        } catch (e) {
+            console.warn("Local portfolio fetch failed, falling back to Supabase:", e);
+        }
+    }
+
     console.log("🔍 Fetching portfolio from Supabase...");
     const res = await fetch(`${SUPABASE_URL}/rest/v1/portfolio?select=*`, { 
         headers: supabaseHeaders,
@@ -27,8 +40,25 @@ async function getPortfolioFromSupabase() {
     }));
 }
 
-// Save portfolio to Supabase
+// Save portfolio to Supabase (with instant local server save if running locally)
 async function savePortfolioToSupabase(portfolioData) {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+            console.log("⚡ Saving portfolio to local server instantly...");
+            const localRes = await fetch('/api/save-portfolio', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(portfolioData)
+            });
+            if (localRes.ok) {
+                console.log("✅ Portfolio saved to local server successfully.");
+                return;
+            }
+        } catch (e) {
+            console.warn("Local portfolio save failed, falling back to direct Supabase save:", e);
+        }
+    }
+
     console.log("📤 Saving portfolio to Supabase...");
     // 1. Delete existing rows (using symbol=not.is.null filter to bypass PostgREST safety block)
     const delRes = await fetch(`${SUPABASE_URL}/rest/v1/portfolio?symbol=not.is.null`, {
@@ -57,8 +87,21 @@ async function savePortfolioToSupabase(portfolioData) {
     console.log("✅ Portfolio saved to Supabase successfully.");
 }
 
-// Fetch stock data from Supabase (all 225 stocks with 200-day histories)
+// Fetch stock data from Supabase (all 225 stocks with 200-day histories, local server fast path)
 async function getStockDataFromSupabase() {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+            console.log("⚡ Fetching all stocks and histories from local server instantly...");
+            const localRes = await fetch('/Data/stock_data.json', { cache: 'no-store' });
+            if (localRes.ok) {
+                const data = await localRes.json();
+                return data.companies ? data : { companies: data };
+            }
+        } catch (e) {
+            console.warn("Local stock data fetch failed, falling back to Supabase:", e);
+        }
+    }
+
     console.log("🔍 Fetching all stocks and histories from Supabase...");
     const res = await fetch(`${SUPABASE_URL}/rest/v1/all_stocks_data?select=*`, { 
         headers: supabaseHeaders,

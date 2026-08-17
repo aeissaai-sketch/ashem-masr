@@ -179,15 +179,15 @@ async function fetchYahooPrice(symbol) {
 
 app.use(express.json({ limit: '50mb' }));
 
-// Intercept file requests to dynamically sync from Supabase database
-app.get('/Data/portfolio.json', async (req, res) => {
-    await syncPortfolioFromSupabase();
+// Intercept file requests to serve instantly and sync in background asynchronously
+app.get('/Data/portfolio.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'Data', 'portfolio.json'));
+    syncPortfolioFromSupabase().catch(err => console.error("Background sync portfolio failed:", err.message));
 });
 
-app.get('/Data/stock_data.json', async (req, res) => {
-    await syncStockDataFromSupabase();
+app.get('/Data/stock_data.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'Data', 'stock_data.json'));
+    syncStockDataFromSupabase().catch(err => console.error("Background sync stock data failed:", err.message));
 });
 
 // Serve root and static frontend files

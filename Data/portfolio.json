@@ -1,149 +1,149 @@
 [
   {
-    "symbol": "FCMD",
-    "name": "FCMD",
-    "quantity": 30091,
-    "entryPrice": 8.45,
-    "marketPrice": 6.88
-  },
-  {
-    "symbol": "PHDC",
-    "name": "PHDC",
-    "quantity": 10815,
-    "entryPrice": 15.4,
-    "marketPrice": 15.68
-  },
-  {
-    "symbol": "BONY",
-    "name": "BONY",
-    "quantity": 11000,
-    "entryPrice": 4.52,
-    "marketPrice": 4.75
-  },
-  {
-    "symbol": "FNAR",
-    "name": "FNAR",
-    "quantity": 9755,
-    "entryPrice": 11.11,
-    "marketPrice": 13.15
-  },
-  {
     "symbol": "HRHO",
     "name": "HRHO",
     "quantity": 15447,
     "entryPrice": 26.91,
-    "marketPrice": 26.46
-  },
-  {
-    "symbol": "BTFH",
-    "name": "BTFH",
-    "quantity": 116623,
-    "entryPrice": 3.01,
-    "marketPrice": 3.12
-  },
-  {
-    "symbol": "EFIH",
-    "name": "EFIH",
-    "quantity": 8500,
-    "entryPrice": 23.87,
-    "marketPrice": 24.99
-  },
-  {
-    "symbol": "RAYA",
-    "name": "RAYA",
-    "quantity": 14781,
-    "entryPrice": 7.12,
-    "marketPrice": 7.23
-  },
-  {
-    "symbol": "ACTF",
-    "name": "ACTF",
-    "quantity": 50000,
-    "entryPrice": 2.75,
-    "marketPrice": 2.75
-  },
-  {
-    "symbol": "FCMD_R3",
-    "name": "FCMD_R3",
-    "quantity": 10000,
-    "entryPrice": 1.44,
-    "marketPrice": 4.36
-  },
-  {
-    "symbol": "QNBE",
-    "name": "QNBE",
-    "quantity": 3000,
-    "entryPrice": 54.35,
-    "marketPrice": 59.8
-  },
-  {
-    "symbol": "TAQA",
-    "name": "TAQA",
-    "quantity": 7500,
-    "entryPrice": 15.57,
-    "marketPrice": 15.3
-  },
-  {
-    "symbol": "FWRY",
-    "name": "FWRY",
-    "quantity": 10969,
-    "entryPrice": 19.15,
-    "marketPrice": 19.13
-  },
-  {
-    "symbol": "KORA",
-    "name": "KORA",
-    "quantity": 79947,
-    "entryPrice": 3.35,
-    "marketPrice": 3.33
+    "addedDate": "17/08/2026"
   },
   {
     "symbol": "TMGH",
     "name": "TMGH",
     "quantity": 3140,
     "entryPrice": 96.66,
-    "marketPrice": 96.5
+    "addedDate": "17/08/2026"
   },
   {
-    "symbol": "IBCT",
-    "name": "IBCT",
-    "quantity": 10000,
-    "entryPrice": 12.23,
-    "marketPrice": 13.75
+    "symbol": "PHDC",
+    "name": "PHDC",
+    "quantity": 10815,
+    "entryPrice": 15.4,
+    "addedDate": "17/08/2026"
   },
   {
-    "symbol": "JUFO",
-    "name": "JUFO",
-    "quantity": 3670,
-    "entryPrice": 24.9,
-    "marketPrice": 27.19
+    "symbol": "BTFH",
+    "name": "BTFH",
+    "quantity": 116623,
+    "entryPrice": 3.01,
+    "addedDate": "17/08/2026"
   },
   {
-    "symbol": "ABUK",
-    "name": "ABUK",
-    "quantity": 1000,
-    "entryPrice": 73.64,
-    "marketPrice": 78.0
+    "symbol": "FWRY",
+    "name": "FWRY",
+    "quantity": 10969,
+    "entryPrice": 19.15,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "RAYA",
+    "name": "RAYA",
+    "quantity": 14781,
+    "entryPrice": 7.12,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "EFIH",
+    "name": "EFIH",
+    "quantity": 8500,
+    "entryPrice": 23.87,
+    "addedDate": "17/08/2026"
   },
   {
     "symbol": "RACC",
     "name": "RACC",
     "quantity": 4716,
     "entryPrice": 10.46,
-    "marketPrice": 10.5
+    "addedDate": "17/08/2026"
   },
   {
     "symbol": "FERC",
     "name": "FERC",
     "quantity": 1965,
     "entryPrice": 76.43,
-    "marketPrice": 78.87
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "ABUK",
+    "name": "ABUK",
+    "quantity": 1000,
+    "entryPrice": 73.64,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "JUFO",
+    "name": "JUFO",
+    "quantity": 3670,
+    "entryPrice": 24.9,
+    "addedDate": "17/08/2026"
   },
   {
     "symbol": "EFID",
     "name": "EFID",
     "quantity": 3500,
     "entryPrice": 28.18,
-    "marketPrice": 33.22
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "IBCT",
+    "name": "IBCT",
+    "quantity": 10000,
+    "entryPrice": 12.23,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "FNAR",
+    "name": "FNAR",
+    "quantity": 9755,
+    "entryPrice": 11.11,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "FCMD",
+    "name": "FCMD",
+    "quantity": 30091,
+    "entryPrice": 8.45,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "BONY",
+    "name": "BONY",
+    "quantity": 11000,
+    "entryPrice": 4.52,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "ACTF",
+    "name": "ACTF",
+    "quantity": 50000,
+    "entryPrice": 2.75,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "FCMD_R3",
+    "name": "FCMD_R3",
+    "quantity": 10000,
+    "entryPrice": 1.44,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "QNBE",
+    "name": "QNBE",
+    "quantity": 3000,
+    "entryPrice": 54.35,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "TAQA",
+    "name": "TAQA",
+    "quantity": 7500,
+    "entryPrice": 15.57,
+    "addedDate": "17/08/2026"
+  },
+  {
+    "symbol": "KORA",
+    "name": "KORA",
+    "quantity": 79947,
+    "entryPrice": 3.35,
+    "addedDate": "17/08/2026"
   }
 ]
