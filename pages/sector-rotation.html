@@ -566,15 +566,33 @@
 
     <script>
         const SECTOR_CONFIG = {
+            // المرحلة 1: العقارات والمرافق
             'عقارات': { color: 'blue', stepId: 'step-realestate' },
             'مقاولات و إنشاءات هندسية': { color: 'blue', stepId: 'step-realestate' },
+            'مرافق': { color: 'cyan', stepId: 'step-realestate' },
+            
+            // المرحلة 2: المال والخدمات
             'بنوك': { color: 'purple', stepId: 'step-finance' },
             'خدمات مالية غير مصرفية': { color: 'purple', stepId: 'step-finance' },
+            
+            // المرحلة 3: الإنتاج والصناعة
             'موارد أساسية': { color: 'green', stepId: 'step-industry' },
             'خدمات و منتجات صناعية وسيارات': { color: 'green', stepId: 'step-industry' },
             'مواد البناء': { color: 'green', stepId: 'step-industry' },
+            'ورق ومواد تعبئة و تغليف': { color: 'green', stepId: 'step-industry' },
+            'منسوجات و سلع معمرة': { color: 'orange', stepId: 'step-industry' },
+            'خدمات النقل والشحن': { color: 'green', stepId: 'step-industry' },
+            
+            // المرحلة 4: الاستهلاك والدفاعيات
             'أغذية و مشروبات و تبغ': { color: 'gold', stepId: 'step-food' },
-            'رعاية صحية و ادوية': { color: 'gold', stepId: 'step-food' }
+            'رعاية صحية و ادوية': { color: 'gold', stepId: 'step-food' },
+            'تجارة و موزعون': { color: 'gold', stepId: 'step-food' },
+            'خدمات تعليمية': { color: 'brown', stepId: 'step-food' },
+            
+            // المرحلة 5: النمو والترفيه والمضاربة
+            'اتصالات و اعلام و تكنولوجيا المعلومات': { color: 'teal', stepId: 'step-speculation' },
+            'سياحة وترفيه': { color: 'pink', stepId: 'step-speculation' },
+            'طاقة وخدمات مساندة': { color: 'cyan', stepId: 'step-speculation' }
         };
 
         let SECTORS = {};
