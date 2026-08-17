@@ -127,9 +127,9 @@ for stock in all_stocks:
             "low": current_low if current_low is not None else current_price,
             "volume": current_volume
         })
-        # Keep history capped at 200 days
-        if len(history) > 200:
-            history = history[-200:]
+        # Keep history capped at 600 days
+        if len(history) > 600:
+            history = history[-600:]
             
     all_stocks_payload.append({
         "symbol": sym,
